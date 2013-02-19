@@ -11,7 +11,7 @@ Anyway...
 
 TODO - Updated at least once weekly!
 -----
-(Week of Feb 18)
+###Week of Feb 18###
   - [ ] @everyone, Create your own separate folder where you will upload your windows a2 source code. We will
   decide this week whose code we will work on and improve on as a group. On the other hand, we could also
   rewrite the entire networking layer of our project.
