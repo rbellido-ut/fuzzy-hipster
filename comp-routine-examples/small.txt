@@ -1,0 +1,34 @@
+Simple Text File
+
+The Quickest Text File Possible?
+
+There is a way that you can manipulate commands to write a simple text file from the terminal. Rather then opening an editor like pico, emacs, vi or vim you can actually do a nice little hack with the cat command.
+
+Before showing you exactly you should know a few things about files and the terminal in Unix. Text files in Unix end with an "End of File" character. When your on the command line you can actually type that character by pushing Control and D at the same time, I will simulate this character as ^D. That is how you will terminal the text file once we start running. Also if you are ever at a point where you think the current process is frozen or stuck and you cannot seem to get out of it, Control and C, depicted as ^C, will close the current running process. Also if you ever have a problem with the backspace key, Control and H should do the work for you!
+
+Lets make a quick text file. First we choose a name, then input the text, we stop inputing text when we insert the end of file character ^D. The text for the file will appear as blue! Here goes:
+
+% cat > simpleTextFile
+This is the first and
+second line of a simple text file.
+^D
+% cat simpleTextFile
+This is the first and
+second line of a simple text file.
+% cat >> simpleTextFile
+appending a third line.
+^D
+% cat simpleTextFile
+This is the first and
+second line of a simple text file.
+appending a third line.
+The hack uses the cat command, to read not from a file, but from Standard In and direct the output to a file instead of Standard Output (the terminal). The normal rules for the I/O direction arrows apply, so this file was created or overwritten by the first command!
+
+Also notice that all the ^D characters were on their own line. I did push enter, putting a new line in the file before pushing Control and D. Otherwise the file would end without a newline and would appear unusual if read on the console. Here is an example of a poorly created text file:
+
+% cat > badFile.txt
+no newline, just two EOF characters^D^D% cat badFile.txt
+no newline, just two EOF characters% rm badFile.txt
+The formatting there is absolutely correct. A simple problem really, just add a newline at the end of the file so this doesn't happen. There you have it, create a simple text file without opening an editor, on the command line. Very useful if you deal with small text files often.
+
+environment variables »
