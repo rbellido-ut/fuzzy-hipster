@@ -26,6 +26,7 @@
 #include "util.h"
 using namespace std;
 size_t Server::count_ = 0;
+std::map<int, LPSOCKETDATA> Server::mSocketList_;
 
 extern Server sv;
 
@@ -52,247 +53,88 @@ return true;
 }
 */
 
-bool Server::initTCPServer(WSADATA* wsaData, SOCKET* ListenSocket){
+
+bool Server::createTCPServer(WSADATA* wsaData){
 	int res;
 	SOCKADDR_IN addr;
 
-	if ((res = WSAStartup(0x0202,wsaData)) != 0)
+	WORD wVersionRequested;
+	wVersionRequested = MAKEWORD( 2, 2 );
+
+	if ((res = WSAStartup(wVersionRequested, wsaData)) != 0)
 	{
-		printf("WSAStartup failed with error %d\n", res);
+		cerr << "WSAStartup falied with error " << res << endl;
 		WSACleanup();
 		return false;
 	}
 
-	if ((*ListenSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET) 
+	if ((listenSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET) 
 	{
-		printf("Failed to get a socket %d\n", WSAGetLastError());
+		cerr << "Failed to get a socket with error " << WSAGetLastError() << endl;
 		return false;
 	}
 
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	addr.sin_port = htons(TCPPORT);
-	if (bind(*ListenSocket, (PSOCKADDR) &addr, sizeof(addr)) == SOCKET_ERROR)
+	if (bind(listenSocket, (PSOCKADDR) &addr, sizeof(addr)) == SOCKET_ERROR)
 	{
-		printf("bind() failed with error %d\n", WSAGetLastError());
+		cerr << "bind() falied with error " << WSAGetLastError() << endl;
 		return false;
+	}
+
+	if (listen(listenSocket, 5))
+	{
+		cerr << "listen() falied with error " << WSAGetLastError() << endl;
+		closesocket(listenSocket);
+		return 0;
+	}
+
+	ULONG nonblock = 1;
+	if(ioctlsocket(listenSocket, FIONBIO, &nonblock) == SOCKET_ERROR)
+	{
+		cerr << "ioctlsocket() falied with error " << WSAGetLastError() << endl;
+		closesocket(listenSocket);
+		return 0;
 	}
 	
 	return true;
 }
 
 //Other function prototypes
-bool Server::startTCPServer(SOCKET* listenSocket){
+bool Server::startTCPServer(){
 
-	//WSAEVENT AcceptEvent;
-	HANDLE hServeClntThread;
-	HANDLE hStupidThread;
-	DWORD servThreadId;
-	DWORD stupidThreadId;
-	xx* yy = (xx*) malloc (sizeof(xx*));
-
-	if (listen(*listenSocket, 5))
-	{
-		printf("listen() failed with error %d\n", WSAGetLastError());
-		return 0;
-	}
-
-	if ((AcceptEvent = WSACreateEvent()) == WSA_INVALID_EVENT)
-	{
-		printf("WSACreateEvent() failed with error %d\n", WSAGetLastError());
-		return 0;
-	}
-
-	yy->acceptEvent = AcceptEvent;
-	yy->s = this;
-	// Create a worker thread to service completed I/O requests. 
-	if ((hServeClntThread = CreateThread(NULL, 0, serveClientThread, (LPVOID) yy/*AcceptEvent*/, 0, &servThreadId)) == NULL)
-	{
-		printf("CreateThread failed with error %d\n", GetLastError());
-		return 0;
-	}
-
-
+	cout << "Server started, listening on socket " << listenSocket << endl;
 	while(TRUE)
 	{
-		AcceptSocket = accept(*listenSocket, NULL, NULL);
+		SOCKADDR_IN addr = {};
+		int addrLen = sizeof(addr);
 
-		if (WSASetEvent(yy->acceptEvent) == FALSE)
+ 		SOCKET newSock = WSAAccept(listenSocket, (sockaddr*)&addr, &addrLen, NULL, NULL);
+		if(newSock == INVALID_SOCKET)
 		{
-			printf("WSASetEvent failed with error %d\n", WSAGetLastError());
-			return 0;
-		}
-	}
-
-	free(yy);
-	return true;
-}
-
-
-DWORD WINAPI serveClientThread(LPVOID lpParameter)
-{
-
-	DWORD Flags;
-	LPSOCK_INFO SocketInfo;
-	WSAEVENT EventArray[1];
-	DWORD Index;
-	DWORD RecvBytes;
-
-	// Save the accept event in the event array.
-	xx* zz  = (xx*) malloc (sizeof(xx*));
-		zz = (xx*)lpParameter;
-	
-	EventArray[0] = (WSAEVENT) &zz->acceptEvent;
-
-	while(TRUE)
-	{
-		// Wait for accept() to signal an event and also process WorkerRoutine() returns.
-
-		while(TRUE)
-		{
-			Index = WSAWaitForMultipleEvents(1, EventArray, FALSE, WSA_INFINITE, TRUE);
-
-			if (Index == WSA_WAIT_FAILED)
+			if(WSAGetLastError() != WSAEWOULDBLOCK)
 			{
-				printf("WSAWaitForMultipleEvents failed with error %d\n", WSAGetLastError());
-				return FALSE;
-			}
-
-			if (Index != WAIT_IO_COMPLETION)
-			{
-				// An accept() call event is ready - break the wait loop
+				cerr << "accept() failed with error " << WSAGetLastError() << endl;
 				break;
-			} 
+			}
 		}
-
-		WSAResetEvent(EventArray[Index - WSA_WAIT_EVENT_0]);
-
-		// Create a socket information structure to associate with the accepted socket.
-
-
-		if ((SocketInfo = (LPSOCK_INFO) GlobalAlloc(GPTR,
-			sizeof(SOCK_INFO))) == NULL)
-		{
-			printf("GlobalAlloc() failed with error %d\n", GetLastError());
-			return FALSE;
-		} 
-
-		// Fill in the details of our accepted socket.
-
-		SocketInfo->sock = zz->s->AcceptSocket;//AcceptSocket;
-		ZeroMemory(&(SocketInfo->ov), sizeof(WSAOVERLAPPED));  
-		SocketInfo->BytesSEND = 0;
-		SocketInfo->BytesRECV = 0;
-		SocketInfo->DataBuf.len = DATA_BUFSIZE;
-		SocketInfo->DataBuf.buf = SocketInfo->Buffer;
-
-		Flags = 0;
-		if (WSARecv(SocketInfo->sock, &(SocketInfo->DataBuf), 1, &RecvBytes, &Flags,
-			&(SocketInfo->ov), WorkerRoutine) == SOCKET_ERROR)
-		{
-			if (WSAGetLastError() != WSA_IO_PENDING)
+		else {
+			SOCKETDATA* data = allocData(newSock);
+			cout << "Socket " << newSock << " accepted." << endl;
+			if(data)
 			{
-				printf("WSARecv() failed with error %d\n", WSAGetLastError());
-				return FALSE;
+				//thread??
+				postRecvRequest(data);
 			}
 		}
 
-		printf("Socket %d connected\n", zz->s->AcceptSocket);//AcceptSocket);
+
+		::SleepEx(100, TRUE); //make this thread alertable
 	}
 
-	free(zz);
 	return true;
-
 }
-
-void CALLBACK WorkerRoutine(DWORD Error, DWORD BytesTransferred,
-	LPWSAOVERLAPPED Overlapped, DWORD InFlags)
-{
-
-	DWORD SendBytes, RecvBytes;
-	DWORD Flags;
-
-	// Reference the WSAOVERLAPPED structure as a SOCK_INFO structure
-	LPSOCK_INFO SI = (LPSOCK_INFO) Overlapped;
-
-	if (Error != 0)
-	{
-		printf("I/O operation failed with error %d\n", Error);
-	}
-
-	if (BytesTransferred == 0)
-	{
-		printf("Closing socket %d\n", SI->sock);
-	}
-
-	if (Error != 0 || BytesTransferred == 0)
-	{
-		closesocket(SI->sock);
-		GlobalFree(SI);
-		return;
-	}
-
-	// Check to see if the BytesRECV field equals zero. If this is so, then
-	// this means a WSARecv call just completed so update the BytesRECV field
-	// with the BytesTransferred value from the completed WSARecv() call.
-
-	if (SI->BytesRECV == 0)
-	{
-		SI->BytesRECV = BytesTransferred;
-		SI->BytesSEND = 0;
-	}
-	else
-	{
-		SI->BytesSEND += BytesTransferred;
-	}
-
-	if (SI->BytesRECV > SI->BytesSEND)
-	{
-
-		// Post another WSASend() request.
-		// Since WSASend() is not gauranteed to send all of the bytes requested,
-		// continue posting WSASend() calls until all received bytes are sent.
-
-		ZeroMemory(&(SI->ov), sizeof(WSAOVERLAPPED));
-
-		SI->DataBuf.buf = SI->Buffer + SI->BytesSEND;
-		SI->DataBuf.len = SI->BytesRECV - SI->BytesSEND;
-
-		if (WSASend(SI->sock, &(SI->DataBuf), 1, &SendBytes, 0,
-			&(SI->ov), WorkerRoutine) == SOCKET_ERROR)
-		{
-			if (WSAGetLastError() != WSA_IO_PENDING)
-			{
-				printf("WSASend() failed with error %d\n", WSAGetLastError());
-				return;
-			}
-		}
-	}
-	else
-	{
-		SI->BytesRECV = 0;
-
-		// Now that there are no more bytes to send post another WSARecv() request.
-
-		Flags = 0;
-		ZeroMemory(&(SI->ov), sizeof(WSAOVERLAPPED));
-
-		SI->DataBuf.len = DATA_BUFSIZE;
-		SI->DataBuf.buf = SI->Buffer;
-
-		if (WSARecv(SI->sock, &(SI->DataBuf), 1, &RecvBytes, &Flags,
-			&(SI->ov), WorkerRoutine) == SOCKET_ERROR)
-		{
-			if (WSAGetLastError() != WSA_IO_PENDING )
-			{
-				printf("WSARecv() failed with error %d\n", WSAGetLastError());
-				return;
-			}
-		}
-	}
-
-}
-
 
 bool Server::stopServer(){
 
@@ -322,4 +164,100 @@ bool Server::acceptStream(){
 bool Server::saveToFile(){
 
 	return true;
+}
+
+
+LPSOCKETDATA Server::allocData(SOCKET socketFD)
+{
+	LPSOCKETDATA data = NULL;
+
+	try{
+		data = new SOCKETDATA();
+	
+	}catch(std::bad_alloc&){
+		cerr << "Allocate socket data failed" << endl;
+		return NULL;
+	}
+
+	data->overlap.hEvent = (WSAEVENT)data;
+	data->sock = socketFD;
+	data->wsabuf.buf = data->databuf;
+	data->wsabuf.len = sizeof(data->databuf);
+
+	mSocketList_[socketFD] = data;
+
+	return data;
+}
+
+void Server::freeData(LPSOCKETDATA data){
+	if(data)
+	{
+		cout << "Socket " << data->sock <<" Closed." << endl;
+		closesocket(data->sock);
+		mSocketList_.erase(data->sock);
+		delete data;
+	}
+}
+
+bool Server::postRecvRequest(LPSOCKETDATA data)
+{
+	DWORD flag = 0;
+	DWORD bytesRecvd = 0;
+	//setBytesRecvd(0);
+	int error;
+
+	error = WSARecv(data->sock, &data->wsabuf, 1, &bytesRecvd, &flag, &data->overlap, recvComplete);
+	if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
+	{
+		return true;
+	}
+	else
+	{
+		cerr << "WSARecv() failed on " << data->sock << endl;
+		freeData(data);
+		return false;
+	}
+
+}
+void CALLBACK Server::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+{
+	LPSOCKETDATA data = (LPSOCKETDATA) overlapped->hEvent;
+
+	if(error || bytesTransferred == 0)
+	{
+		freeData(data);
+		return;
+	}
+
+	//Send Data Back
+	memset(&data->overlap, 0, sizeof(data->overlap));
+	data->overlap.hEvent = (WSAEVENT)data;
+	data->wsabuf.len = bytesTransferred;
+	DWORD bytesSent = 0;
+	cout << "Received: " << data->databuf << ". From: " << data->sock << endl;
+	error = WSASend(data->sock, &data->wsabuf, 1, &bytesSent, flags, &data->overlap, sendComplete);
+	if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
+	{
+		//success
+		return;
+	}
+	else
+	{
+		freeData(data);
+	}
+
+}
+
+void CALLBACK Server::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+{
+	LPSOCKETDATA data = (LPSOCKETDATA)overlapped->hEvent;
+	if(error || bytesTransferred == 0)
+	{
+		freeData(data);
+		return;
+	}
+
+	//post another WSARecv()
+	data->wsabuf.len = sizeof(data->databuf);
+	postRecvRequest(data);
 }

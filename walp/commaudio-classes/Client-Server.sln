@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "clt-srv", "clt-srv\clt-srv.vcxproj", "{A246618C-6025-458E-8FFA-F46AA3F3F5AB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tcpClientTest", "tcpClientTest\tcpClientTest.vcxproj", "{9C40D1AD-D4FA-4CBE-8963-1657875A2BF8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -13,6 +15,10 @@ Global
 		{A246618C-6025-458E-8FFA-F46AA3F3F5AB}.Debug|Win32.Build.0 = Debug|Win32
 		{A246618C-6025-458E-8FFA-F46AA3F3F5AB}.Release|Win32.ActiveCfg = Release|Win32
 		{A246618C-6025-458E-8FFA-F46AA3F3F5AB}.Release|Win32.Build.0 = Release|Win32
+		{9C40D1AD-D4FA-4CBE-8963-1657875A2BF8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9C40D1AD-D4FA-4CBE-8963-1657875A2BF8}.Debug|Win32.Build.0 = Debug|Win32
+		{9C40D1AD-D4FA-4CBE-8963-1657875A2BF8}.Release|Win32.ActiveCfg = Release|Win32
+		{9C40D1AD-D4FA-4CBE-8963-1657875A2BF8}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

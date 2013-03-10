@@ -47,32 +47,35 @@ Server sv;
 
 int main(int argc, char* argv[]){
 
-	//if(argc < 2){
+	if(argc < 2){
 
-		//cout << "Usage: ./run mode" <<endl;
+		cout << "Usage: ./run mode" <<endl;
 
-	//}else{
+	}else{
 
-		//if(strcmp(argv[1], "server") == 0){ 		//User wanted a server instance
+		if(strcmp(argv[1], "server") == 0){ 		//User wanted a server instance
 
 			//initialize and start the server
 			Server srvr;
 			WSADATA wsadata;
-			SOCKET s;
 
-			srvr.initTCPServer(&wsadata, &s);
-			srvr.startTCPServer(&s);
+			srvr.createTCPServer(&wsadata);
+			srvr.startTCPServer();
 
-	//	}else if(strcmp(argv[1], "client") == 0){	//User wanted a client instance
+		}else if(strcmp(argv[1], "client") == 0){	//User wanted a client instance
 
-	//		Client clnt;					//initialize and start the client
+			//initialize and start the client
+			Client clnt;
+			WSADATA wsadata;
 
-	//	}else{
+			clnt.createTCPClient(&wsadata);
+			clnt.startTCPClient();
+		}else{
 
-	//		cout << "Incorrect Mode" << endl;
+			cout << "Incorrect Mode" << endl;
 
-	//	}
-	//}
+		}
+	}
 
 	exit(0);
 }

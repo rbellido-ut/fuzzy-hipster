@@ -50,14 +50,31 @@ public:
 
 	//Other function prototypes
 	
-	bool startClient();
-	bool initClient();
+	bool createTCPClient(WSADATA* wsaData);
+	bool startTCPClient();
+
+	bool createUDPClient(WSADATA* wsaData);
+	bool startUDPClient();
+	
 	bool stopClient();
 	bool requestConnect();
 	bool requestDownload();
 	bool requestUpload();
 	bool requestStream();
 	bool saveToFile();
+
+	
+	static LPSOCKETDATA allocData(SOCKET fd);
+	static void freeData(LPSOCKETDATA data);
+	static bool postSendRequest(LPSOCKETDATA data);
+	static bool postRecvRequest(LPSOCKETDATA data);
+	static void CALLBACK recvComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+	static void CALLBACK sendComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+
+	static DWORD WINAPI clientThread(LPVOID lpParameter);
+	static void sendTCP(SOCKET& clntSock);
+
+
 
 	//friend decleration of input and output operators
 	friend std::ostream& operator<< (std::ostream& os, const Client& c);
@@ -67,6 +84,15 @@ private:
 	//Data members
 	std::vector<int> musicList_; //std::vector<music>? would have to create a music class
 	static size_t count_;
+	static SOCKET connectSocket_;
+	struct hostent	*hp;
+	char **pptr;
+	SOCKADDR_IN addr;
+
+	HANDLE threadHandle_;
+	DWORD threadID_;
+	static char  sbuf[255];
+	
 };
 
 #endif

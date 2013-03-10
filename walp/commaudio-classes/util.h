@@ -33,8 +33,9 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <fstream>
+#include <map>
 
-#define DATA_BUFSIZE 102400
+#define DATABUFSIZE 102400
 
 class Server;
 
@@ -42,15 +43,24 @@ typedef struct _sock_info {
 	OVERLAPPED ov; //the overlapped structured used for async i/o
 	SOCKET sock; //the socket used for the entire connection
 	WSABUF DataBuf; 
-	CHAR Buffer[DATA_BUFSIZE]; 
+	CHAR Buffer[DATABUFSIZE]; 
 	DWORD BytesSEND;
 	DWORD BytesRECV;
 }SOCK_INFO, * LPSOCK_INFO;
+
+typedef struct socket_data{
+	SOCKET sock;
+	WSABUF	wsabuf;
+	char databuf[DATABUFSIZE];
+	WSAOVERLAPPED overlap;
+}SOCKETDATA, *LPSOCKETDATA;
 
 typedef struct xx{
 	WSAEVENT acceptEvent;
 	Server* s;
 };
+
+
 
 #include "communication.h"
 #include "client.h"

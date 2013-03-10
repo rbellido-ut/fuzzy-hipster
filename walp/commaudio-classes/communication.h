@@ -34,13 +34,22 @@ private:
 	static size_t count_;
 
 public:
+
+	int TCPPORT, UDPPORT;
+
+
+
 	//Constructor
 	explicit Communication(const std::string& readBuffer = "",const std::string& writeBuffer = "",
 		const int& bytesSent = 0, const int& bytesRecvd = 0, 
 		const SOCKET& readSocket = 0, const SOCKET& writeSocket = 0)
 		:readBuffer_(readBuffer), writeBuffer_(writeBuffer), bytesSent_(bytesSent),
 		bytesRecvd_(bytesRecvd), readSocket_(readSocket), writeSocket_(writeSocket)
-	{ count_++; }
+	{ 
+		TCPPORT= 5150;
+		UDPPORT = 6000;
+		count_++; 
+	}
 
 	//Copy constructor
 	Communication (const Communication& src);	//copy ctor
@@ -69,9 +78,14 @@ public:
 	bool sendPacket();
 	bool recvPacket();
 
+	
+
 	//Friend decleration of input/output operators
 	friend std::ostream& operator<< (std::ostream& os, const Communication& cs);
 	friend std::istream& operator>> (std::istream& is, Communication& cs);
+
+
+
 };
 
 #endif

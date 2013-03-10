@@ -38,13 +38,12 @@ public:
 	//Constructor calls parrent's constructor
 	explicit Server(const std::string& readBuffer = "",const std::string& writeBuffer = "",
 		const int& bytesSent = 0, const int& bytesRecvd = 0, 
-		const SOCKET& readSocket = 0, const SOCKET& writeSocket = 0)
+		const SOCKET& readSocket = 0, const SOCKET& writeSocket = 0, const SOCKET& listenSocket = 0)
 		//const std::vector<int>& musicList = 0, const std::vector<Client>& clientList)
 		:Communication(readBuffer, writeBuffer, bytesSent, bytesRecvd, readSocket, writeSocket)
 		//musicList_(musicList), clientList_(clientList)
 	{
-		TCPPORT= 5150;
-		UDPPORT = 6000;
+		
 		count_++; 
 	}
 
@@ -57,7 +56,7 @@ public:
 	~Server(){ count_--; }
 
 	//Getter functions
-	SOCKET getAcceptSocket(){ return AcceptSocket; }
+	SOCKET getacceptSocket(){ return acceptSocket; }
 	//std::vector<int> getMusicList() { return musicList_; }
 	//std::vector<Client> getClientList() { return clientList_; }
 	static size_t getCount(){ return count_; }
@@ -68,8 +67,10 @@ public:
 
 
 	//Other function prototypes
-	bool initTCPServer(WSADATA* wsaData, SOCKET* ListenSocket);
-	bool startTCPServer(SOCKET* listenSocket);
+	bool createTCPServer(WSADATA* wsaData);
+	bool startTCPServer();
+
+
 	bool stopServer();
 	bool acceptConnect();
 	bool acceptDownload();
@@ -78,25 +79,36 @@ public:
 	bool saveToFile();
 	//bool addToMusicList();
 	//bool addToClientList(Client c);
-	friend DWORD WINAPI serveClientThread(LPVOID lpParameter);
-	friend void CALLBACK WorkerRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Overlapped, DWORD InFlags);
+
+
+	//SOCKET createListenTCPSocket(const std::string& strHost, const int& TCPPort);
+	static LPSOCKETDATA allocData(SOCKET fd);
+	static void freeData(LPSOCKETDATA data);
+	static bool postRecvRequest(LPSOCKETDATA data);
+	static void CALLBACK recvComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+	static void CALLBACK sendComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+
+
+	
+	
+
 
 private:
 	//std::vector<int> musicList_;
 	//std::vector<Client> clientList_;
-	//SOCKET ListenSocket, AcceptSocket;
+	//SOCKET ListenSocket, acceptSocket;
+	
+	int Ret;
 	WSADATA wsaData;
-	SOCKET AcceptSocket;
-	SOCKADDR_IN server;
-	INT Ret;
-	HANDLE ThreadHandle;
-	DWORD ThreadId;
-	WSAEVENT AcceptEvent;
-
-	int TCPPORT, UDPPORT;
+	SOCKET listenSocket;
+	SOCKET acceptSocket;
+	
+	
 
 	static size_t count_;
-
+	static std::map<int, LPSOCKETDATA> mSocketList_;
+	
+	
 };
 
 #endif
