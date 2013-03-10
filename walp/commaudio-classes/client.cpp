@@ -34,7 +34,24 @@ bool Client::setMusicList(vector<int> ml){
 }
 
 //Other function prototypes
-
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	Client::createTCPClient(WSADATA* wsaData)
+--
+-- DATE:		March 4th, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	bool Client::createTCPClient(WSADATA* wsaData)
+--				wsaData: pointer to a WSADATA structure
+--
+-- RETURNS:		false on failure and true on success
+--
+-- NOTES:		This function initializes and creates a TCP client socket
+----------------------------------------------------------------------------------------------------------------------*/
 bool Client::createTCPClient(WSADATA* wsaData){
 	int res;
 	WORD wVersionRequested;
@@ -50,7 +67,7 @@ bool Client::createTCPClient(WSADATA* wsaData){
 	if ((connectSocket_ = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET)
 	{
 		cerr << "Failed to get a socket with error " << WSAGetLastError() << endl;
-		exit(1);
+		return false;
 	}
 
 	// Initialize and set up the address structure
@@ -61,7 +78,7 @@ bool Client::createTCPClient(WSADATA* wsaData){
 	if ((hp = gethostbyname("localhost")) == NULL)
 	{
 		cerr << "Unknown server address" << endl;
-		exit(1);
+		return false;
 	}
 
 	// Copy the server address
@@ -70,6 +87,23 @@ bool Client::createTCPClient(WSADATA* wsaData){
 	return true;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	Client::startTCPClient()
+--
+-- DATE:		March 4th, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	bool Client::startTCPClient()
+--
+-- RETURNS:		false on failure and true on success
+--
+-- NOTES:		This function establishes the TCP connection and starts the receive and send loops
+----------------------------------------------------------------------------------------------------------------------*/
 bool Client::startTCPClient(){
 
 	// Connecting to the server
@@ -84,8 +118,8 @@ bool Client::startTCPClient(){
 	cout << "\t\tIP Address: " <<  inet_ntoa(addr.sin_addr) << endl;
 
 	cout << "Server started, connected to socket " << connectSocket_ << endl;
-	
-	//postRecvRequest();
+
+	threadHandle_ = CreateThread(NULL, 0, clientThread, NULL, 0, &threadID_);
 
 	while(TRUE)
 	{
@@ -93,31 +127,42 @@ bool Client::startTCPClient(){
 		SOCKETDATA* data = allocData(connectSocket_);
 		if(data)
 		{
-			//thread??
 			postSendRequest(data);
 		}
 		
 		::SleepEx(100, TRUE); //make this thread alertable
 	}
-
-	
-
-	//threadHandle_ = CreateThread(NULL, 0, clientThread, NULL, 0, &threadID_);
 	
 	return true;
 }
 
-
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	Client::postRecvRequest(LPSOCKETDATA data)
+--
+-- DATE:		March 4th, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	bool Client::postRecvRequest(LPSOCKETDATA data)
+--				data: the socket data structure that holds the connection socket and buffers
+--
+-- RETURNS:		false on failure and true on success
+--
+-- NOTES:		This function starts a overlapped WSARecv call which calls the recvComplete completion routine
+--  			function when completed
+----------------------------------------------------------------------------------------------------------------------*/
 bool Client::postRecvRequest(LPSOCKETDATA data){
 	DWORD flag = 0;
 	DWORD bytesRecvd = 0;
 			
-	//setBytesRecvd(0);
 	int error;
 	
 	if(data)
 	{
-		//thread??
 		error = WSARecv(data->sock, &data->wsabuf, 1, &bytesRecvd, &flag, &data->overlap, recvComplete);
 		if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
 		{
@@ -133,6 +178,25 @@ bool Client::postRecvRequest(LPSOCKETDATA data){
 
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	Client::postSendRequest(LPSOCKETDATA data)
+--
+-- DATE:		March 4th, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	bool Client::postSendRequest(LPSOCKETDATA data)
+--				data: the socket data structure that holds the connection socket and buffers
+--
+-- RETURNS:		false on failure and true on success
+--
+-- NOTES:		This function starts a overlapped WSASend call which calls the sendComplete completion routine
+--  			function when completed
+----------------------------------------------------------------------------------------------------------------------*/
 bool Client::postSendRequest(LPSOCKETDATA data)
 {
 	DWORD flag = 0;
@@ -156,6 +220,27 @@ bool Client::postSendRequest(LPSOCKETDATA data)
 
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--
+-- DATE:		March 4th, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	void CALLBACK Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--				error: error codes
+--				bytesTransferred: number of bytes transferred by the WSARecv call
+--				overlapped: the overlapped structure
+--				flags:
+--
+-- RETURNS:		
+--
+-- NOTES:		This is the call back function that gets called when a WSARecv call is completed
+----------------------------------------------------------------------------------------------------------------------*/
 void CALLBACK Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 	LPSOCKETDATA data = (LPSOCKETDATA) overlapped->hEvent;
@@ -170,6 +255,27 @@ void CALLBACK Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
 
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--
+-- DATE:		March 4th, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	void CALLBACK Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--				error: error codes
+--				bytesTransferred: number of bytes transferred by the WSASend call
+--				overlapped: the overlapped structure
+--				flags:
+--
+-- RETURNS:		
+--
+-- NOTES:		This is the call back function that gets called when a WSASend call is completed
+----------------------------------------------------------------------------------------------------------------------*/
 void CALLBACK Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 	LPSOCKETDATA data = (LPSOCKETDATA)overlapped->hEvent;
@@ -179,10 +285,27 @@ void CALLBACK Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
 		return;
 	}
 	
-	postRecvRequest(data);
 }
 
-
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--
+-- DATE:		March 4th, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	LPSOCKETDATA Client::allocData(SOCKET socketFD)
+--				socketFD: handle to the socket to be copied into the data structure
+--
+-- RETURNS:		Pointer to the allocated memory location for the data structure
+--
+-- NOTES:		This function allocates memory for the data structure used to hold the buffers 
+--				and the communication socket
+----------------------------------------------------------------------------------------------------------------------*/
 LPSOCKETDATA Client::allocData(SOCKET socketFD)
 {
 	LPSOCKETDATA data = NULL;
@@ -204,6 +327,23 @@ LPSOCKETDATA Client::allocData(SOCKET socketFD)
 	return data;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	Client::freeData(LPSOCKETDATA data)
+--
+-- DATE:		March 4th, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	void Client::freeData(LPSOCKETDATA data)
+--
+-- RETURNS:		
+--
+-- NOTES:		This function frees the allocated memory for the data structure
+----------------------------------------------------------------------------------------------------------------------*/
 void Client::freeData(LPSOCKETDATA data){
 	if(data)
 	{
@@ -218,7 +358,23 @@ void Client::sendTCP(SOCKET& clntSock){
 	Sleep(10000);
 }
 
-
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	Client::clientThread(LPVOID lpParameter)
+--
+-- DATE:		March 4th, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	DWORD WINAPI Client::clientThread(LPVOID lpParameter)
+--				lpParameters: A pointer to the parameters passed to the thread proc
+-- RETURNS:		
+--
+-- NOTES:		This is the thread proc used to post overlapped WSARecv calls
+----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI Client::clientThread(LPVOID lpParameter){
 
 	while(TRUE)
@@ -226,7 +382,6 @@ DWORD WINAPI Client::clientThread(LPVOID lpParameter){
 		SOCKETDATA* data = allocData(connectSocket_);
 		if(data)
 		{
-			//thread??
 			postRecvRequest(data);
 		}
 		
