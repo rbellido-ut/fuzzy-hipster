@@ -1,28 +1,7 @@
-/*------------------------------------------------------------------------------------------------------------------
--- SOURCE FILE:		client.cpp -  This file contains function implementations related to the client class.
---
--- PROGRAM:			COMP4985 - COMM AUDIO
---
--- FUNCTIONS:		bool Client::setMusicList(std::vector<int> ml)
---					bool Client::requestConnect()
---					bool Client::requestDownload()
---					bool Client::requestUpload()
---					bool Client::requestStream()
---					bool Client::saveToFile()
---
--- DATE:			March 4th, 2013
---
--- REVISIONS: 
---
--- DESIGNER:		Behnam Bastami
---
--- PROGRAMMER:		Behnam Bastami
---
--- NOTES:
-----------------------------------------------------------------------------------------------------------------------*/
-
 #include "util.h"
+
 using namespace std;
+
 size_t Client::count_ = 0;
 SOCKET Client::connectSocket_;
 char  Client::sbuf[255];
@@ -33,25 +12,6 @@ bool Client::setMusicList(vector<int> ml){
 	return true;
 }
 
-//Other function prototypes
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:	Client::createTCPClient(WSADATA* wsaData)
---
--- DATE:		March 4th, 2013
---
--- REVISIONS:	
---
--- DESIGNER:	Behnam Bastami
---
--- PROGRAMMER:	Behnam Bastami
---
--- INTERFACE:	bool Client::createTCPClient(WSADATA* wsaData)
---				wsaData: pointer to a WSADATA structure
---
--- RETURNS:		false on failure and true on success
---
--- NOTES:		This function initializes and creates a TCP client socket
-----------------------------------------------------------------------------------------------------------------------*/
 bool Client::createTCPClient(WSADATA* wsaData){
 	int res;
 	WORD wVersionRequested;
@@ -87,23 +47,7 @@ bool Client::createTCPClient(WSADATA* wsaData){
 	return true;
 }
 
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:	Client::startTCPClient()
---
--- DATE:		March 4th, 2013
---
--- REVISIONS:	
---
--- DESIGNER:	Behnam Bastami
---
--- PROGRAMMER:	Behnam Bastami
---
--- INTERFACE:	bool Client::startTCPClient()
---
--- RETURNS:		false on failure and true on success
---
--- NOTES:		This function establishes the TCP connection and starts the receive and send loops
-----------------------------------------------------------------------------------------------------------------------*/
+
 bool Client::startTCPClient(){
 
 	// Connecting to the server
@@ -136,25 +80,6 @@ bool Client::startTCPClient(){
 	return true;
 }
 
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:	Client::postRecvRequest(LPSOCKETDATA data)
---
--- DATE:		March 4th, 2013
---
--- REVISIONS:	
---
--- DESIGNER:	Behnam Bastami
---
--- PROGRAMMER:	Behnam Bastami
---
--- INTERFACE:	bool Client::postRecvRequest(LPSOCKETDATA data)
---				data: the socket data structure that holds the connection socket and buffers
---
--- RETURNS:		false on failure and true on success
---
--- NOTES:		This function starts a overlapped WSARecv call which calls the recvComplete completion routine
---  			function when completed
-----------------------------------------------------------------------------------------------------------------------*/
 bool Client::postRecvRequest(LPSOCKETDATA data){
 	DWORD flag = 0;
 	DWORD bytesRecvd = 0;
@@ -178,25 +103,6 @@ bool Client::postRecvRequest(LPSOCKETDATA data){
 
 }
 
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:	Client::postSendRequest(LPSOCKETDATA data)
---
--- DATE:		March 4th, 2013
---
--- REVISIONS:	
---
--- DESIGNER:	Behnam Bastami
---
--- PROGRAMMER:	Behnam Bastami
---
--- INTERFACE:	bool Client::postSendRequest(LPSOCKETDATA data)
---				data: the socket data structure that holds the connection socket and buffers
---
--- RETURNS:		false on failure and true on success
---
--- NOTES:		This function starts a overlapped WSASend call which calls the sendComplete completion routine
---  			function when completed
-----------------------------------------------------------------------------------------------------------------------*/
 bool Client::postSendRequest(LPSOCKETDATA data)
 {
 	DWORD flag = 0;
@@ -220,27 +126,7 @@ bool Client::postSendRequest(LPSOCKETDATA data)
 
 }
 
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:	Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
---
--- DATE:		March 4th, 2013
---
--- REVISIONS:	
---
--- DESIGNER:	Behnam Bastami
---
--- PROGRAMMER:	Behnam Bastami
---
--- INTERFACE:	void CALLBACK Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
---				error: error codes
---				bytesTransferred: number of bytes transferred by the WSARecv call
---				overlapped: the overlapped structure
---				flags:
---
--- RETURNS:		
---
--- NOTES:		This is the call back function that gets called when a WSARecv call is completed
-----------------------------------------------------------------------------------------------------------------------*/
+
 void CALLBACK Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 	LPSOCKETDATA data = (LPSOCKETDATA) overlapped->hEvent;
@@ -255,27 +141,6 @@ void CALLBACK Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
 
 }
 
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:	Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
---
--- DATE:		March 4th, 2013
---
--- REVISIONS:	
---
--- DESIGNER:	Behnam Bastami
---
--- PROGRAMMER:	Behnam Bastami
---
--- INTERFACE:	void CALLBACK Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
---				error: error codes
---				bytesTransferred: number of bytes transferred by the WSASend call
---				overlapped: the overlapped structure
---				flags:
---
--- RETURNS:		
---
--- NOTES:		This is the call back function that gets called when a WSASend call is completed
-----------------------------------------------------------------------------------------------------------------------*/
 void CALLBACK Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 	LPSOCKETDATA data = (LPSOCKETDATA)overlapped->hEvent;
@@ -430,51 +295,11 @@ bool Client::saveToFile(){
 	return true;
 }
 
-
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:	operator<<
---
--- DATE:		March 4th, 2013
---
--- REVISIONS:	
---
--- DESIGNER:	Behnam Bastami
---
--- PROGRAMMER:	Behnam Bastami
---
--- INTERFACE:	ostream& operator<< (ostream& os, const Client& c)
---				os: An output stream
---				c: The Client object that needs to be outputed
---
--- RETURNS:		Returns an output stream containing the client's data members
---
--- NOTES:		
-----------------------------------------------------------------------------------------------------------------------*/
 ostream& operator<< (ostream& os, const Client& c){
 
 	return os;
 }
 
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:	operator>>
---
--- DATE:		March 4th, 2013
---
--- REVISIONS:	
---
--- DESIGNER:	Behnam Bastami
---
--- PROGRAMMER:	Behnam Bastami
---
--- INTERFACE:	istream& operator>> (istream& is, Client& c)
---				is: An iutput stream
---				c: The Client object to be read
---
--- RETURNS:		Returns the state of the input stream after the client object was read.
---				If a client object was read successful the return value evaluates to true, and false if it fails.
---
--- NOTES:		
-----------------------------------------------------------------------------------------------------------------------*/
 istream& operator>> (istream& is, Client& c){
 
 	

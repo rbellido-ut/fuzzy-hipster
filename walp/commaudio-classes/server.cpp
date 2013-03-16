@@ -1,58 +1,11 @@
-/*------------------------------------------------------------------------------------------------------------------
--- SOURCE FILE:		server.cpp -  This file contains function implementations related to the server class.
---
--- PROGRAM:			COMP4985 - COMM AUDIO
---
--- FUNCTIONS:		bool setMusicList(std::vector<int> ml)
---					bool setClientList(std::vector<Client> cl)
---					bool addToMusicList()
---					bool acceptConnect()
---					bool acceptDownload()
---					bool acceptUpload()
---					bool acceptStream()
---					bool saveToFile()
---
--- DATE:			March 4th, 2013
---
--- REVISIONS: 
---
--- DESIGNER:		Behnam Bastami
---
--- PROGRAMMER:		Behnam Bastami
---
--- NOTES:
-----------------------------------------------------------------------------------------------------------------------*/
-
 #include "util.h"
+
 using namespace std;
+
 size_t Server::count_ = 0;
 std::map<int, LPSOCKETDATA> Server::mSocketList_;
 
 extern Server sv;
-
-//Setter functions
-/*
-bool setMusicList(std::vector<int> ml){
-
-return true;
-}
-
-bool setClientList(std::vector<Client> cl){
-
-return true;
-}
-
-bool Server::addToMusicList(){
-
-return true;
-}
-
-bool Server::addToClientList(Client c){
-
-return true;
-}
-*/
-
 
 bool Server::createTCPServer(WSADATA* wsaData){
 	int res;

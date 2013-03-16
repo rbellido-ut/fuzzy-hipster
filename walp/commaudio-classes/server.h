@@ -1,28 +1,3 @@
-/*------------------------------------------------------------------------------------------------------------------
--- SOURCE FILE:		server.h -  This header file contains the constructor, copy constructor, destructor, getters/setters
---								function prototypes, and class members related to the server class.
---
--- PROGRAM:			COMP4985 - COMM AUDIO
---
--- FUNCTIONS:		explicit Server(const pid_t& pid = 0, const int& ipcID = 0);
---					Server(const Server& src);
---					~Server();
---					static size_t getCount();
---					void initServer();
---					void listen();
---					bool sendFile(std::string file, pid_t clientPID, int clientPriority);
---
--- DATE:			March 4th, 2013
---
--- REVISIONS: 
---
--- DESIGNER:		Behnam Bastami
---
--- PROGRAMMER:		Behnam Bastami
---
--- NOTES:
-----------------------------------------------------------------------------------------------------------------------*/
-
 #ifndef SERVER_H
 #define SERVER_H
 
@@ -96,12 +71,17 @@ public:
 private:
 	//std::vector<int> musicList_;
 	//std::vector<Client> clientList_;
+
 	//SOCKET ListenSocket, acceptSocket;
+
 	
+
 	int Ret;
+
 	WSADATA wsaData;
 	SOCKET listenSocket;
 	SOCKET acceptSocket;
+
 	
 	
 

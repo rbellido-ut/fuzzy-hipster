@@ -1,22 +1,3 @@
-/*------------------------------------------------------------------------------------------------------------------
--- SOURCE FILE:		client.h -  This header file contains the constructor, copy constructor, destructor, getters/setters
---								function prototypes, and class members related to the client class.
---
--- PROGRAM:			COMP4985 - COMM AUDIO
---
--- FUNCTIONS:		
---
--- DATE:			March 4th, 2013
---
--- REVISIONS: 
---
--- DESIGNER:		Behnam Bastami
---
--- PROGRAMMER:		Behnam Bastami
---
--- NOTES:
-----------------------------------------------------------------------------------------------------------------------*/
-
 #ifndef CLIENT_H
 #define CLIENT_H
 

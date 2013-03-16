@@ -1,25 +1,3 @@
-/*------------------------------------------------------------------------------------------------------------------
--- SOURCE FILE:		communication.h -  This header file contains the constructor, copy constructor, destructor, 
---					getters/setters, function prototypes, and class members related to the server class.
---
--- PROGRAM:			COMP4985 - COMM AUDIO
---
--- FUNCTIONS:		explicit Communication(const pid_t& pid, const int& ipcID);
---					Communication (const Communication& src);
---					~Communication();
---					
---
--- DATE:			March 4th, 2013
---
--- REVISIONS: 
---
--- DESIGNER:		Behnam Bastami
---
--- PROGRAMMER:		Behnam Bastami
---
--- NOTES:
-----------------------------------------------------------------------------------------------------------------------*/
-
 #ifndef Communication_H
 #define Communication_H
 
