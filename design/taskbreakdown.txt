@@ -1,0 +1,26 @@
+Client Side
+---------------
+Aaron & Behnam: TCP Control channel established, 
+            Waiting for user command [done by: March 20, 2013]
+Behnam: Sending Download/Upload requests,
+            download/upload functionality [done by March 24, 2013]
+Aaron: sending streaming requests, 
+            streaming functionality [done by March 24, 2013]
+Behnam & Aaron: Sending 2-way Microphone requests, 
+            2-way microphone functionality [done by March 28,2013]
+Behnam & Aaron: Sending multicasting requests,
+            multicasting functionality [done by March 31, 2013]
+
+Server Side
+--------------
+Ron & Jesse: Set up TCP connection listener, listening for requests, 
+            displaying decoded requests [done by: March 20,2013]
+Ron: Handling stream Request [done by March 24, 2013]
+Jesse: Handling upload/download [done by March 24,2013]
+Ron: Handling 2-way Microphone requests [done by March 28, 2013]
+Jesse & Ron: Handling multicasting requests[done by March 31, 2013]
+
+
+Finalize & coding GUI in QT: March 20, 2013
+Testing: April 1 - 2
+Due: April 3 (2.5 weeks from Mar 18,2013)
