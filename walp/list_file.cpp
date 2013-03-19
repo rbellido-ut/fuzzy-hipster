@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <dirent.h>
 
 using namespace std;
@@ -19,7 +20,8 @@ int main (int argc, char **argv)
     if ((dir = opendir(argv[1])) != NULL)
     {
 	while ((ent = readdir(dir)) != NULL)
-		cout << ent->d_name << endl;
+		if (ent->d_name[0] != '.')
+			cout << ent->d_name << endl;
 
 	closedir(dir);
     }
