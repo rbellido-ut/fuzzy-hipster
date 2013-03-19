@@ -7,6 +7,25 @@
 
 using namespace std;
 
+vector<string> get_files(char *dirname)
+{
+    DIR *dir;
+    struct dirent *ent;
+    vector<string> files;
+
+    if ((dir = opendir(dirname)) != NULL)
+    {
+	while ((ent = readdir(dir)) != NULL)
+	    if (ent->d_name[0] != '.')
+		files.push_back(ent->d_name);
+
+	closedir(dir);
+    }
+    else return (vector<string>)0;
+
+    return files;
+}
+
 int main (int argc, char **argv)
 {
     if (argc != 2)
@@ -15,23 +34,8 @@ int main (int argc, char **argv)
 	return EXIT_FAILURE;
     }
 
-    DIR *dir;
-    struct dirent *ent;
     vector<string> files;
-
-    if ((dir = opendir(argv[1])) != NULL)
-    {
-	while ((ent = readdir(dir)) != NULL)
-	    if (ent->d_name[0] != '.')
-		files.push_back(ent->d_name);
-
-	closedir(dir);
-    }
-    else
-    {
-	perror("");
-	return EXIT_FAILURE;
-    }
+    files = get_files(argv[1]);
 
     for (vector<string>::iterator i = files.begin(); i != files.end(); i++)
     {
