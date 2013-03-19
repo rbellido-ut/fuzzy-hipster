@@ -172,6 +172,27 @@ bool Server::postRecvRequest(LPSOCKETDATA data)
 	}
 
 }
+
+bool Server::postSendRequest(LPSOCKETDATA data)
+{
+	DWORD flags = 0;
+	DWORD bytesSent = 0;
+	int error;
+
+	error = WSASend(data->sock, &data->wsabuf, 1, &bytesSent, flags, &data->overlap, sendComplete);
+	if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
+	{
+		//success
+		return true;
+	}
+	else
+	{
+		freeData(data);
+		return false;
+	}
+
+}
+
 void CALLBACK Server::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 	LPSOCKETDATA data = (LPSOCKETDATA) overlapped->hEvent;
@@ -188,7 +209,9 @@ void CALLBACK Server::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
 	data->wsabuf.len = bytesTransferred;
 	DWORD bytesSent = 0;
 	cout << "Received: " << data->databuf << ". From: " << data->sock << endl;
-	error = WSASend(data->sock, &data->wsabuf, 1, &bytesSent, flags, &data->overlap, sendComplete);
+
+	postSendRequest(data);
+	/*error = WSASend(data->sock, &data->wsabuf, 1, &bytesSent, flags, &data->overlap, sendComplete);
 	if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
 	{
 		//success
@@ -198,7 +221,7 @@ void CALLBACK Server::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
 	{
 		freeData(data);
 	}
-
+	*/
 }
 
 void CALLBACK Server::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)

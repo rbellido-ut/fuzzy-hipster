@@ -47,8 +47,10 @@ public:
 	
 	static LPSOCKETDATA allocData(SOCKET fd);
 	static void freeData(LPSOCKETDATA data);
+
 	static bool postSendRequest(LPSOCKETDATA data);
 	static bool postRecvRequest(LPSOCKETDATA data);
+
 	static void CALLBACK recvComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 	static void CALLBACK sendComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 

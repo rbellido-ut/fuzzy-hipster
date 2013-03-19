@@ -53,6 +53,7 @@ typedef struct socket_data{
 	WSABUF	wsabuf;
 	char databuf[DATABUFSIZE];
 	WSAOVERLAPPED overlap;
+	int typeOfRequest;
 }SOCKETDATA, *LPSOCKETDATA;
 
 typedef struct xx{

@@ -77,27 +77,28 @@ bool Client::startTCPClient(){
 		
 		if(command == "download")
 		{
-			cout << "Downloading" << endl;
+			data->typeOfRequest = 1;
 			//send download request
 		}
 		if(command == "upload")
 		{
-			cout << "Uploading" << endl;
+			data->typeOfRequest = 2;
 			//send upload request
 		}
 		if(command == "stream")
 		{
-			cout << "Streaming" << endl;
+			data->typeOfRequest = 3;
 			//send stream request
 		}
 		if(command == "multicast")
 		{
-			cout << "Multicasting" << endl;
+			data->typeOfRequest = 4;
 			//send multicast request
 		}
 		if(command == "mic")
 		{
 			cout << "Mic" << endl;
+			data->typeOfRequest = 5;
 			//send mic request
 		}
 
@@ -108,9 +109,6 @@ bool Client::startTCPClient(){
 		{
 			postSendRequest(data);
 		}
-		
-
-		cout << "Your "<< command << " requested has been posted, waiting for server response" << command << endl;
 
 
 		::SleepEx(100, TRUE); //make this thread alertable
@@ -122,7 +120,6 @@ bool Client::startTCPClient(){
 bool Client::postRecvRequest(LPSOCKETDATA data){
 	DWORD flag = 0;
 	DWORD bytesRecvd = 0;
-			
 	int error;
 	
 	if(data)
@@ -146,10 +143,8 @@ bool Client::postSendRequest(LPSOCKETDATA data)
 {
 	DWORD flag = 0;
 	DWORD bytesSent = 0;
-	DWORD bytesRecvd = 0;
 	int error;
 	
-
 	error = WSASend(data->sock, &data->wsabuf, 1, &bytesSent, flag, &data->overlap, sendComplete);
 	if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
 	{
@@ -175,7 +170,7 @@ void CALLBACK Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
 		return;
 	}
 
-	cout << data->databuf << endl;
+	cout << "recvComplete(): " << data->databuf << endl;
 
 }
 
@@ -186,6 +181,30 @@ void CALLBACK Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
 	{
 		freeData(data);
 		return;
+	}
+
+	switch(data->typeOfRequest)
+	{
+	case 1:
+		cout << "Client handling DL" << endl;
+		//do whatever you want to do after a download request was sent successfully (save to file)
+		break;
+	case 2:
+		cout << "Client handling UL" << endl;
+		//do whatever you want to do after a upload request was sent successfully (wait for server to send u a confirmation)
+		break;
+	case 3:
+		cout << "Client handling Stream" << endl;
+		//do whatever you want to do after a stream request was sent successfully (wait for approval)
+		break;
+	case 4:
+		cout << "Client handling Multicast" << endl;
+		//do whatever you want to do after a multicast request was sent successfully ( ... )
+		break;
+	case 5:
+		cout << "Client handling Mic" << endl;
+		//do whatever you want to do after a mic request was sent successfully ( ... )
+		break;
 	}
 	
 }
