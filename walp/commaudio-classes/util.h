@@ -60,7 +60,7 @@ typedef struct xx{
 	Server* s;
 };
 
-
+std::vector<char> convertToCharStar(std::string str);
 
 #include "communication.h"
 #include "client.h"

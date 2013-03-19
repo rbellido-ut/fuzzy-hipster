@@ -63,17 +63,56 @@ bool Client::startTCPClient(){
 
 	cout << "Server started, connected to socket " << connectSocket_ << endl;
 
+
+
 	threadHandle_ = CreateThread(NULL, 0, clientThread, NULL, 0, &threadID_);
 
 	while(TRUE)
 	{
-		
+		string command;
 		SOCKETDATA* data = allocData(connectSocket_);
+	
+		cout << "Enter your command: ";
+		getline(cin, command);
+		
+		if(command == "download")
+		{
+			cout << "Downloading" << endl;
+			//send download request
+		}
+		if(command == "upload")
+		{
+			cout << "Uploading" << endl;
+			//send upload request
+		}
+		if(command == "stream")
+		{
+			cout << "Streaming" << endl;
+			//send stream request
+		}
+		if(command == "multicast")
+		{
+			cout << "Multicasting" << endl;
+			//send multicast request
+		}
+		if(command == "mic")
+		{
+			cout << "Mic" << endl;
+			//send mic request
+		}
+
+
+		strcpy(data->databuf,command.c_str());
+		
 		if(data)
 		{
 			postSendRequest(data);
 		}
 		
+
+		cout << "Your "<< command << " requested has been posted, waiting for server response" << command << endl;
+
+
 		::SleepEx(100, TRUE); //make this thread alertable
 	}
 	
@@ -110,7 +149,6 @@ bool Client::postSendRequest(LPSOCKETDATA data)
 	DWORD bytesRecvd = 0;
 	int error;
 	
-	gets(data->databuf);
 
 	error = WSASend(data->sock, &data->wsabuf, 1, &bytesSent, flag, &data->overlap, sendComplete);
 	if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
