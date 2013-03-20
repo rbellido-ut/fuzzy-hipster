@@ -12,7 +12,7 @@
 --
 -- DESIGNER:		Behnam Bastami
 --
--- PROGRAMMER:		Behnam Bastami
+-- PROGRAMMER:		Behnam Bastami, Ronald Bellido
 --
 -- NOTES:
 ----------------------------------------------------------------------------------------------------------------------*/
@@ -39,6 +39,14 @@
 
 class Server;
 
+enum {
+	REQST; //streaming request
+	REQDL; //download request
+	REQUL; //upload request
+	REQMC; //Multicast request
+	REQMIC; //2-way mic chat request
+};
+
 typedef struct _sock_info {
 	OVERLAPPED ov; //the overlapped structured used for async i/o
 	SOCKET sock; //the socket used for the entire connection
@@ -60,7 +68,21 @@ typedef struct xx{
 	Server* s;
 };
 
+//Request packet structs
+typedef struct {
+	int type;
+	int size;
+} header_t;
 
+typedef struct {
+	header_t head;
+	int songIndex; 
+} stream_req_t;
+
+typedef struct {
+	header_t head;
+	string songname;
+} filetrans_req_t; //Struct can be used for both download and upload requests
 
 #include "communication.h"
 #include "client.h"
