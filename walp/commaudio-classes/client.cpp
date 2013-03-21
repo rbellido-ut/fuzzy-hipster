@@ -71,39 +71,59 @@ bool Client::startTCPClient(){
 	{
 		string command;
 		SOCKETDATA* data = allocData(connectSocket_);
-	
+		
 		cout << "Enter your command: ";
 		getline(cin, command);
 		
 		if(command == "download")
 		{
-			data->typeOfRequest = 1;
+			filetrans_req_t reqDL = {0};
+			reqDL.head.type = REQDL;
+			reqDL.songname = "xxx"; //note: hard coded!
+			reqDL.head.size = sizeof(reqDL.songname);
+			
+			data->typeOfRequest = REQDL; // used to track the request locally
+			
+			memcpy(data->databuf,&reqDL, sizeof(filetrans_req_t));
 			//send download request
 		}
 		if(command == "upload")
 		{
-			data->typeOfRequest = 2;
+			filetrans_req_t reqUL = {0};
+			reqUL.head.type = REQUL;
+			reqUL.songname = "xxx"; //note: hard coded!
+			reqUL.head.size = sizeof(reqUL.songname);
+			
+			data->typeOfRequest = REQUL; // used to track the request locally
+
+			memcpy(data->databuf,&reqUL, sizeof(filetrans_req_t));
 			//send upload request
 		}
 		if(command == "stream")
 		{
-			data->typeOfRequest = 3;
+			stream_req_t reqStream = {0};
+			reqStream.head.type = REQST;
+			reqStream.songIndex = 1; //note: hard coded!
+			reqStream.head.size = sizeof(int);
+
+			data->typeOfRequest = REQST; // used to track the request locally
+
+			memcpy(data->databuf,&reqStream, sizeof(stream_req_t));
 			//send stream request
 		}
 		if(command == "multicast")
 		{
-			data->typeOfRequest = 4;
+
 			//send multicast request
 		}
 		if(command == "mic")
 		{
-			cout << "Mic" << endl;
-			data->typeOfRequest = 5;
+
 			//send mic request
 		}
 
 
-		strcpy(data->databuf,command.c_str());
+		//strcpy(data->databuf,command.c_str());
 		
 		if(data)
 		{
@@ -115,6 +135,29 @@ bool Client::startTCPClient(){
 	}
 	
 	return true;
+}
+
+
+void Client::encodeRequest(){
+
+	/*
+//Request packet structs
+typedef struct {
+	int type;
+	int size;
+} header_t;
+
+typedef struct {
+	header_t head;
+	int songIndex; 
+} stream_req_t;
+
+typedef struct {
+	header_t head;
+	string songname;
+} filetrans_req_t; //Struct can be used for both download and upload requests
+*/
+	return;
 }
 
 bool Client::postRecvRequest(LPSOCKETDATA data){
@@ -185,23 +228,23 @@ void CALLBACK Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
 
 	switch(data->typeOfRequest)
 	{
-	case 1:
+	case REQDL:
 		cout << "Client handling DL" << endl;
 		//do whatever you want to do after a download request was sent successfully (save to file)
 		break;
-	case 2:
+	case REQUL:
 		cout << "Client handling UL" << endl;
 		//do whatever you want to do after a upload request was sent successfully (wait for server to send u a confirmation)
 		break;
-	case 3:
+	case REQST:
 		cout << "Client handling Stream" << endl;
 		//do whatever you want to do after a stream request was sent successfully (wait for approval)
 		break;
-	case 4:
+	case REQMC:
 		cout << "Client handling Multicast" << endl;
 		//do whatever you want to do after a multicast request was sent successfully ( ... )
 		break;
-	case 5:
+	case REQMIC:
 		cout << "Client handling Mic" << endl;
 		//do whatever you want to do after a mic request was sent successfully ( ... )
 		break;

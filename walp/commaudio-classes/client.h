@@ -37,6 +37,8 @@ public:
 	bool createUDPClient(WSADATA* wsaData);
 	bool startUDPClient();
 	
+	void encodeRequest();
+
 	bool stopClient();
 	bool requestConnect();
 	bool requestDownload();
