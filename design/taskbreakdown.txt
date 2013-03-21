@@ -1,3 +1,15 @@
+Progress Report
+================
+
+Summary
+---------
+GUI finalized & coded today
+Aaron & Behnam: TCP connection [done]
+Ron & Jesse: Listening for requests, displaying decoded requests [in progress]
+
+
+Task Breakdown
+===============
 Client Side
 ---------------
 Aaron & Behnam: TCP Control channel established, 
