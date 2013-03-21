@@ -6,6 +6,10 @@ FuzzyMainWindow::FuzzyMainWindow(QWidget *parent) :
     ui(new Ui::FuzzyMainWindow)
 {
     ui->setupUi(this);
+
+    this->statusBar()->showMessage("Idle");
+
+    // slot-signal connections
 }
 
 FuzzyMainWindow::~FuzzyMainWindow()
