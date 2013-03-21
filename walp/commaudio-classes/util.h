@@ -61,6 +61,7 @@ typedef struct socket_data{
 	WSABUF	wsabuf;
 	char databuf[DATABUFSIZE];
 	WSAOVERLAPPED overlap;
+	int typeOfRequest;
 }SOCKETDATA, *LPSOCKETDATA;
 
 typedef struct xx{
@@ -83,6 +84,9 @@ typedef struct {
 	header_t head;
 	string songname;
 } filetrans_req_t; //Struct can be used for both download and upload requests
+
+std::vector<char> convertToCharStar(std::string str);
+
 
 #include "communication.h"
 #include "client.h"
