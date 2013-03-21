@@ -5,7 +5,9 @@
 #include "communication.h"
 
 //The server class extends the Communication class
-class Client : public Communication {
+class Client : public Communication
+{
+
 
 public:
     //Constructor calls parrent constructor for shared members

@@ -5,7 +5,7 @@
 #include "client.h"
 
 namespace Ui {
-class FuzzyMainWindow;
+    class FuzzyMainWindow;
 }
 
 class FuzzyMainWindow : public QMainWindow
@@ -16,6 +16,9 @@ public:
     explicit FuzzyMainWindow(QWidget *parent = 0);
     ~FuzzyMainWindow();
     
+public slots:
+    void setStatus(const QString &);
+
 private slots:
     void on_actionE_xit_triggered();
 

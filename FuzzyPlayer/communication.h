@@ -2,9 +2,17 @@
 #define COMMUNICATION_H
 
 #include "util.h"
+#include <QObject>
 
-class Communication
+class Communication : public QObject
 {
+    Q_OBJECT // macro to allow QT signals
+
+signals:
+    void statusChanged(QString);
+    //void songListAdd(QString);
+    //void clientListAdd(QString);
+
 private:
 
     std::string readBuffer_, writeBuffer_;
