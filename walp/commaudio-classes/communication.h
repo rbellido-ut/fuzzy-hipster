@@ -15,8 +15,6 @@ public:
 
 	int TCPPORT, UDPPORT;
 
-
-
 	//Constructor
 	explicit Communication(const std::string& readBuffer = "",const std::string& writeBuffer = "",
 		const int& bytesSent = 0, const int& bytesRecvd = 0, 

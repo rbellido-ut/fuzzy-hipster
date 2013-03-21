@@ -1,4 +1,4 @@
-#include "util.h"
+#include "server.h"
 
 using namespace std;
 
@@ -236,4 +236,25 @@ void CALLBACK Server::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
 	//post another WSARecv()
 	data->wsabuf.len = sizeof(data->databuf);
 	postRecvRequest(data);
+}
+
+void Server::DecodeRequest(int requesttype) 
+{
+	switch (requesttype)
+	{
+		case REQST:
+		break;
+		
+		case REQDL:
+		break;
+		
+		case REQUL:
+		break;
+		
+		case REQMC:
+		break;
+		
+		case REQMIC:
+		break;
+	}
 }

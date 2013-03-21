@@ -40,11 +40,9 @@ public:
 	//bool setMusicList(std::vector<int> ml);
 	//bool setClientList(std::vector<Client> cl);
 
-
 	//Other function prototypes
 	bool createTCPServer(WSADATA* wsaData);
 	bool startTCPServer();
-
 
 	bool stopServer();
 	bool acceptConnect();
@@ -55,7 +53,6 @@ public:
 	//bool addToMusicList();
 	//bool addToClientList(Client c);
 
-
 	//SOCKET createListenTCPSocket(const std::string& strHost, const int& TCPPort);
 	static LPSOCKETDATA allocData(SOCKET fd);
 	static void freeData(LPSOCKETDATA data);
@@ -63,33 +60,24 @@ public:
 	static bool postSendRequest(LPSOCKETDATA data);
 	static void CALLBACK recvComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 	static void CALLBACK sendComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
-
-
 	
-	
-
+	void DecodeRequest(int requesttype);
+	void startStream(int songindex);
+	void endStream();
 
 private:
 	//std::vector<int> musicList_;
 	//std::vector<Client> clientList_;
-
-	//SOCKET ListenSocket, acceptSocket;
-
 	
-
 	int Ret;
 
 	WSADATA wsaData;
 	SOCKET listenSocket;
 	SOCKET acceptSocket;
-
-	
-	
-
 	static size_t count_;
 	static std::map<int, LPSOCKETDATA> mSocketList_;
 	
-	
+	bool isStreaming_;
 };
 
 #endif
