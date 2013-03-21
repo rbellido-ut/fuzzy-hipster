@@ -13,8 +13,14 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        fuzzymainwindow.cpp
+        fuzzymainwindow.cpp \
+    client.cpp \
+    communication.cpp \
+    util.cpp
 
-HEADERS  += fuzzymainwindow.h
+HEADERS  += fuzzymainwindow.h \
+    client.h \
+    communication.h \
+    util.h
 
 FORMS    += fuzzymainwindow.ui
