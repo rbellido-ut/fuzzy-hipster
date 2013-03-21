@@ -13,7 +13,7 @@ bool Client::setMusicList(vector<int> ml){
     return true;
 }
 
-bool Client::createTCPClient(WSADATA* wsaData){
+bool Client::createTCPClient(WSADATA* wsaData, const char* host, const int port){
     int res;
     WORD wVersionRequested;
     wVersionRequested = MAKEWORD( 2, 2 );
@@ -34,9 +34,9 @@ bool Client::createTCPClient(WSADATA* wsaData){
     // Initialize and set up the address structure
     memset((char *)&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(TCPPORT);
+    addr.sin_port = htons(port);
 
-    if ((hp = gethostbyname("localhost")) == NULL)
+    if ((hp = gethostbyname(host)) == NULL)
     {
         cerr << "Unknown server address" << endl;
         return false;
@@ -58,13 +58,15 @@ bool Client::startTCPClient(){
         cerr << "connect()" << endl;
         return false;
     }
+
     cout << "Connected:    Server Name: " << hp->h_name << endl;
     pptr = hp->h_addr_list;
     cout << "\t\tIP Address: " <<  inet_ntoa(addr.sin_addr) << endl;
 
-    cout << "Server started, connected to socket " << connectSocket_ << endl;
+    cout << "Client started, connected to socket " << connectSocket_ << endl;
 
-
+    // will eventually port all COUT calls to QT calls
+    emit statusChanged(QString("Connected to %1 (%2)").arg(hp->h_name).arg(inet_ntoa(addr.sin_addr)));
 
     threadHandle_ = CreateThread(NULL, 0, clientThread, NULL, 0, &threadID_);
 
@@ -354,7 +356,7 @@ DWORD WINAPI Client::clientThread(LPVOID lpParameter)
     }
 }
 
-bool Client::createUDPClient(WSADATA* wsaData){
+bool Client::createUDPClient(WSADATA* wsaData, const char* host, const int port){
 
     return true;
 }

@@ -33,12 +33,10 @@ public:
     //Setter functions
     bool setMusicList(std::vector<int> ml);
 
-    //Other function prototypes
-
-    bool createTCPClient(WSADATA* wsaData);
+    //Primary function prototypes
+    bool createTCPClient(WSADATA*, const char*, const int);
     bool startTCPClient();
-
-    bool createUDPClient(WSADATA* wsaData);
+    bool createUDPClient(WSADATA*, const char*, const int);
     bool startUDPClient();
 
     void encodeRequest();

@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "client.h"
+#include "clientsettingsdialog.h"
 
 namespace Ui {
     class FuzzyMainWindow;
@@ -18,6 +19,7 @@ public:
     
 public slots:
     void setStatus(const QString &);
+    void startClient(const QString &, const QString &);
 
 private slots:
     void on_actionE_xit_triggered();
@@ -25,7 +27,11 @@ private slots:
     void on_action_Client_triggered();
 
 private:
+    // GUI Objects
     Ui::FuzzyMainWindow *ui;
+    ClientSettingsDialog *cDlg;
+
+    // Network objects
     Client c;
 };
 
