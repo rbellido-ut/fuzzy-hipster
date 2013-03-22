@@ -16,8 +16,9 @@ FuzzyMainWindow::FuzzyMainWindow(QWidget *parent) :
     this->statusBar()->showMessage("Idle");
 
     // slot-signal connections
-    QObject::connect(&c, SIGNAL(statusChanged(QString)), this, SLOT(setStatus(const QString &)));
+    QObject::connect(&client_, SIGNAL(statusChanged(QString)), this, SLOT(setStatus(const QString &)));
     QObject::connect(cDlg, SIGNAL(clientIgnite(QString,QString)), this, SLOT(startClient(const QString &, const QString &)));
+    QObject::connect(sDlg, SIGNAL(serverIgnite(int)), this, SLOT(startServer(int)));
 }
 
 FuzzyMainWindow::~FuzzyMainWindow()
@@ -126,13 +127,40 @@ void FuzzyMainWindow::setStatus(const QString& s)
     this->statusBar()->showMessage(s);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+ -- FUNCTION: startServer
+ --
+ -- DATE: March 20, 2013
+ --
+ -- REVISIONS: March 20, 2013 -- Initial version.
+ --
+ -- DESIGNER: Ronald Bellido
+ --
+ -- PROGRAMMER: Ronald Bellido
+ --
+ -- INTERFACE: void MainWindow::startServer(int protocol)
+ --            int protocol - the type of the protocol the server will be (UDP or TCP)
+ --
+ -- RETURNS: void
+ --
+ -- NOTES:
+ -- Slot that is invoked connected and invoked when the ServerSettingsDialog closes
+----------------------------------------------------------------------------------------------------------------------*/
+void FuzzyMainWindow::startServer(int protocol)
+{
+    WSADATA wsadata;
+
+    server_.createServer(&wsadata, protocol);
+    server_.startServer();
+}
+
 // slot function to start the TCP client engine
 void FuzzyMainWindow::startClient(const QString& hostname, const QString& port)
 {
     WSADATA wsadata;
 
-    c.createTCPClient(&wsadata, hostname.toUtf8().constData(), port.toInt());
-    c.startTCPClient();
+    client_.createTCPClient(&wsadata, hostname.toUtf8().constData(), port.toInt());
+    client_.startTCPClient();
 }
 
 void FuzzyMainWindow::on_action_Open_Local_Directory_triggered()

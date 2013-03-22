@@ -34,7 +34,7 @@ public:
 	//Setter functions
 
 	//Other function prototypes
-    bool createServer(WSADATA* wsaData, int connectionType);
+    bool createServer(WSADATA* wsaData, int protocol);
     bool startServer();
 	//SOCKET createListenTCPSocket(const std::string& strHost, const int& TCPPort);
 	static LPSOCKETDATA allocData(SOCKET fd);
@@ -55,7 +55,7 @@ private:
 	SOCKET acceptSocket;
 	static std::map<int, LPSOCKETDATA> mSocketList_;
 
-    int connectionType_;
+    int protocolType_;
 	bool isStreaming_;
 };
 

@@ -6,11 +6,11 @@ std::map<int, LPSOCKETDATA> Server::mSocketList_;
 
 extern Server sv;
 
-bool Server::createServer(WSADATA* wsaData, int connectionType)
+bool Server::createServer(WSADATA* wsaData, int protocol)
 {
 	int res;
 	SOCKADDR_IN addr;
-    connectionType_ = connectionType;
+    protocolType_ = protocol;
 
 	WORD wVersionRequested;
 	wVersionRequested = MAKEWORD( 2, 2 );
@@ -22,7 +22,7 @@ bool Server::createServer(WSADATA* wsaData, int connectionType)
 		return false;
 	}
 
-    if ((listenSocket = WSASocket(AF_INET, (connectionType_ == TCP) ? SOCK_STREAM : SOCK_DGRAM , 0, NULL, 0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET)
+    if ((listenSocket = WSASocket(AF_INET, (protocolType_ == TCP) ? SOCK_STREAM : SOCK_DGRAM , 0, NULL, 0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET)
 	{
 		cerr << "Failed to get a socket with error " << WSAGetLastError() << endl;
 		return false;

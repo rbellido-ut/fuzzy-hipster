@@ -78,7 +78,6 @@ typedef struct socket_data{
     int typeOfRequest;
 }SOCKETDATA, *LPSOCKETDATA;
 
-// what is this...
 typedef struct {
     WSAEVENT acceptEvent;
     Server* s;

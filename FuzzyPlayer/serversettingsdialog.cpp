@@ -12,3 +12,15 @@ ServerSettingsDialog::~ServerSettingsDialog()
 {
     delete ui;
 }
+
+void ServerSettingsDialog::on_buttonBox_accepted()
+{
+    int proto;
+
+    if (ui->TCPRadio->isChecked())
+        proto = TCP;
+    else if (ui->UDPRadio->isChecked())
+        proto = UDP;
+
+    emit serverIgnite(proto);
+}

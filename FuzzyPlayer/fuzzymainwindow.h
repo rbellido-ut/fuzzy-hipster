@@ -5,6 +5,7 @@
 #include <QFileDialog>
 #include <QTreeWidgetItem>
 #include "client.h"
+#include "server.h"
 #include "clientsettingsdialog.h"
 #include "serversettingsdialog.h"
 
@@ -23,6 +24,7 @@ public:
 public slots:
     void setStatus(const QString &);
     void startClient(const QString &, const QString &);
+    void startServer(int protocol);
 
 private slots:
     void on_actionE_xit_triggered();
@@ -35,7 +37,7 @@ private slots:
 
 private:
     // methods
-    void populateFileTree(QTreeWidget*, QDir*) ;
+    void populateFileTree(QTreeWidget*, QDir*);
     void addChildren(QTreeWidgetItem*, QString);
 
     // members
@@ -47,7 +49,8 @@ private:
     ServerSettingsDialog *sDlg;
 
     // Network objects
-    Client c;
+    Client client_;
+    Server server_;
 };
 
 #endif // FUZZYMAINWINDOW_H
