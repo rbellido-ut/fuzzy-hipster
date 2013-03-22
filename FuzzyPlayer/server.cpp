@@ -2,14 +2,14 @@
 
 using namespace std;
 
-size_t Server::count_ = 0;
 std::map<int, LPSOCKETDATA> Server::mSocketList_;
 
 extern Server sv;
 
-bool Server::createTCPServer(WSADATA* wsaData){
+bool Server::createServer(WSADATA* wsaData, int connectionType){
 	int res;
 	SOCKADDR_IN addr;
+    connectionType_ = connectionType;
 
 	WORD wVersionRequested;
 	wVersionRequested = MAKEWORD( 2, 2 );
@@ -21,7 +21,7 @@ bool Server::createTCPServer(WSADATA* wsaData){
 		return false;
 	}
 
-	if ((listenSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET) 
+    if ((listenSocket = WSASocket(AF_INET, (connectionType_ == TCP) ? SOCK_STREAM : SOCK_DGRAM , 0, NULL, 0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET)
 	{
 		cerr << "Failed to get a socket with error " << WSAGetLastError() << endl;
 		return false;
@@ -55,7 +55,7 @@ bool Server::createTCPServer(WSADATA* wsaData){
 }
 
 //Other function prototypes
-bool Server::startTCPServer(){
+bool Server::startServer(){
 
 	cout << "Server started, listening on socket " << listenSocket << endl;
 	while(TRUE)
@@ -77,7 +77,7 @@ bool Server::startTCPServer(){
 			cout << "Socket " << newSock << " accepted." << endl;
 			if(data)
 			{
-				//thread??
+                //TODO: add thread to handle clients
 				postRecvRequest(data);
 			}
 		}
@@ -89,37 +89,6 @@ bool Server::startTCPServer(){
 	return true;
 }
 
-bool Server::stopServer(){
-
-	return true;
-}
-
-bool Server::acceptConnect(){
-
-	return true;
-}
-
-bool Server::acceptDownload(){
-
-	return true;
-}
-
-bool Server::acceptUpload(){
-
-	return true;
-}
-
-bool Server::acceptStream(){
-
-	return true;
-}
-
-bool Server::saveToFile(){
-
-	return true;
-}
-
-
 LPSOCKETDATA Server::allocData(SOCKET socketFD)
 {
 	LPSOCKETDATA data = NULL;
@@ -127,7 +96,7 @@ LPSOCKETDATA Server::allocData(SOCKET socketFD)
 	try{
 		data = new SOCKETDATA();
 	
-	}catch(std::bad_alloc&){
+    } catch(std::bad_alloc&){
 		cerr << "Allocate socket data failed" << endl;
 		return NULL;
 	}
@@ -190,7 +159,6 @@ bool Server::postSendRequest(LPSOCKETDATA data)
 		freeData(data);
 		return false;
 	}
-
 }
 
 void CALLBACK Server::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)

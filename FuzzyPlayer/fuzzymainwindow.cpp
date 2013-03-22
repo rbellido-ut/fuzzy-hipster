@@ -9,6 +9,7 @@ FuzzyMainWindow::FuzzyMainWindow(QWidget *parent) :
     // setup GUI
     ui->setupUi(this);
     cDlg = new ClientSettingsDialog();
+    sDlg = new ServerSettingsDialog();
 
     populateFileTree(ui->localTree, new QDir("/"));
 
@@ -23,6 +24,7 @@ FuzzyMainWindow::~FuzzyMainWindow()
 {
     delete ui;
     delete cDlg;
+    delete sDlg;
 }
 
 void FuzzyMainWindow::populateFileTree(QTreeWidget *tree, QDir *dir)
@@ -91,6 +93,11 @@ void FuzzyMainWindow::on_actionE_xit_triggered()
 void FuzzyMainWindow::on_action_Client_triggered()
 {
     cDlg->show();
+}
+
+void FuzzyMainWindow::on_action_Server_triggered()
+{
+    sDlg->show();
 }
 
 

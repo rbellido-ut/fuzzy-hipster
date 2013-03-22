@@ -49,6 +49,11 @@
 class Server ;
 
 enum {
+    TCP,
+    UDP
+};
+
+enum {
     REQST, //streaming request
     REQDL, //download request
     REQUL, //upload request

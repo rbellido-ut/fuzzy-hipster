@@ -6,6 +6,7 @@
 #include <QTreeWidgetItem>
 #include "client.h"
 #include "clientsettingsdialog.h"
+#include "serversettingsdialog.h"
 
 namespace Ui {
     class FuzzyMainWindow;
@@ -30,6 +31,8 @@ private slots:
 
     void on_action_Open_Local_Directory_triggered();
 
+    void on_action_Server_triggered();
+
 private:
     // methods
     void populateFileTree(QTreeWidget*, QDir*) ;
@@ -41,6 +44,7 @@ private:
     // GUI Objects
     Ui::FuzzyMainWindow *ui;
     ClientSettingsDialog *cDlg;
+    ServerSettingsDialog *sDlg;
 
     // Network objects
     Client c;
