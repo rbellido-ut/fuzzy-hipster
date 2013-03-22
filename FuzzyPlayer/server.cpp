@@ -30,7 +30,7 @@ bool Server::createServer(WSADATA* wsaData, int protocol)
 
     addr.sin_family         = AF_INET;
     addr.sin_addr.s_addr    = htonl(INADDR_ANY);
-    addr.sin_port           = htons(TCPPORT);
+    addr.sin_port           = htons((protocolType_ == TCP) ? TCPPORT : UDPPORT);
 
 	if (bind(listenSocket, (PSOCKADDR) &addr, sizeof(addr)) == SOCKET_ERROR)
 	{
@@ -38,12 +38,15 @@ bool Server::createServer(WSADATA* wsaData, int protocol)
 		return false;
 	}
 
-	if (listen(listenSocket, 5))
-	{
-		cerr << "listen() falied with error " << WSAGetLastError() << endl;
-		closesocket(listenSocket);
-		return 0;
-	}
+    if (protocol != UDP)
+    {
+        if (listen(listenSocket, 5))
+        {
+            cerr << "listen() falied with error " << WSAGetLastError() << endl;
+            closesocket(listenSocket);
+            return 0;
+        }
+    }
 
 	ULONG nonblock = 1;
 	if(ioctlsocket(listenSocket, FIONBIO, &nonblock) == SOCKET_ERROR)
@@ -67,8 +70,9 @@ bool Server::startServer()
 		SOCKADDR_IN addr = {};
 		int addrLen = sizeof(addr);
 
- 		SOCKET newSock = WSAAccept(listenSocket, (sockaddr*)&addr, &addrLen, NULL, NULL);
-		if(newSock == INVALID_SOCKET)
+        SOCKET newClientSocket = WSAAccept(listenSocket, (sockaddr*)&addr, &addrLen, NULL, NULL);
+
+        if(newClientSocket == INVALID_SOCKET)
 		{
 			if(WSAGetLastError() != WSAEWOULDBLOCK)
 			{
@@ -78,12 +82,12 @@ bool Server::startServer()
 		}
         else
         {
-			SOCKETDATA* data = allocData(newSock);
-			cout << "Socket " << newSock << " accepted." << endl;
-			if(data)
+            SOCKETDATA* clientRequests = allocData(newClientSocket);
+            cout << "Socket " << newClientSocket << " accepted." << endl;
+            if(clientRequests)
 			{
                 //TODO: add thread to handle clients
-				postRecvRequest(data);
+                postRecvRequest(clientRequests);
 			}
 		}
 

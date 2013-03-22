@@ -151,7 +151,9 @@ void FuzzyMainWindow::startServer(int protocol)
     WSADATA wsadata;
 
     server_.createServer(&wsadata, protocol);
-    server_.startServer();
+
+    if (protocol != UDP)
+        server_.startServer();
 }
 
 // slot function to start the TCP client engine

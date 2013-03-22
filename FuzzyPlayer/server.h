@@ -3,7 +3,6 @@
 
 #include "communication.h"
 #include "util.h"
-#include "communication.h"
 
 class Client;
 class Communication;
