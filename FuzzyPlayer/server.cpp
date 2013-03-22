@@ -6,7 +6,8 @@ std::map<int, LPSOCKETDATA> Server::mSocketList_;
 
 extern Server sv;
 
-bool Server::createServer(WSADATA* wsaData, int connectionType){
+bool Server::createServer(WSADATA* wsaData, int connectionType)
+{
 	int res;
 	SOCKADDR_IN addr;
     connectionType_ = connectionType;
@@ -27,9 +28,10 @@ bool Server::createServer(WSADATA* wsaData, int connectionType){
 		return false;
 	}
 
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	addr.sin_port = htons(TCPPORT);
+    addr.sin_family         = AF_INET;
+    addr.sin_addr.s_addr    = htonl(INADDR_ANY);
+    addr.sin_port           = htons(TCPPORT);
+
 	if (bind(listenSocket, (PSOCKADDR) &addr, sizeof(addr)) == SOCKET_ERROR)
 	{
 		cerr << "bind() falied with error " << WSAGetLastError() << endl;
@@ -54,11 +56,13 @@ bool Server::createServer(WSADATA* wsaData, int connectionType){
 	return true;
 }
 
-//Other function prototypes
-bool Server::startServer(){
 
-	cout << "Server started, listening on socket " << listenSocket << endl;
-	while(TRUE)
+//Other function prototypes
+bool Server::startServer()
+{
+    cout << "Server started, listening on socket " << listenSocket << endl;
+
+    while(TRUE)
 	{
 		SOCKADDR_IN addr = {};
 		int addrLen = sizeof(addr);
@@ -72,7 +76,8 @@ bool Server::startServer(){
 				break;
 			}
 		}
-		else {
+        else
+        {
 			SOCKETDATA* data = allocData(newSock);
 			cout << "Socket " << newSock << " accepted." << endl;
 			if(data)
@@ -81,7 +86,6 @@ bool Server::startServer(){
 				postRecvRequest(data);
 			}
 		}
-
 
 		::SleepEx(100, TRUE); //make this thread alertable
 	}
@@ -93,25 +97,28 @@ LPSOCKETDATA Server::allocData(SOCKET socketFD)
 {
 	LPSOCKETDATA data = NULL;
 
-	try{
+    try
+    {
 		data = new SOCKETDATA();
-	
-    } catch(std::bad_alloc&){
+    }
+    catch(std::bad_alloc&)
+    {
 		cerr << "Allocate socket data failed" << endl;
 		return NULL;
 	}
 
-	data->overlap.hEvent = (WSAEVENT)data;
-	data->sock = socketFD;
-	data->wsabuf.buf = data->databuf;
-	data->wsabuf.len = sizeof(data->databuf);
+    data->overlap.hEvent    = (WSAEVENT)data;
+    data->sock              = socketFD;
+    data->wsabuf.buf        = data->databuf;
+    data->wsabuf.len        = sizeof(data->databuf);
 
 	mSocketList_[socketFD] = data;
 
 	return data;
 }
 
-void Server::freeData(LPSOCKETDATA data){
+void Server::freeData(LPSOCKETDATA data)
+{
 	if(data)
 	{
 		cout << "Socket " << data->sock <<" Closed." << endl;
@@ -139,7 +146,6 @@ bool Server::postRecvRequest(LPSOCKETDATA data)
 		freeData(data);
 		return false;
 	}
-
 }
 
 bool Server::postSendRequest(LPSOCKETDATA data)
