@@ -8,34 +8,46 @@ class Client;
 class Communication;
 
 //The server class extends the Communication class
-class Server:public Communication {
+class Server:public Communication
+{
 public:
 
 	//Constructor calls parrent's constructor
-	explicit Server(const std::string& readBuffer = "",const std::string& writeBuffer = "",
+    explicit Server(const std::string& readBuffer = "", const std::string& writeBuffer = "",
 		const int& bytesSent = 0, const int& bytesRecvd = 0, 
 		const SOCKET& readSocket = 0, const SOCKET& writeSocket = 0, const SOCKET& listenSocket = 0)
 		//const std::vector<int>& musicList = 0, const std::vector<Client>& clientList)
-		:Communication(readBuffer, writeBuffer, bytesSent, bytesRecvd, readSocket, writeSocket)
+        : Communication(readBuffer, writeBuffer, bytesSent, bytesRecvd, readSocket, writeSocket)
 		//musicList_(musicList), clientList_(clientList)
 	{
-		
 		count_++; 
 	}
 
 	//Copy constructor, calls parrent's copy constructor
 	Server(const Server& src)
-		: Communication(src)//, musicList_(src.musicList_), clientList_(src.clientList_)
-	{ count_++; } 
+        : Communication(src) //, musicList_(src.musicList_), clientList_(src.clientList_)
+    {
+        count_++;
+    }
 
 	//Destructor
-	~Server(){ count_--; }
+    ~Server()
+    {
+        count_--;
+    }
 
 	//Getter functions
-	SOCKET getacceptSocket(){ return acceptSocket; }
-	//std::vector<int> getMusicList() { return musicList_; }
+    SOCKET getacceptSocket()
+    {
+        return acceptSocket;
+    }
+
+    //std::vector<int> getMusicList() { return musicList_; }
 	//std::vector<Client> getClientList() { return clientList_; }
-	static size_t getCount(){ return count_; }
+
+    static size_t getCount(){
+        return count_;
+    }
 
 	//Setter functions
 	//bool setMusicList(std::vector<int> ml);
@@ -59,8 +71,8 @@ public:
 	static void freeData(LPSOCKETDATA data);
 	static bool postRecvRequest(LPSOCKETDATA data);
 	static bool postSendRequest(LPSOCKETDATA data);
-	static void CALLBACK recvComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
-	static void CALLBACK sendComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+    static void CALLBACK recvComplete(DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+    static void CALLBACK sendComplete(DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 	
 	void DecodeRequest(int requesttype);
 	void startStream(int songindex);
