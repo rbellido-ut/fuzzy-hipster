@@ -1,6 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include "communication.h"
 #include "util.h"
 
 class Client;
