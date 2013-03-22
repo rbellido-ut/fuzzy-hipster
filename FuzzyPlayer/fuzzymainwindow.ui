@@ -6,28 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>521</width>
-    <height>521</height>
+    <width>687</width>
+    <height>519</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Fuzzy Player</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QListWidget" name="clientList">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>256</width>
-      <height>361</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QListWidget" name="songList">
     <property name="geometry">
      <rect>
-      <x>260</x>
+      <x>430</x>
       <y>0</y>
       <width>256</width>
       <height>361</height>
@@ -190,13 +180,41 @@
      <string>Pause</string>
     </property>
    </widget>
+   <widget class="QTreeWidget" name="localTree">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>431</width>
+      <height>361</height>
+     </rect>
+    </property>
+    <property name="columnCount">
+     <number>3</number>
+    </property>
+    <column>
+     <property name="text">
+      <string>File Name</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Size (Bytes)</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Extension</string>
+     </property>
+    </column>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>521</width>
+     <width>687</width>
      <height>26</height>
     </rect>
    </property>
@@ -204,6 +222,8 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <addaction name="action_Open_Local_Directory"/>
+    <addaction name="separator"/>
     <addaction name="actionE_xit"/>
    </widget>
    <widget class="QMenu" name="menu_Connection">
@@ -230,6 +250,11 @@
   <action name="action_Client">
    <property name="text">
     <string>&amp;Client</string>
+   </property>
+  </action>
+  <action name="action_Open_Local_Directory">
+   <property name="text">
+    <string>&amp;Open Local Directory</string>
    </property>
   </action>
  </widget>

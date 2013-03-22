@@ -10,6 +10,8 @@ FuzzyMainWindow::FuzzyMainWindow(QWidget *parent) :
     ui->setupUi(this);
     cDlg = new ClientSettingsDialog();
 
+    populateFileTree(ui->localTree, new QDir("/"));
+
     this->statusBar()->showMessage("Idle");
 
     // slot-signal connections
@@ -21,6 +23,64 @@ FuzzyMainWindow::~FuzzyMainWindow()
 {
     delete ui;
     delete cDlg;
+}
+
+void FuzzyMainWindow::populateFileTree(QTreeWidget *tree, QDir *dir)
+{
+    // remove all items from tree
+    tree->clear();
+
+
+    // columns are not quite right yet...
+    //localDir = new QDir("/");
+    QFileInfoList filesList = dir->entryInfoList();
+    foreach(QFileInfo fileInfo, filesList)
+    {
+      QTreeWidgetItem* item = new QTreeWidgetItem();
+      item->setText(0,fileInfo.fileName());
+
+      if(fileInfo.isFile())
+      {
+        item->setText(1,QString::number(fileInfo.size()));
+        item->setIcon(0,*(new QIcon("file.jpg")));
+      }
+
+      if(fileInfo.isDir())
+      {
+        item->setIcon(0,*(new QIcon("folder.jpg")));
+        addChildren(item,fileInfo.filePath());
+      }
+
+      item->setText(2,fileInfo.filePath());
+      tree->addTopLevelItem(item);
+    }
+}
+
+// populateFileTree helper
+void FuzzyMainWindow::addChildren(QTreeWidgetItem* item,QString filePath)
+{
+    QDir* rootDir = new QDir(filePath);
+    QFileInfoList filesList = rootDir->entryInfoList();
+
+    foreach(QFileInfo fileInfo, filesList)
+    {
+        QTreeWidgetItem* child = new QTreeWidgetItem();
+        child->setText(0,fileInfo.fileName());
+
+
+        if(fileInfo.isFile())
+        {
+          child->setText(1,QString::number(fileInfo.size()));
+        }
+
+        if(fileInfo.isDir())
+        {
+          child->setIcon(0,*(new QIcon("folder.jpg")));
+          child->setText(2,fileInfo.filePath());
+        }
+
+        item->addChild(child);
+    }
 }
 
 void FuzzyMainWindow::on_actionE_xit_triggered()
@@ -66,4 +126,14 @@ void FuzzyMainWindow::startClient(const QString& hostname, const QString& port)
 
     c.createTCPClient(&wsadata, hostname.toUtf8().constData(), port.toInt());
     c.startTCPClient();
+}
+
+void FuzzyMainWindow::on_action_Open_Local_Directory_triggered()
+{
+    // create browse folder dialog
+    QString directory = QFileDialog::getExistingDirectory(this, tr("Open Local Directory"),
+          "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+    // populate qlistwidget with file names from above folder
+    populateFileTree(ui->localTree, new QDir(directory));
 }
