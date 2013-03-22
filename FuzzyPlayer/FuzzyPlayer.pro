@@ -17,13 +17,15 @@ SOURCES += main.cpp\
     client.cpp \
     communication.cpp \
     util.cpp \
-    clientsettingsdialog.cpp
+    clientsettingsdialog.cpp \
+    server.cpp
 
 HEADERS  += fuzzymainwindow.h \
     client.h \
     communication.h \
     util.h \
-    clientsettingsdialog.h
+    clientsettingsdialog.h \
+    server.h
 
 FORMS    += fuzzymainwindow.ui \
     clientsettingsdialog.ui
