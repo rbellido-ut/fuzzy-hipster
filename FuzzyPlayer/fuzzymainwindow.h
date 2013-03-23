@@ -39,6 +39,8 @@ private:
     // methods
     void populateFileTree(QTreeWidget*, QDir*);
     void addChildren(QTreeWidgetItem*, QString);
+    static unsigned long WINAPI startTCPClient(void*);
+    static unsigned long WINAPI startServer(void*);
 
     // members
     QDir* localDir;

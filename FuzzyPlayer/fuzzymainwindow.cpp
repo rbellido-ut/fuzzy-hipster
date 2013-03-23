@@ -149,20 +149,30 @@ void FuzzyMainWindow::setStatus(const QString& s)
 void FuzzyMainWindow::startServer(int protocol)
 {
     WSADATA wsadata;
+    HANDLE hSThread;
+    DWORD sthreadID;
 
     server_.createServer(&wsadata, protocol);
 
-    if (protocol != UDP)
+    if (protocol != UDP) {
+        // thread the server listening function to prevent it from blocking the GUI
+        //hSThread = CreateThread(NULL, 0, startServer, this, 0, &sthreadID);
         server_.startServer();
+    }
 }
 
 // slot function to start the TCP client engine
 void FuzzyMainWindow::startClient(const QString& hostname, const QString& port)
 {
     WSADATA wsadata;
+    HANDLE hCThread;
+    DWORD cthreadID;
 
     client_.createTCPClient(&wsadata, hostname.toUtf8().constData(), port.toInt());
-    client_.startTCPClient();
+
+    // thread the client listening function to prevent it from blocking the GUI
+    hCThread = CreateThread(NULL, 0, startTCPClient, this, 0, &cthreadID);
+    //client_.startTCPClient();
 }
 
 void FuzzyMainWindow::on_action_Open_Local_Directory_triggered()
@@ -173,4 +183,24 @@ void FuzzyMainWindow::on_action_Open_Local_Directory_triggered()
 
     // populate qlistwidget with file names from above folder
     populateFileTree(ui->localTree, new QDir(directory));
+}
+
+// hack to thread the client class member function from this GUI
+// invoke with: CreateThread(NULL, 0, startTCPClientThread, this, 0, &id);
+unsigned long WINAPI FuzzyMainWindow::startTCPClient(void *ptr)
+{
+    if (!ptr)
+        return -1;
+
+    return ((Client*)ptr)->startTCPClient();
+}
+
+// hack to thread the server class member function from this GUI
+// invoke with: CreateThread(NULL, 0, startServer, this, 0, &id);
+unsigned long WINAPI FuzzyMainWindow::startServer(void *ptr)
+{
+    if (!ptr)
+        return -1;
+
+    return ((Server*)ptr)->startServer();
 }

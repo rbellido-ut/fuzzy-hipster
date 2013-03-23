@@ -48,7 +48,6 @@ public:
     bool requestStream();
     bool saveToFile();
 
-
     static LPSOCKETDATA allocData(SOCKET fd);
     static void freeData(LPSOCKETDATA data);
 

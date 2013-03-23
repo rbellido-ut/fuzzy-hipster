@@ -48,8 +48,8 @@ bool Client::createTCPClient(WSADATA* wsaData, const char* host, const int port)
     return true;
 }
 
-
-bool Client::startTCPClient(){
+bool Client::startTCPClient()
+{
 
     // Connecting to the server
     if (WSAConnect (connectSocket_, (struct sockaddr *)&addr, sizeof(addr), NULL, NULL, NULL, NULL) == INVALID_SOCKET)
