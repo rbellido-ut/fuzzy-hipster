@@ -46,27 +46,14 @@ bool Client::createTCPClient(WSADATA* wsaData, const char* host, const int port)
     return true;
 }
 
-
-bool Client::startTCPClient(){
-
-    // Connecting to the server
-    if (WSAConnect (connectSocket_, (struct sockaddr *)&addr, sizeof(addr), NULL, NULL, NULL, NULL) == INVALID_SOCKET)
-    {
-        emit statusChanged("Can't connect to server");
-        return false;
-    }
-
-    pptr = hp->h_addr_list;
-
-    // will eventually port all COUT calls to QT calls
-    emit statusChanged(QString("Connected to %1 (%2)").arg(hp->h_name).arg(inet_ntoa(addr.sin_addr)));
-
-    threadHandle_ = CreateThread(NULL, 0, runRecvThread, this, 0, &threadID_);
+unsigned long WINAPI Client::clientWorkThread(void *ptr)
+{
+    Client * that = (Client*) ptr;
 
     while(TRUE)
     {
         REQUESTCONTEX* rc = (REQUESTCONTEX*) malloc(sizeof(REQUESTCONTEX));
-        rc->data = allocData(connectSocket_);
+        rc->data = that->allocData(that->connectSocket_);
 
         //SOCKETDATA* data = allocData(connectSocket_);
 
@@ -75,7 +62,6 @@ bool Client::startTCPClient(){
         //hardcoded for now just to download
         string command("download");
         Sleep(500);
-
 
         if(command == "download")
         {
@@ -128,15 +114,37 @@ bool Client::startTCPClient(){
 
         if(rc->data)
         {
-            postSendRequest(rc->data);
+            that->postSendRequest(rc->data);
         }
 
         ::SleepEx(100, TRUE); //make this thread alertable
 
         //free (rc);
     }
+}
 
 
+bool Client::startTCPClient(){
+
+    // Connecting to the server
+    if (WSAConnect (connectSocket_, (struct sockaddr *)&addr, sizeof(addr), NULL, NULL, NULL, NULL) == INVALID_SOCKET)
+    {
+        emit statusChanged("Can't connect to server");
+        return false;
+    }
+
+    pptr = hp->h_addr_list;
+
+    // will eventually port all COUT calls to QT calls
+    emit statusChanged(QString("Connected to %1 (%2)").arg(hp->h_name).arg(inet_ntoa(addr.sin_addr)));
+
+    threadHandle_ = CreateThread(NULL, 0, runRecvThread, this, 0, &threadID_);
+
+    HANDLE hThread;
+    DWORD sthreadID;
+
+    // thread the server listening function to prevent it from blocking the GUI
+    hThread = CreateThread(NULL, 0, clientWorkThread, this, 0, &sthreadID);
 
     return true;
 }
