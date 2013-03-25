@@ -48,18 +48,23 @@ public:
     bool requestStream();
     bool saveToFile();
 
+    static DWORD WINAPI runRecvThread(LPVOID args);
 
-    static LPSOCKETDATA allocData(SOCKET fd);
-    static void freeData(LPSOCKETDATA data);
+    LPSOCKETDATA allocData(SOCKET fd);
+    void freeData(LPSOCKETDATA data);
 
-    static bool postSendRequest(LPSOCKETDATA data);
-    static bool postRecvRequest(LPSOCKETDATA data);
+    bool postSendRequest(LPSOCKETDATA data);
+    bool postRecvRequest(LPSOCKETDATA data);
 
-    static void CALLBACK recvComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
-    static void CALLBACK sendComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+    void recvComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+    void sendComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 
-    static DWORD WINAPI clientThread(LPVOID lpParameter);
-    static void sendTCP(SOCKET& clntSock);
+    static void CALLBACK runRecvComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+    static void CALLBACK runSendComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+
+
+    DWORD clientRecvThread();
+    void sendTCP(SOCKET& clntSock);
 
 
 
@@ -71,14 +76,14 @@ private:
     //Data members
     std::vector<int> musicList_; //std::vector<music>? would have to create a music class
     static size_t count_;
-    static SOCKET connectSocket_;
+    SOCKET connectSocket_;
     struct hostent	*hp;
     char **pptr;
     SOCKADDR_IN addr;
 
     HANDLE threadHandle_;
     DWORD threadID_;
-    static char  sbuf[255];
+    char  sbuf[255];
 
 };
 

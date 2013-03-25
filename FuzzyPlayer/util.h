@@ -47,6 +47,7 @@
 #define DATABUFSIZE 102400
 
 class Server ;
+class Client ;
 
 enum {
     TCP,
@@ -77,6 +78,11 @@ typedef struct socket_data{
     WSAOVERLAPPED overlap;
     int typeOfRequest;
 }SOCKETDATA, *LPSOCKETDATA;
+
+typedef struct request_contex{
+    LPSOCKETDATA data;
+    Client* clnt;
+}REQUESTCONTEX;
 
 typedef struct {
     WSAEVENT acceptEvent;

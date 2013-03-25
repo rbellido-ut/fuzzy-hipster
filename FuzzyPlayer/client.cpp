@@ -4,8 +4,6 @@
 using namespace std;
 
 size_t Client::count_ = 0;
-SOCKET Client::connectSocket_;
-char  Client::sbuf[255];
 
 //Setter functions
 bool Client::setMusicList(vector<int> ml){
@@ -20,14 +18,14 @@ bool Client::createTCPClient(WSADATA* wsaData, const char* host, const int port)
 
     if ((res = WSAStartup(wVersionRequested, wsaData)) != 0)
     {
-        cerr << "WSAStartup falied with error " << res << endl;
+        emit statusChanged(QString("WSAStartup falied with error (%1)").arg(res));
         WSACleanup();
         return false;
     }
 
     if ((connectSocket_ = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET)
     {
-        cerr << "Failed to get a socket with error " << WSAGetLastError() << endl;
+        emit statusChanged(QString("Failed to get a socket with error (%1)").arg(WSAGetLastError()));
         return false;
     }
 
@@ -38,7 +36,7 @@ bool Client::createTCPClient(WSADATA* wsaData, const char* host, const int port)
 
     if ((hp = gethostbyname(host)) == NULL)
     {
-        cerr << "Unknown server address" << endl;
+        emit statusChanged("Unknown server address");
         return false;
     }
 
@@ -54,29 +52,30 @@ bool Client::startTCPClient(){
     // Connecting to the server
     if (WSAConnect (connectSocket_, (struct sockaddr *)&addr, sizeof(addr), NULL, NULL, NULL, NULL) == INVALID_SOCKET)
     {
-        cerr << "Can't connect to server" << endl;
-        cerr << "connect()" << endl;
+        emit statusChanged("Can't connect to server");
         return false;
     }
 
-    cout << "Connected:    Server Name: " << hp->h_name << endl;
     pptr = hp->h_addr_list;
-    cout << "\t\tIP Address: " <<  inet_ntoa(addr.sin_addr) << endl;
-
-    cout << "Client started, connected to socket " << connectSocket_ << endl;
 
     // will eventually port all COUT calls to QT calls
     emit statusChanged(QString("Connected to %1 (%2)").arg(hp->h_name).arg(inet_ntoa(addr.sin_addr)));
 
-    threadHandle_ = CreateThread(NULL, 0, clientThread, NULL, 0, &threadID_);
+    threadHandle_ = CreateThread(NULL, 0, runRecvThread, this, 0, &threadID_);
 
     while(TRUE)
     {
-        string command;
-        SOCKETDATA* data = allocData(connectSocket_);
+        REQUESTCONTEX* rc = (REQUESTCONTEX*) malloc(sizeof(REQUESTCONTEX));
+        rc->data = allocData(connectSocket_);
 
-        cout << "Enter your command: ";
-        getline(cin, command);
+        //SOCKETDATA* data = allocData(connectSocket_);
+
+
+        //have to read user request based on their choice of GUI items
+        //hardcoded for now just to download
+        string command("download");
+        Sleep(500);
+
 
         if(command == "download")
         {
@@ -85,9 +84,9 @@ bool Client::startTCPClient(){
             reqDL.songname = "xxx"; //note: hard coded!
             reqDL.head.size = sizeof(reqDL.songname);
 
-            data->typeOfRequest = REQDL; // used to track the request locally
+            rc->data->typeOfRequest = REQDL; // used to track the request locally
 
-            memcpy(data->databuf,&reqDL, sizeof(filetrans_req_t));
+            memcpy(rc->data->databuf,&reqDL, sizeof(filetrans_req_t));
             //send download request
         }
         if(command == "upload")
@@ -97,9 +96,9 @@ bool Client::startTCPClient(){
             reqUL.songname = "xxx"; //note: hard coded!
             reqUL.head.size = sizeof(reqUL.songname);
 
-            data->typeOfRequest = REQUL; // used to track the request locally
+            rc->data->typeOfRequest = REQUL; // used to track the request locally
 
-            memcpy(data->databuf,&reqUL, sizeof(filetrans_req_t));
+            memcpy(rc->data->databuf,&reqUL, sizeof(filetrans_req_t));
             //send upload request
         }
         if(command == "stream")
@@ -109,9 +108,9 @@ bool Client::startTCPClient(){
             reqStream.songIndex = 1; //note: hard coded!
             reqStream.head.size = sizeof(int);
 
-            data->typeOfRequest = REQST; // used to track the request locally
+            rc->data->typeOfRequest = REQST; // used to track the request locally
 
-            memcpy(data->databuf,&reqStream, sizeof(stream_req_t));
+            memcpy(rc->data->databuf,&reqStream, sizeof(stream_req_t));
             //send stream request
         }
         if(command == "multicast")
@@ -127,37 +126,23 @@ bool Client::startTCPClient(){
 
         //strcpy(data->databuf,command.c_str());
 
-        if(data)
+        if(rc->data)
         {
-            postSendRequest(data);
+            postSendRequest(rc->data);
         }
 
-
         ::SleepEx(100, TRUE); //make this thread alertable
+
+        //free (rc);
     }
+
+
 
     return true;
 }
 
 void Client::encodeRequest() {
 
-    /*
-//Request packet structs
-typedef struct {
-    int type;
-    int size;
-} header_t;
-
-typedef struct {
-    header_t head;
-    int songIndex;
-} stream_req_t;
-
-typedef struct {
-    header_t head;
-    string songname;
-} filetrans_req_t; //Struct can be used for both download and upload requests
-*/
     return;
 }
 
@@ -168,17 +153,25 @@ bool Client::postRecvRequest(LPSOCKETDATA data){
 
     if(data)
     {
-        error = WSARecv(data->sock, &data->wsabuf, 1, &bytesRecvd, &flag, &data->overlap, recvComplete);
+        REQUESTCONTEX* rc = (REQUESTCONTEX*)malloc(sizeof(REQUESTCONTEX));
+        rc->clnt = this;
+        rc->data = data;
+        data->overlap.hEvent = rc;
+
+        error = WSARecv(data->sock, &data->wsabuf, 1, &bytesRecvd, &flag, &data->overlap, runRecvComplete);
         if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
         {
             return true;
         }
         else
         {
-            cerr << "WSARecv() failed on " << data->sock << endl;
+            emit statusChanged("WSARecv() failed");
             freeData(data);
             return false;
         }
+
+        free(rc);
+
     }
 
 }
@@ -189,24 +182,40 @@ bool Client::postSendRequest(LPSOCKETDATA data)
     DWORD bytesSent = 0;
     int error;
 
-    error = WSASend(data->sock, &data->wsabuf, 1, &bytesSent, flag, &data->overlap, sendComplete);
+    REQUESTCONTEX* rc = (REQUESTCONTEX*)malloc(sizeof(REQUESTCONTEX));
+    rc->clnt = this;
+    rc->data = data;
+    data->overlap.hEvent = rc;
+
+    error = WSASend(data->sock, &data->wsabuf, 1, &bytesSent, flag, &data->overlap, runSendComplete);
     if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
     {
         return true;
     }
     else
     {
-        cerr << "WSASend() failed on " << data->sock << endl;
+        emit statusChanged("WSASend() failedd");
         freeData(data);
         return false;
     }
 
+    free(rc);
+
 }
 
-
-void CALLBACK Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+void CALLBACK Client::runRecvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
-    LPSOCKETDATA data = (LPSOCKETDATA) overlapped->hEvent;
+    REQUESTCONTEX* rc = (REQUESTCONTEX*) overlapped->hEvent;
+    Client* c = (Client*) rc->clnt;
+
+    c->recvComplete(error, bytesTransferred, overlapped, flags);
+
+}
+
+void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+{
+    REQUESTCONTEX* rc = (REQUESTCONTEX*) overlapped->hEvent;
+    LPSOCKETDATA data = (LPSOCKETDATA) rc->data;
 
     if(error || bytesTransferred == 0)
     {
@@ -214,13 +223,25 @@ void CALLBACK Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
         return;
     }
 
-    cout << "recvComplete(): " << data->databuf << endl;
+    //handle server reply in here
 
 }
 
-void CALLBACK Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+void CALLBACK Client::runSendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
-    LPSOCKETDATA data = (LPSOCKETDATA)overlapped->hEvent;
+    REQUESTCONTEX* rc = (REQUESTCONTEX*) overlapped->hEvent;
+    Client* c = (Client*) rc->clnt;
+
+    c->sendComplete(error, bytesTransferred, overlapped, flags);
+
+}
+
+void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+{
+
+    REQUESTCONTEX* rc = (REQUESTCONTEX*) overlapped->hEvent;
+    LPSOCKETDATA data = (LPSOCKETDATA) rc->data;
+
     if(error || bytesTransferred == 0)
     {
         freeData(data);
@@ -230,23 +251,23 @@ void CALLBACK Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
     switch(data->typeOfRequest)
     {
     case REQDL:
-        cout << "Client handling DL" << endl;
+        emit statusChanged("Client handeling download");
         //do whatever you want to do after a download request was sent successfully (save to file)
         break;
     case REQUL:
-        cout << "Client handling UL" << endl;
+        emit statusChanged("Client handeling upload");
         //do whatever you want to do after a upload request was sent successfully (wait for server to send u a confirmation)
         break;
     case REQST:
-        cout << "Client handling Stream" << endl;
+        emit statusChanged("Client handeling stream");
         //do whatever you want to do after a stream request was sent successfully (wait for approval)
         break;
     case REQMC:
-        cout << "Client handling Multicast" << endl;
+        emit statusChanged("Client handeling multicast");
         //do whatever you want to do after a multicast request was sent successfully ( ... )
         break;
     case REQMIC:
-        cout << "Client handling Mic" << endl;
+        emit statusChanged("Client handeling microphone");
         //do whatever you want to do after a mic request was sent successfully ( ... )
         break;
     }
@@ -280,7 +301,7 @@ LPSOCKETDATA Client::allocData(SOCKET socketFD)
         data = new SOCKETDATA();
 
     }catch(std::bad_alloc&){
-        cerr << "Allocate socket data failed" << endl;
+        emit statusChanged("Allocate socket data failed");
         return NULL;
     }
 
@@ -313,7 +334,7 @@ LPSOCKETDATA Client::allocData(SOCKET socketFD)
 void Client::freeData(LPSOCKETDATA data){
     if(data)
     {
-        cout << "Socket " << data->sock <<" Closed." << endl;
+        emit statusChanged("Socket Closed");
         closesocket(data->sock);
         delete data;
     }
@@ -341,7 +362,7 @@ void Client::sendTCP(SOCKET& clntSock){
 --
 -- NOTES:		This is the thread proc used to post overlapped WSARecv calls
 ----------------------------------------------------------------------------------------------------------------------*/
-DWORD WINAPI Client::clientThread(LPVOID lpParameter)
+DWORD Client::clientRecvThread()
 {
 
     while(TRUE)
@@ -354,6 +375,13 @@ DWORD WINAPI Client::clientThread(LPVOID lpParameter)
 
         ::SleepEx(100, TRUE); //make this thread alertable
     }
+}
+
+
+DWORD WINAPI Client::runRecvThread(LPVOID args)
+{
+    Client *c = (Client*)args;
+    return c->clientRecvThread();
 }
 
 bool Client::createUDPClient(WSADATA* wsaData, const char* host, const int port){
