@@ -150,18 +150,25 @@ void FuzzyMainWindow::startServer(int protocol)
 {
     WSADATA wsadata;
 
+
     server_.createServer(&wsadata, protocol);
 
-    if (protocol != UDP)
+    if (protocol != UDP) {
         server_.startServer();
+    }
 }
 
 // slot function to start the TCP client engine
 void FuzzyMainWindow::startClient(const QString& hostname, const QString& port)
 {
     WSADATA wsadata;
+    HANDLE hCThread;
+    DWORD cthreadID;
 
     client_.createTCPClient(&wsadata, hostname.toUtf8().constData(), port.toInt());
+
+    // thread the client listening function to prevent it from blocking the GUI
+    //hCThread = CreateThread(NULL, 0, startTCPClient, this, 0, &cthreadID);
     client_.startTCPClient();
 }
 

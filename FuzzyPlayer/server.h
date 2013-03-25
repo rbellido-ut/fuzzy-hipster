@@ -56,6 +56,7 @@ private:
 
     int protocolType_;
 	bool isStreaming_;
+    static unsigned long WINAPI serverWorkThread(void *);
 };
 
 #endif

@@ -59,42 +59,58 @@ bool Server::createServer(WSADATA* wsaData, int protocol)
 	return true;
 }
 
-
-//Other function prototypes
-bool Server::startServer()
+unsigned long WINAPI Server::serverWorkThread(void *ptr)
 {
-    cout << "Server started, listening on socket " << listenSocket << endl;
+    Server * that = (Server*) ptr;
+
+    cout << "Server started, listening on socket " << that->listenSocket << endl;
 
     while(TRUE)
-	{
-		SOCKADDR_IN addr = {};
-		int addrLen = sizeof(addr);
+    {
+        SOCKADDR_IN addr = {};
+        int addrLen = sizeof(addr);
 
-        SOCKET newClientSocket = WSAAccept(listenSocket, (sockaddr*)&addr, &addrLen, NULL, NULL);
+        SOCKET newClientSocket = WSAAccept(that->listenSocket, (sockaddr*)&addr, &addrLen, NULL, NULL);
 
         if(newClientSocket == INVALID_SOCKET)
-		{
-			if(WSAGetLastError() != WSAEWOULDBLOCK)
-			{
-				cerr << "accept() failed with error " << WSAGetLastError() << endl;
-				break;
-			}
-		}
+        {
+            if(WSAGetLastError() != WSAEWOULDBLOCK)
+            {
+                cerr << "accept() failed with error " << WSAGetLastError() << endl;
+                break;
+            }
+        }
         else
         {
             SOCKETDATA* clientRequests = allocData(newClientSocket);
             cout << "Socket " << newClientSocket << " accepted." << endl;
             if(clientRequests)
-			{
+            {
                 //TODO: add thread to handle clients
                 postRecvRequest(clientRequests);
-			}
-		}
+            }
+        }
 
-		::SleepEx(100, TRUE); //make this thread alertable
-	}
+        ::SleepEx(100, TRUE); //make this thread alertable
+    }
 
-	return true;
+    return true;
+
+}
+
+//Other function prototypes
+bool Server::startServer()
+{
+    HANDLE hSThread;
+    DWORD sthreadID;
+
+    //server_.createServer(&wsadata, protocol);
+
+    // thread the server listening function to prevent it from blocking the GUI
+    hSThread = CreateThread(NULL, 0, serverWorkThread, this, 0, &sthreadID);
+    //server_.startServer();
+
+    return true;
 }
 
 LPSOCKETDATA Server::allocData(SOCKET socketFD)
