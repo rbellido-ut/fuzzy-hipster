@@ -67,6 +67,9 @@ public:
     friend std::istream& operator>> (std::istream& is, Client& c);
 
 private:
+    // function
+    static unsigned long WINAPI clientWorkThread(void *);
+
     //Data members
     std::vector<int> musicList_; //std::vector<music>? would have to create a music class
     static size_t count_;

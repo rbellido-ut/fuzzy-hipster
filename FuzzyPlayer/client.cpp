@@ -48,27 +48,9 @@ bool Client::createTCPClient(WSADATA* wsaData, const char* host, const int port)
     return true;
 }
 
-bool Client::startTCPClient()
+unsigned long WINAPI Client::clientWorkThread(void *ptr)
 {
-
-    // Connecting to the server
-    if (WSAConnect (connectSocket_, (struct sockaddr *)&addr, sizeof(addr), NULL, NULL, NULL, NULL) == INVALID_SOCKET)
-    {
-        cerr << "Can't connect to server" << endl;
-        cerr << "connect()" << endl;
-        return false;
-    }
-
-    cout << "Connected:    Server Name: " << hp->h_name << endl;
-    pptr = hp->h_addr_list;
-    cout << "\t\tIP Address: " <<  inet_ntoa(addr.sin_addr) << endl;
-
-    cout << "Client started, connected to socket " << connectSocket_ << endl;
-
-    // will eventually port all COUT calls to QT calls
-    emit statusChanged(QString("Connected to %1 (%2)").arg(hp->h_name).arg(inet_ntoa(addr.sin_addr)));
-
-    threadHandle_ = CreateThread(NULL, 0, clientThread, NULL, 0, &threadID_);
+    Client * that = (Client*) ptr;
 
     while(TRUE)
     {
@@ -135,6 +117,35 @@ bool Client::startTCPClient()
 
         ::SleepEx(100, TRUE); //make this thread alertable
     }
+}
+
+bool Client::startTCPClient()
+{
+
+    // Connecting to the server
+    if (WSAConnect (connectSocket_, (struct sockaddr *)&addr, sizeof(addr), NULL, NULL, NULL, NULL) == INVALID_SOCKET)
+    {
+        cerr << "Can't connect to server" << endl;
+        cerr << "connect()" << endl;
+        return false;
+    }
+
+    cout << "Connected:    Server Name: " << hp->h_name << endl;
+    pptr = hp->h_addr_list;
+    cout << "\t\tIP Address: " <<  inet_ntoa(addr.sin_addr) << endl;
+
+    cout << "Client started, connected to socket " << connectSocket_ << endl;
+
+    // will eventually port all COUT calls to QT calls
+    emit statusChanged(QString("Connected to %1 (%2)").arg(hp->h_name).arg(inet_ntoa(addr.sin_addr)));
+
+    threadHandle_ = CreateThread(NULL, 0, clientThread, NULL, 0, &threadID_);
+
+    // start work thread (prevent the GUI from being blocked)
+    HANDLE hThread;
+    DWORD threadID;
+
+    hThread = CreateThread(NULL, 0, clientWorkThread, this, 0, &threadID);
 
     return true;
 }
