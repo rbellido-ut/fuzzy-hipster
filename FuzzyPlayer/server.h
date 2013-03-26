@@ -23,10 +23,13 @@ public:
 	//Copy constructor, calls parrent's copy constructor
 	Server(const Server& src)
         : Communication(src)
-    { }
+    {
+    }
 
 	//Destructor
-    ~Server(){}
+    ~Server()
+    {
+    }
 
 	//Getter functions
 
@@ -36,9 +39,11 @@ public:
     bool createServer(WSADATA* wsaData, int protocol);
     bool startServer();
 	//SOCKET createListenTCPSocket(const std::string& strHost, const int& TCPPort);
-	static LPSOCKETDATA allocData(SOCKET fd);
+
+    static LPSOCKETDATA allocData(SOCKET fd);
 	static void freeData(LPSOCKETDATA data);
-	static bool postRecvRequest(LPSOCKETDATA data);
+
+    static bool postRecvRequest(LPSOCKETDATA data);
 	static bool postSendRequest(LPSOCKETDATA data);
     static void CALLBACK recvComplete(DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
     static void CALLBACK sendComplete(DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);

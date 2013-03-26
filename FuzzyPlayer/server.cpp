@@ -201,19 +201,24 @@ void CALLBACK Server::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
 	memset(&data->overlap, 0, sizeof(data->overlap));
 	data->overlap.hEvent = (WSAEVENT)data;
 	data->wsabuf.len = bytesTransferred;
-	DWORD bytesSent = 0;
+
 	cout << "Received: " << data->databuf << ". From: " << data->sock << endl;
 
+<<<<<<< HEAD
     //postSendRequest(data);
+=======
+	postSendRequest(data);
+>>>>>>> 5706c6ccc1a66557a49046e9f2702c7fbce264a9
 }
 
 void CALLBACK Server::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 	LPSOCKETDATA data = (LPSOCKETDATA)overlapped->hEvent;
+
 	if(error || bytesTransferred == 0)
 	{
 		freeData(data);
-		return;
+        return;
 	}
 
 	//post another WSARecv()
