@@ -204,18 +204,7 @@ void CALLBACK Server::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
 	DWORD bytesSent = 0;
 	cout << "Received: " << data->databuf << ". From: " << data->sock << endl;
 
-	postSendRequest(data);
-	/*error = WSASend(data->sock, &data->wsabuf, 1, &bytesSent, flags, &data->overlap, sendComplete);
-	if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
-	{
-		//success
-		return;
-	}
-	else
-	{
-		freeData(data);
-	}
-	*/
+    //postSendRequest(data);
 }
 
 void CALLBACK Server::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
@@ -232,23 +221,24 @@ void CALLBACK Server::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOV
 	postRecvRequest(data);
 }
 
-void Server::DecodeRequest(int requesttype) 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	DecodeRequest
+--
+-- DATE:		March 23, 2013
+--
+-- REVISIONS:
+--
+-- DESIGNER:	Ronald Bellido
+--
+-- PROGRAMMER:	Ronald Bellido
+--
+-- INTERFACE:	DecodeRequest(LPSOCKETDATA packet)
+--                  packet - packet received by the server for its contents to be decoded
+--
+-- RETURNS: void
+--
+-- NOTES:
+----------------------------------------------------------------------------------------------------------------------*/
+void Server::DecodeRequest(LPSOCKETDATA packet)
 {
-	switch (requesttype)
-	{
-		case REQST:
-		break;
-		
-		case REQDL:
-		break;
-		
-		case REQUL:
-		break;
-		
-		case REQMC:
-		break;
-		
-		case REQMIC:
-		break;
-	}
 }

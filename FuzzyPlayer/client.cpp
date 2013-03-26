@@ -63,7 +63,7 @@ unsigned long WINAPI Client::clientWorkThread(void *ptr)
         string command("download");
         Sleep(500);
 
-        if(command == "download")
+        /*if(command == "download")
         {
             filetrans_req_t reqDL = {0};
             reqDL.head.type = REQDL;
@@ -119,7 +119,7 @@ unsigned long WINAPI Client::clientWorkThread(void *ptr)
 
         ::SleepEx(100, TRUE); //make this thread alertable
 
-        //free (rc);
+        //free (rc);*/
     }
 }
 

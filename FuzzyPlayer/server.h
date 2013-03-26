@@ -43,7 +43,7 @@ public:
     static void CALLBACK recvComplete(DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
     static void CALLBACK sendComplete(DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 	
-	void DecodeRequest(int requesttype);
+    void DecodeRequest(LPSOCKETDATA packet);
 	void startStream(int songindex);
 	void endStream();
 
