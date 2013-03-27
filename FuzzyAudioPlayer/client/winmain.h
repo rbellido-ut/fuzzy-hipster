@@ -14,7 +14,7 @@
 *			DEFINITIONS
 ***********************************/
 #define IDC_EDIT_HOSTNAME		6901
-#define IDC_EDIT_OUT			6902
+#define IDC_SRVSONGLIST			6902
 #define IDC_BUTTON_REWIND		6903
 #define IDC_EDIT_PORT			6905
 #define IDC_BUTTON_PLAY			6906
@@ -24,7 +24,7 @@
 #define IDC_RADIO_MULTICAST		6910
 #define IDC_RADIO_MIC			6911
 #define IDC_BUTTON_PAUSE		6912
-#define IDC_BUTTON_PLAY			6913
+#define IDC_CLIENTLIST			6913
 #define IDC_BUTTON_FORWARD		6914
 #define IDC_BUTTON_STOP			6915
 #define ID_TOOL_HELP			6916
@@ -33,6 +33,7 @@
 #define IDC_MAIN_TOOL			6919
 #define WM_SOCKET				6920
 #define IDC_BUTTON_OK			6921
+
 
 
 #define STATUSBAR_MODE			0
@@ -54,7 +55,7 @@ int nPort = 5555; // internal
 int nRepeat = 1;
 
 // controls
-HWND hEditStat = NULL;
+/*HWND hSrvSongList = NULL;
 HWND hEditHostname = NULL;
 HWND hEditPort = NULL;
 HWND hStatus = NULL;
@@ -69,7 +70,7 @@ HWND hButtonStop = NULL;
 HWND hButtonForward = NULL;
 HWND hButtonPause = NULL;
 HWND hButtonPlay = NULL;
-HWND hButtonRewind = NULL;
+HWND hButtonRewind = NULL;*/
 
 SOCKET Socket = NULL;
 char szHistory[10000];

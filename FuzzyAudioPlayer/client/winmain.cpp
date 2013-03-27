@@ -102,8 +102,8 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 					haveClient = true;
 					WSADATA wsaData;
 					if(clnt.runClient(&wsaData)){
-						SendMessage(hStatus, SB_SETTEXT, STATUSBAR_STATUS, (LPARAM)"Connected");
-						EnableWindow(hButtonOk, TRUE); 
+						SendMessage(GetDlgItem(hWnd,IDC_MAIN_STATUS), SB_SETTEXT, STATUSBAR_STATUS, (LPARAM)"Connected");
+						EnableWindow(GetDlgItem(hWnd,IDC_BUTTON_OK), TRUE); 
 					}
 					else
 						MessageBox(hWnd, "Try Again!" , "Sorry" , MB_ICONWARNING);
@@ -192,8 +192,7 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 	case WM_SIZE:
 		{
 			// dynamically resize status bar
-			hStatus = GetDlgItem(hWnd, IDC_MAIN_STATUS);
-			SendMessage(hStatus, WM_SIZE, 0, 0);
+			SendMessage(GetDlgItem(hWnd, IDC_MAIN_STATUS), WM_SIZE, 0, 0);
 		}
 		break;
 	}
@@ -228,108 +227,132 @@ bool createGUI(HWND hWnd)
 			
 	SendMessage(
 	CreateWindow(TEXT("STATIC"), TEXT("Hostname"), WS_CHILD | WS_VISIBLE | SS_LEFT, 
-		0, 30, 200, 25, hWnd, 0, GetModuleHandle(NULL), NULL)
+		10, 30, 200, 25, hWnd, 0, GetModuleHandle(NULL), NULL)
 		,WM_SETFONT, (WPARAM)hFont, TRUE);
 	
+	SendMessage(
+	CreateWindow(TEXT("STATIC"), TEXT("Songs available on server"), WS_CHILD | WS_VISIBLE | SS_LEFT, 
+		10, 80, 200, 25, hWnd, 0, GetModuleHandle(NULL), NULL)
+		,WM_SETFONT, (WPARAM)hFont, TRUE);
+
+		SendMessage(
+	CreateWindow(TEXT("STATIC"), TEXT("Other users on server"), WS_CHILD | WS_VISIBLE | SS_LEFT, 
+		390, 80, 200, 25, hWnd, 0, GetModuleHandle(NULL), NULL)
+		,WM_SETFONT, (WPARAM)hFont, TRUE);
+
 	SendMessage(
 	CreateWindow(TEXT("STATIC"), TEXT("Port"), WS_CHILD | WS_VISIBLE | SS_LEFT,
 		300, 30, 100, 25, hWnd, 0, GetModuleHandle(NULL), NULL)
 		,WM_SETFONT, (WPARAM)hFont, TRUE);
 
 			ZeroMemory(szHistory,sizeof(szHistory));
+			
+			// create song list box
+			SendMessage(
+			CreateWindowEx(WS_EX_CLIENTEDGE, "LISTBOX", "", WS_CHILD|WS_VISIBLE|LBS_STANDARD|LBS_HASSTRINGS,
+						10, 100, 380, 260, hWnd, (HMENU)IDC_SRVSONGLIST, GetModuleHandle(NULL), NULL)
+						,WM_SETFONT, (WPARAM)hFont, TRUE);
 
-			// Create stat message box
-			hEditStat=CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD|WS_VISIBLE|ES_MULTILINE|WS_VSCROLL|ES_AUTOVSCROLL|ES_AUTOHSCROLL|ES_READONLY,
-						0, 80, 400, 280, hWnd, (HMENU)IDC_EDIT_OUT, GetModuleHandle(NULL), NULL);
-			if (!hEditStat)
-			{
-				//MessageBox(hWnd, "Could not create incoming edit box.", "Error", MB_OK|MB_ICONERROR);
-				return false;
-			}
-			HGDIOBJ hfDefault=GetStockObject(DEFAULT_GUI_FONT);
-			SendMessage(hEditStat, WM_SETFONT, (WPARAM)hfDefault, MAKELPARAM(FALSE,0));
-			strcat(szHistory,"this program doesn't use the above hostname/port inputs yet...");
-			SendMessage(hEditStat, WM_SETTEXT, sizeof(szHistory), reinterpret_cast<LPARAM>(&szHistory));
+			SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"Test Behnam's party mix");
+
+			// create connected clients list box
+			SendMessage(
+			CreateWindowEx(WS_EX_CLIENTEDGE, "LISTBOX", "", WS_CHILD|WS_VISIBLE|LBS_STANDARD|LBS_HASSTRINGS,
+						390, 100, 380, 260, hWnd, (HMENU)IDC_CLIENTLIST, GetModuleHandle(NULL), NULL)
+						,WM_SETFONT, (WPARAM)hFont, TRUE);
+
+			SendMessage(GetDlgItem(hWnd,IDC_CLIENTLIST),LB_INSERTSTRING,0,(LPARAM)"otherusertochatwith69");
 
 			// Create hostname box
-			hEditHostname = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_AUTOVSCROLL|ES_AUTOHSCROLL,
-				0, 50, 300, 25, hWnd, (HMENU)IDC_EDIT_HOSTNAME, GetModuleHandle(NULL), NULL);
-			if (!hEditHostname)
-			{
-				//MessageBox(hWnd, "Could not create outgoing edit box.", "Error", MB_OK|MB_ICONERROR);
-				return false;
-			}
-
-			SendMessage(hEditHostname, WM_SETFONT,(WPARAM)hfDefault, MAKELPARAM(FALSE,0));
-			SendMessage(hEditHostname, WM_SETTEXT, NULL, (LPARAM)szServer);
+			SendMessage(
+				CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_AUTOVSCROLL|ES_AUTOHSCROLL,
+				10, 50, 300, 25, hWnd, (HMENU)IDC_EDIT_HOSTNAME, GetModuleHandle(NULL), NULL)
+				,WM_SETFONT, (WPARAM)hFont, TRUE);
+			// set default value
+			SendMessage(GetDlgItem(hWnd,IDC_EDIT_HOSTNAME), WM_SETTEXT, NULL, (LPARAM)szServer);
 
 			// radio buttons
-			hRadioUpload = CreateWindowEx(0, "BUTTON", "Upload", WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON,
-				20, 400, 120, 25, hWnd, (HMENU)IDC_RADIO_UPLOAD, GetModuleHandle(NULL), NULL);
+			SendMessage(
+			CreateWindowEx(0, "BUTTON", "Upload", WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON,
+				20, 400, 120, 25, hWnd, (HMENU)IDC_RADIO_UPLOAD, GetModuleHandle(NULL), NULL)
+				,WM_SETFONT, (WPARAM)hFont, TRUE);
 
-			hRadioDownload= CreateWindowEx(0, "BUTTON", "Download", WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON,
-				20+150*1, 400, 120, 25, hWnd, (HMENU)IDC_RADIO_DOWNLOAD, GetModuleHandle(NULL), NULL);
+			SendMessage(
+				CreateWindowEx(0, "BUTTON", "Download", WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON,
+				20+150*1, 400, 120, 25, hWnd, (HMENU)IDC_RADIO_DOWNLOAD, GetModuleHandle(NULL), NULL)
+				,WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage(GetDlgItem(hWnd,IDC_RADIO_DOWNLOAD), BM_SETCHECK, 1, 0);
 			
-			hRadioStream= CreateWindowEx(0, "BUTTON", "Streaming", WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON,
-				20+150*2, 400, 120, 25, hWnd, (HMENU)IDC_RADIO_STREAM, GetModuleHandle(NULL), NULL);
+			SendMessage(
+			CreateWindowEx(0, "BUTTON", "Streaming", WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON,
+				20+150*2, 400, 120, 25, hWnd, (HMENU)IDC_RADIO_STREAM, GetModuleHandle(NULL), NULL)
+				,WM_SETFONT, (WPARAM)hFont, TRUE);
 			
-			hRadioMulticast= CreateWindowEx(0, "BUTTON", "Multicast", WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON, 
-				20+150*3, 400, 100, 25, hWnd, (HMENU)IDC_RADIO_MULTICAST, GetModuleHandle(NULL), NULL);
+			SendMessage(
+				CreateWindowEx(0, "BUTTON", "Multicast", WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON, 
+				20+150*3, 400, 100, 25, hWnd, (HMENU)IDC_RADIO_MULTICAST, GetModuleHandle(NULL), NULL)
+				,WM_SETFONT, (WPARAM)hFont, TRUE);
 
-			hRadioMic= CreateWindowEx(0, "BUTTON", "Microphone Chat", WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON,
-				20+140*4, 400, 170, 25, hWnd, (HMENU)IDC_RADIO_MIC, GetModuleHandle(NULL), NULL);
+			SendMessage(
+				CreateWindowEx(0, "BUTTON", "Microphone Chat", WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON,
+				20+140*4, 400, 170, 25, hWnd, (HMENU)IDC_RADIO_MIC, GetModuleHandle(NULL), NULL)
+				,WM_SETFONT, (WPARAM)hFont, TRUE);
 
 			// Port box
-			hEditPort = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_AUTOVSCROLL|ES_AUTOHSCROLL|ES_NUMBER,
-				300, 50, 100, 25, hWnd, (HMENU)IDC_EDIT_PORT, GetModuleHandle(NULL), NULL);
-			if (!hEditPort)
-			{
-				//MessageBox(hWnd, "Could not create outgoing edit box.", "Error", MB_OK|MB_ICONERROR);
-				return false;
-			}
-			SendMessage(hEditPort, WM_SETFONT,(WPARAM)hfDefault, MAKELPARAM(FALSE,0));
-			SendMessage(hEditPort, WM_SETTEXT, NULL, (LPARAM)szPort);
+			SendMessage(
+			CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_AUTOVSCROLL|ES_AUTOHSCROLL|ES_NUMBER,
+				300, 50, 100, 25, hWnd, (HMENU)IDC_EDIT_PORT, GetModuleHandle(NULL), NULL)
+				,WM_SETFONT, (WPARAM)hFont, TRUE);
+			//SendMessage(hEditPort, WM_SETFONT,(WPARAM)hfDefault, MAKELPARAM(FALSE,0));
+			SendMessage(GetDlgItem(hWnd,IDC_EDIT_PORT), WM_SETTEXT, NULL, (LPARAM)szPort);
 
 			// create music control buttons
-			hButtonRewind=CreateWindow("BUTTON", "&Rewind", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
-				10,	450, 150, 46, hWnd, (HMENU)IDC_BUTTON_REWIND, GetModuleHandle(NULL), NULL);
-			SendMessage(hButtonRewind,WM_SETFONT,(WPARAM)hfDefault,MAKELPARAM(FALSE,0));
+			SendMessage(
+				CreateWindow("BUTTON", "&Rewind", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
+				10,	450, 150, 46, hWnd, (HMENU)IDC_BUTTON_REWIND, GetModuleHandle(NULL), NULL)
+				,WM_SETFONT, (WPARAM)hFont, TRUE);
 			
-			hButtonPlay = CreateWindow("BUTTON", "&Play", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
-				10+150*1+10, 450, 150, 46, hWnd, (HMENU)IDC_BUTTON_PLAY, GetModuleHandle(NULL), NULL);
-			SendMessage(hButtonPlay,WM_SETFONT,(WPARAM)hfDefault,MAKELPARAM(FALSE,0));
+			SendMessage(
+				CreateWindow("BUTTON", "&Play", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
+				10+150*1+10, 450, 150, 46, hWnd, (HMENU)IDC_BUTTON_PLAY, GetModuleHandle(NULL), NULL)
+				,WM_SETFONT, (WPARAM)hFont, TRUE);
 			
-			hButtonPause = CreateWindow("BUTTON", "P&ause", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
-				10+150*2+10, 450, 150, 46, hWnd, (HMENU)IDC_BUTTON_PAUSE, GetModuleHandle(NULL), NULL);
-			SendMessage(hButtonPause,WM_SETFONT,(WPARAM)hfDefault,MAKELPARAM(FALSE,0));
+			SendMessage(
+				CreateWindow("BUTTON", "P&ause", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
+				10+150*2+10, 450, 150, 46, hWnd, (HMENU)IDC_BUTTON_PAUSE, GetModuleHandle(NULL), NULL)
+				,WM_SETFONT, (WPARAM)hFont, TRUE);
 			
-			hButtonForward = CreateWindow("BUTTON", "&Forward", WS_TABSTOP|WS_VISIBLE| WS_CHILD|BS_DEFPUSHBUTTON,
-				10+150*3+10, 450, 150, 46, hWnd, (HMENU)IDC_BUTTON_FORWARD, GetModuleHandle(NULL), NULL);
-			SendMessage(hButtonForward,WM_SETFONT,(WPARAM)hfDefault,MAKELPARAM(FALSE,0));
+			SendMessage(
+				CreateWindow("BUTTON", "&Forward", WS_TABSTOP|WS_VISIBLE| WS_CHILD|BS_DEFPUSHBUTTON,
+				10+150*3+10, 450, 150, 46, hWnd, (HMENU)IDC_BUTTON_FORWARD, GetModuleHandle(NULL), NULL)
+				,WM_SETFONT, (WPARAM)hFont, TRUE);
 			
-			hButtonStop = CreateWindow("BUTTON", "&Stop", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
-									10+150*4+10, 450, 150, 46, hWnd, (HMENU)IDC_BUTTON_STOP, GetModuleHandle(NULL), NULL);
-			SendMessage(hButtonStop,WM_SETFONT,(WPARAM)hfDefault,MAKELPARAM(FALSE,0));
-			EnableWindow(hButtonStop, FALSE);
+			SendMessage(
+				CreateWindow("BUTTON", "&Stop", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
+									10+150*4+10, 450, 150, 46, hWnd, (HMENU)IDC_BUTTON_STOP, GetModuleHandle(NULL), NULL)
+				,WM_SETFONT, (WPARAM)hFont, TRUE);
+			EnableWindow(GetDlgItem(hWnd,IDC_BUTTON_STOP), FALSE);
 
 
-			hButtonOk = CreateWindow("BUTTON", "&OK", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
-									150*4+50, 360, 100, 23, hWnd, (HMENU)IDC_BUTTON_OK, GetModuleHandle(NULL), NULL);
-			SendMessage(hButtonOk,WM_SETFONT,(WPARAM)hfDefault,MAKELPARAM(FALSE,0));
+			SendMessage(
+				CreateWindow("BUTTON", "&OK", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
+									150*4+50, 360, 100, 23, hWnd, (HMENU)IDC_BUTTON_OK, GetModuleHandle(NULL), NULL)
+									,WM_SETFONT, (WPARAM)hFont, TRUE);
+			EnableWindow(GetDlgItem(hWnd,IDC_BUTTON_OK), FALSE); 
 
 			// xfer Status bar
 			int statwidths[] = {80, 200, 360, 490,590, -1};
-			hStatus = CreateWindowEx(0, STATUSCLASSNAME, NULL, WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP, 0, 0, 0, 0, hWnd, (HMENU)IDC_MAIN_STATUS, GetModuleHandle(NULL), NULL);
+			SendMessage(
+				CreateWindowEx(0, STATUSCLASSNAME, NULL, WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP, 0, 0, 0, 0, hWnd, (HMENU)IDC_MAIN_STATUS, GetModuleHandle(NULL), NULL)
+				,WM_SETFONT, (WPARAM)hFont, TRUE);
 
-			SendMessage(hStatus, SB_SETPARTS, sizeof(statwidths)/sizeof(int), (LPARAM)statwidths);
-			SendMessage(hStatus, SB_SETTEXT, STATUSBAR_MODE, (LPARAM)"Client");
-			SendMessage(hStatus, SB_SETTEXT, STATUSBAR_TIME, (LPARAM)"0 ms");
-			SendMessage(hStatus, SB_SETTEXT, STATUSBAR_XFRD, (LPARAM)"Sent: 0 b");
-			SendMessage(hStatus, SB_SETTEXT, STATUSBAR_STATUS, (LPARAM)"Not Connected");
-			SendMessage(hStatus, SB_SETTEXT, STATUSBAR_PROTOCOL, (LPARAM)"TCP");
-
-			EnableWindow(hButtonOk, FALSE); 
-			SendMessage(hRadioDownload, BM_SETCHECK, 1, 0);
+			SendMessage(GetDlgItem(hWnd,IDC_MAIN_STATUS), SB_SETPARTS, sizeof(statwidths)/sizeof(int), (LPARAM)statwidths);
+			SendMessage(GetDlgItem(hWnd,IDC_MAIN_STATUS), SB_SETTEXT, STATUSBAR_MODE, (LPARAM)"Client");
+			SendMessage(GetDlgItem(hWnd,IDC_MAIN_STATUS), SB_SETTEXT, STATUSBAR_TIME, (LPARAM)"0 ms");
+			SendMessage(GetDlgItem(hWnd,IDC_MAIN_STATUS), SB_SETTEXT, STATUSBAR_XFRD, (LPARAM)"Sent: 0 b");
+			SendMessage(GetDlgItem(hWnd,IDC_MAIN_STATUS), SB_SETTEXT, STATUSBAR_STATUS, (LPARAM)"Not Connected");
+			SendMessage(GetDlgItem(hWnd,IDC_MAIN_STATUS), SB_SETTEXT, STATUSBAR_PROTOCOL, (LPARAM)"TCP");
+			
 			//currentUserChoice = DOWNLOAD;
 
 	return true;
