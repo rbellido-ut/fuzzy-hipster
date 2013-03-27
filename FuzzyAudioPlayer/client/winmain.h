@@ -8,7 +8,7 @@
 #include "utils.h"
 #include "resource.h"
 #include <Commctrl.h>
-
+#pragma comment(lib,"comctl32.lib")
 
 /***********************************
 *			DEFINITIONS
@@ -81,6 +81,7 @@ DWORD BytesRECV=0;
 *			PROTOTYPES
 ***********************************/
 LRESULT CALLBACK WinProc(HWND hWnd,UINT message,WPARAM wParam,LPARAM lParam);
+bool createGUI(HWND hWnd);
 int initOpenFileStruct(HWND, OPENFILENAME &);
 long delay (SYSTEMTIME, SYSTEMTIME);
 
