@@ -5,8 +5,10 @@
 *			IMPORTS
 ***********************************/
 #include "client.h"
+#include "utils.h"
 #include "resource.h"
 #include <Commctrl.h>
+
 
 /***********************************
 *			DEFINITIONS
@@ -25,27 +27,30 @@
 #define IDC_BUTTON_PLAY			6913
 #define IDC_BUTTON_FORWARD		6914
 #define IDC_BUTTON_STOP			6915
-#define ID_TOOL_HELP 996
-#define ID_TOOL_ABORT 997
-#define IDC_MAIN_STATUS	998
-#define IDC_MAIN_TOOL 999
-#define WM_SOCKET		104
-#define STATUSBAR_MODE 0
-#define STATUSBAR_TIME 1
-#define STATUSBAR_XFRD 2
-#define STATUSBAR_LOST 3
-#define STATUSBAR_PROTOCOL 4
+#define ID_TOOL_HELP			6916
+#define ID_TOOL_ABORT			6917
+#define IDC_MAIN_STATUS			6918
+#define IDC_MAIN_TOOL			6919
+#define WM_SOCKET				6920
+#define IDC_BUTTON_OK			6921
 
-#define DATA_BUFSIZE 8192
-#define MAX_CLIENTS 5
+
+#define STATUSBAR_MODE			0
+#define STATUSBAR_TIME			1
+#define STATUSBAR_XFRD			2
+#define STATUSBAR_STATUS		3
+#define STATUSBAR_PROTOCOL		4
+
+#define DATA_BUFSIZE			8192
+#define MAX_CLIENTS				5
 
 /***********************************
 *			GLOBALS
 ***********************************/
 // defaults
 char szServer[255] = "localhost"; // edit box
-char szPort[255] = "7000"; // edit box
-int nPort = 7000; // internal
+char szPort[255] = "5555"; // edit box
+int nPort = 5555; // internal
 int nRepeat = 1;
 
 // controls
@@ -59,6 +64,13 @@ HWND hRadioDownload = NULL;
 HWND hRadioStream = NULL;
 HWND hRadioMulticast = NULL;
 HWND hRadioMic = NULL;
+HWND hButtonOk = NULL;
+HWND hButtonStop = NULL;
+HWND hButtonForward = NULL;
+HWND hButtonPause = NULL;
+HWND hButtonPlay = NULL;
+HWND hButtonRewind = NULL;
+
 SOCKET Socket = NULL;
 char szHistory[10000];
 SOCKADDR_IN SockAddr;

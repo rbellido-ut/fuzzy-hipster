@@ -1,31 +1,44 @@
-#include "client_net.h"
+#include "utils.h"
 
 class Client {
+
 public:
-	Client() {connectSocket_ = 0;}
-	~Client(){}
-
-	void runClient(WSADATA *wsadata) {
-		char **pptr;
-		
-		connectSocket_ = createTCPClient(wsadata);
-		if (WSAConnect (connectSocket_, (struct sockaddr *)&addr_, sizeof(addr_), NULL, NULL, NULL, NULL) == INVALID_SOCKET)
-		{
-			std::cerr << "Can't connect to server" << std::endl;
-			std::cerr << "connect()" << std::endl;
-			exit(0);
-		}
-		std::cout << "Connected:    Server Name: " << hp_->h_name << std::endl;
-		pptr = hp_->h_addr_list;
-		std::cout << "\t\tIP Address: " <<  inet_ntoa(addr_.sin_addr) << std::endl;
-
-		std::cout << "Server started, connected to socket " << connectSocket_ << std::endl;
-
+	Client()
+	{ 
+		currentState = NOTCONNECTED;
+		connectSocket_ = 0; 
 	}
+	~Client(){ }
+
+	bool runClient(WSADATA *wsadata);
+	
+
+	int currentState;
+	DWORD dlThreadID;
+	HANDLE dlThreadHandle;
+
+	DWORD Client::dlThread(/*LPVOID param*/);
+	static DWORD WINAPI Client::runDLThread(LPVOID param);
+	void sendDLRequest(std::string dlReq);
 
 private:
 	SOCKET connectSocket_;
 	SOCKADDR_IN addr_;
 	hostent *hp_;
+
 	SOCKET createTCPClient(WSADATA* wsaData);
+
+	static DWORD WINAPI runRecvThread(LPVOID param);
+	DWORD WINAPI Client::recvThread(/*LPVOID param*/);
+
+	LPSOCKETDATA allocData(SOCKET fd);
+    void freeData(LPSOCKETDATA data);
+
+	bool postSendRequest(LPSOCKETDATA data);
+    bool postRecvRequest(LPSOCKETDATA data);
+	void recvComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+    void sendComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+    static void CALLBACK runRecvComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+    static void CALLBACK runSendComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+
 };
