@@ -51,29 +51,10 @@
 // defaults
 char szServer[255] = "localhost"; // edit box
 char szPort[255] = "5555"; // edit box
-int nPort = 5555; // internal
 int nRepeat = 1;
 
-// controls
-/*HWND hSrvSongList = NULL;
-HWND hEditHostname = NULL;
-HWND hEditPort = NULL;
-HWND hStatus = NULL;
-HWND hTool = NULL;
-HWND hRadioUpload = NULL;
-HWND hRadioDownload = NULL;
-HWND hRadioStream = NULL;
-HWND hRadioMulticast = NULL;
-HWND hRadioMic = NULL;
-HWND hButtonOk = NULL;
-HWND hButtonStop = NULL;
-HWND hButtonForward = NULL;
-HWND hButtonPause = NULL;
-HWND hButtonPlay = NULL;
-HWND hButtonRewind = NULL;*/
-
+// not needed
 SOCKET Socket = NULL;
-char szHistory[10000];
 SOCKADDR_IN SockAddr;
 DWORD BytesRECV=0;
 
@@ -85,5 +66,10 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT message,WPARAM wParam,LPARAM lParam);
 bool createGUI(HWND hWnd);
 int initOpenFileStruct(HWND, OPENFILENAME &);
 long delay (SYSTEMTIME, SYSTEMTIME);
+bool downloadRequest(Client&);
+bool uploadRequest(Client&);
+bool streamRequest(Client&);
+bool micRequest(Client&);
+bool castRequest(Client&);
 
 #endif

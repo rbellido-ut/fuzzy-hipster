@@ -2,9 +2,8 @@
 
 using namespace std;
 
-SOCKET Client::createTCPClient(WSADATA* wsaData) 
+SOCKET Client::createTCPClient(WSADATA* wsaData, const char* hostname, const int port) 
 {
-
 	int res;
 	WORD wVersionRequested;
 	wVersionRequested = MAKEWORD( 2, 2 );
@@ -26,9 +25,9 @@ SOCKET Client::createTCPClient(WSADATA* wsaData)
 	// Initialize and set up the address structure
 	memset((char *)&addr_, 0, sizeof(addr_));
 	addr_.sin_family = AF_INET;
-	addr_.sin_port = htons(TCPPORT); //TODO: this is hard coded
+	addr_.sin_port = htons(port); //TODO: this is hard coded
 
-	if ((hp_ = gethostbyname("localhost")) == NULL) //TODO: this is hard-coded
+	if ((hp_ = gethostbyname(hostname)) == NULL) //TODO: this is hard-coded
 	{
 		MessageBox(NULL, "Unknown server address", "Connection Error", MB_ICONERROR);
 		return NULL;
@@ -41,12 +40,12 @@ SOCKET Client::createTCPClient(WSADATA* wsaData)
 
 }
 
-bool Client::runClient(WSADATA *wsadata) 
+bool Client::runClient(WSADATA *wsadata, const char* hostname, const int port) 
 {
 
 	char **pptr;
 
-	connectSocket_ = createTCPClient(wsadata);
+	connectSocket_ = createTCPClient(wsadata, hostname, port);
 
 	if (WSAConnect (connectSocket_, (struct sockaddr *)&addr_, sizeof(addr_), NULL, NULL, NULL, NULL) == INVALID_SOCKET)
 	{
@@ -294,6 +293,7 @@ DWORD WINAPI Client::runDLThread(LPVOID param)
 	Client* c = (Client*) param;
 	return c->dlThread();
 }
+
 DWORD Client::dlThread(/*LPVOID param*/)
 {
 	
@@ -341,7 +341,7 @@ LPSOCKETDATA Client::allocData(SOCKET socketFD)
 void Client::freeData(LPSOCKETDATA data){
     if(data)
     {
-		MessageBox(NULL, "Socket Closed", "", MB_ICONWARNING);
+		//MessageBox(NULL, "Socket Closed", "", MB_ICONWARNING);
         closesocket(data->sock);
         delete data;
     }

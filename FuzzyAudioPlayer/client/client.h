@@ -10,7 +10,7 @@ public:
 	}
 	~Client(){ }
 
-	bool runClient(WSADATA *wsadata);
+	bool runClient(WSADATA *wsadata, const char*, const int);
 	
 
 	int currentState;
@@ -26,7 +26,7 @@ private:
 	SOCKADDR_IN addr_;
 	hostent *hp_;
 
-	SOCKET createTCPClient(WSADATA* wsaData);
+	SOCKET createTCPClient(WSADATA*, const char*, const int);
 
 	static DWORD WINAPI runRecvThread(LPVOID param);
 	DWORD WINAPI Client::recvThread(/*LPVOID param*/);
