@@ -9,20 +9,47 @@ we're just way too hipsters that our application is underground right now, just 
 
 Anyway...
 
-TODO - Updated at least once weekly!
------
-####Week of Feb 18####
-  - [ ] @everyone, Create your own separate folder where you will upload your windows a2 source code. We will
-  decide this week whose code we will work on and improve on as a group. On the other hand, we could also
-  rewrite the entire networking layer of our project.
-  - [ ] @anyone, WALP. Our biggest objective is obviously the networking part of this assignment. If you
-  are keen and aren't tired of wandows and totally love it to bits (pun totally intended), then I would suggest 
-  creating little, simple applications. 
-  **We are going to use Completion Routines to implement our networking component.**
-  So I suggest getting familiar with those even if you did or didn't use it on the previous assignment.
-  - [ ] @everyone, Study the assignment specifications, the notes on milliways, and ask questions. 
-  Start thinking about the design and contribute your ideas to the team.
+Task Breakdown
+===============
+Client Side
+---------------
+Aaron & Behnam: 
+* TCP Control channel established, 
+* Waiting for user command [done by: March 20, 2013]
 
+Behnam: 
+* Sending Download/Upload requests,
+* download/upload functionality [done by March 24, 2013]
+
+Aaron: 
+* sending streaming requests, 
+* streaming functionality [done by March 24, 2013]
+
+Behnam & Aaron: 
+* Sending 2-way Microphone requests, 
+* 2-way microphone functionality [done by March 28,2013]
+
+Behnam & Aaron: 
+* Sending multicasting requests,
+* multicasting functionality [done by March 31, 2013]
+
+Server Side
+--------------
+Ron & Jesse: 
+* Set up TCP connection listener, listening for requests, 
+* displaying decoded requests [done by: March 20,2013]
+
+Ron: 
+* Handling stream Request [done by March 24, 2013]
+
+Jesse: 
+* Handling upload/download [done by March 24,2013]
+
+Ron: 
+* Handling 2-way Microphone requests [done by March 28, 2013]
+
+Jesse & Ron: 
+* Handling multicasting requests[done by March 31, 2013]
 
 Important dates
 ----------------
