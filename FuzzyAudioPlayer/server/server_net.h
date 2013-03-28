@@ -1,7 +1,9 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef __SERVER_NET_H
+#define __SERVER_NET_H
+
 #include "../utils.h"
 
 SOCKET createServer(WSADATA * wsadata, int protocol);
 
 #endif
+
