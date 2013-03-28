@@ -236,6 +236,12 @@ bool streamRequest(Client& clnt)
 	clnt.currentState = STREAMING;
 
 	// need to read streamed data received from server into a SFML buffer then play it with the SFML lib
+	sf::SoundBuffer buffer;
+	buffer.loadFromFile("D:\\test.ogg");
+	AudioStream stream;
+	stream.load(buffer);
+	stream.play();
+
 	return true;
 }
 
@@ -275,7 +281,7 @@ bool createGUI(HWND hWnd)
 	SendMessage(
 	CreateWindowEx(WS_EX_CLIENTEDGE, PROGRESS_CLASS, "Progress",
 	WS_CHILD|WS_VISIBLE|PBS_SMOOTH, 
-	0,0, 783, 30, hWnd, NULL, NULL, NULL)
+	0,0, 781, 30, hWnd, NULL, NULL, NULL)
 	,WM_SETFONT, (WPARAM)hFont, TRUE);
 
 	// static controls
@@ -296,7 +302,7 @@ bool createGUI(HWND hWnd)
 
 		SendMessage(
 	CreateWindow(TEXT("STATIC"), TEXT("Other users on server"), WS_CHILD | WS_VISIBLE | SS_LEFT, 
-		390, 80, 200, 25, hWnd, 0, GetModuleHandle(NULL), NULL)
+		420, 80, 160, 25, hWnd, 0, GetModuleHandle(NULL), NULL)
 		,WM_SETFONT, (WPARAM)hFont, TRUE);
 
 	SendMessage(
@@ -315,7 +321,7 @@ bool createGUI(HWND hWnd)
 	// create connected clients list box
 	SendMessage(
 	CreateWindowEx(WS_EX_CLIENTEDGE, "LISTBOX", "", WS_CHILD|WS_VISIBLE|LBS_STANDARD|LBS_HASSTRINGS,
-				390, 100, 380, 260, hWnd, (HMENU)IDC_CLIENTLIST, GetModuleHandle(NULL), NULL)
+				400, 100, 370, 260, hWnd, (HMENU)IDC_CLIENTLIST, GetModuleHandle(NULL), NULL)
 				,WM_SETFONT, (WPARAM)hFont, TRUE);
 
 	SendMessage(GetDlgItem(hWnd,IDC_CLIENTLIST),LB_INSERTSTRING,0,(LPARAM)"otherusertochatwith69");
@@ -327,6 +333,7 @@ bool createGUI(HWND hWnd)
 		,WM_SETFONT, (WPARAM)hFont, TRUE);
 	// set default value
 	SendMessage(GetDlgItem(hWnd,IDC_EDIT_HOSTNAME), WM_SETTEXT, NULL, (LPARAM)szServer);
+	SendMessage(GetDlgItem(hWnd,IDC_EDIT_HOSTNAME), EM_LIMITTEXT, WPARAM(128), 0);
 
 	// radio buttons
 	SendMessage(
@@ -362,6 +369,7 @@ bool createGUI(HWND hWnd)
 		,WM_SETFONT, (WPARAM)hFont, TRUE);
 	//SendMessage(hEditPort, WM_SETFONT,(WPARAM)hfDefault, MAKELPARAM(FALSE,0));
 	SendMessage(GetDlgItem(hWnd,IDC_EDIT_PORT), WM_SETTEXT, NULL, (LPARAM)szPort);
+	SendMessage(GetDlgItem(hWnd,IDC_EDIT_PORT), EM_LIMITTEXT, WPARAM(5), 0);
 
 	// create music control buttons
 	SendMessage(
@@ -432,3 +440,4 @@ int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
 
 	return 0;
 }
+
