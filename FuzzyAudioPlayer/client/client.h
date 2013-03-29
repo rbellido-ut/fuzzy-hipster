@@ -18,11 +18,11 @@ public:
 	HANDLE dlThreadHandle;
 
 	DWORD ulThreadID;
-	DWORD Client::dlThread(/*LPVOID param*/);
+	DWORD Client::dlThread(LPVOID param);
 	static DWORD WINAPI Client::runDLThread(LPVOID param);
 
 	HANDLE ulThreadHandle;
-	DWORD Client::ulThread(/*LPVOID param*/);
+	DWORD Client::ulThread(LPVOID param);
 	static DWORD WINAPI Client::runULThread(LPVOID param);
 
 	void dispatchClientRequest(std::string dlReq);
