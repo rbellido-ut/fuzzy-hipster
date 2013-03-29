@@ -19,11 +19,6 @@ public:
 
 	void runServer(WSADATA * wsadata)
 	{
-		HANDLE acceptClientThreadHandle;
-		DWORD acceptClientThreadID;
-
-		listenSocket_ = createServer(wsadata, TCP);
-		acceptClientThreadHandle = CreateThread(NULL, 0, runListenThread, this, 0, &acceptClientThreadID);
 	}
 
 private:
