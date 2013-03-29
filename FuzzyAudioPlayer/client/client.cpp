@@ -107,6 +107,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
     REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
     LPSOCKETDATA data = (LPSOCKETDATA) rc->data;
     Client* clnt = rc->clnt;
+	
 
     if(error || bytesTransferred == 0)
     {
@@ -116,17 +117,32 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
     //check to see what mode we are in and handle data accordingly
     //will only receive when in DL, Waiting for UL approval, Streaming, Multicasting, or microphone states
-    string tmp(rc->data->databuf);
-	tmp;
+    string tmp(data->databuf);
+	istringstream iss(tmp);
+	string reqType, extra;
 
     switch(clnt->currentState)
 	{
 	case DOWNLOADING:
-		MessageBox(NULL, tmp.c_str(), NULL, NULL);
+		MessageBox(NULL, "DL'ing", "", NULL);
+		clnt->dlThreadHandle = CreateThread(NULL, 0, clnt->runDLThread, &clnt, 0, &clnt->dlThreadID);
+		MessageBox(NULL, "UL Thread created", "DL'ing", NULL);
 		break;
 
 	case WAITFORAPPROVAL:
-		MessageBox(NULL, tmp.c_str(), NULL, NULL);
+		MessageBox(NULL, "UL'ing", "", NULL);
+		//MessageBox(NULL, tmp.c_str(), NULL, NULL);
+		if(iss >> reqType && iss >> extra){
+			clnt->currentState = UPLOADING; 
+			MessageBox(NULL, "UL Approved", "APPROVED", NULL);
+			clnt->ulThreadHandle = CreateThread(NULL, 0, clnt->runULThread, &clnt, 0, &clnt->ulThreadID);
+			MessageBox(NULL, "UL Thread created", "UL'ing", NULL);
+		}
+		else
+		{
+			MessageBox(NULL, "UL Denied", "NOT APPROVED", NULL);
+		}
+
 		break;
 
 	case STREAMING:
@@ -196,9 +212,17 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	switch(clnt->currentState)
 	{
 	case SENTDLREQUEST:
-		rc->clnt->currentState = DOWNLOADING;
+		clnt->currentState = DOWNLOADING;
+		dispatchOneRecv();
 		break;
 
+	case SENTULREQUEST:
+		clnt->currentState = WAITFORAPPROVAL;
+		dispatchOneRecv();
+		
+
+		break;
+					   
 	case UPLOADING:
 		break;
 
@@ -222,7 +246,18 @@ void Client::dispatchClientRequest(string usrReq){
 
 	::SleepEx(100, TRUE); //make this thread alertable
 
-	MessageBox(NULL, "sent Req" , "" , MB_ICONWARNING);
+	//MessageBox(NULL, "sent Req" , "" , MB_ICONWARNING);
+}
+
+void Client::dispatchOneRecv(){
+
+	SOCKETDATA* data = allocData(connectSocket_);
+	if(data)
+	{
+		dispatchWSARecvRequest(data);
+	}
+
+	::SleepEx(100, TRUE); //make this thread alertable
 }
 
 DWORD WINAPI Client::runDLThread(LPVOID param)
@@ -234,22 +269,13 @@ DWORD WINAPI Client::runDLThread(LPVOID param)
 DWORD Client::dlThread(/*LPVOID param*/)
 {
 	
-	currentState = DOWNLOADING;
-
-	while(currentState == DOWNLOADING)
+	while(1)
 	{
-		SOCKETDATA* data = allocData(connectSocket_);
-		if(data)
-		{
-			dispatchWSARecvRequest(data);
-		}
-
-		::SleepEx(100, TRUE); //make this thread alertable
+		MessageBox(NULL, "In DL Thread", "", NULL);
+		Sleep(1000);
 	}
-
-	currentState = WFUCOMMAND;
-
-	return 1;
+	
+	return 0;
 }
 
 
@@ -262,22 +288,13 @@ DWORD WINAPI Client::runULThread(LPVOID param)
 DWORD Client::ulThread(/*LPVOID param*/)
 {
 	
-	if(currentState != SENTULREQUEST)
-		return 0;
-
-
-	SOCKETDATA* data = allocData(connectSocket_);
-	if(data)
+	while(1)
 	{
-		dispatchWSARecvRequest(data);
+		MessageBox(NULL, "In UL Thread", "", NULL);
+		Sleep(1000);
 	}
-
-	::SleepEx(100, TRUE); //make this thread alertable
 	
-
-	currentState = WAITFORAPPROVAL;
-
-	return 1;
+	return 0;
 }
 
 
@@ -324,17 +341,12 @@ DWORD WINAPI Client::runRecvThread(LPVOID param)
 DWORD WINAPI Client::recvThread(/*LPVOID param*/)
 {
 
-	while(TRUE)
+	while(1)
 	{
-		//SOCKETDATA* data = allocData(connectSocket_);
-		//if(data)
-		//{
-		//dispatchWSARecvRequest(data);
-		//}
-
-		cout << "In Recv Thread" << endl;
-
-		::SleepEx(100, TRUE); //make this thread alertable
+		MessageBox(NULL, "In DL Thread", "", NULL);
+		Sleep(1000);
 	}
+	
+	return 0;
 
 }

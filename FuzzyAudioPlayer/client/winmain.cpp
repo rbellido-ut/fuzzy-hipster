@@ -207,10 +207,10 @@ bool downloadRequest(Client &clnt)
 	userRequest += "DL ";
 	userRequest += "Behnam's party mix.wav\n";
 					
+	clnt.currentState = SENTDLREQUEST;
 	clnt.dispatchClientRequest(userRequest);
 					
-	clnt.currentState = SENTDLREQUEST;
-	clnt.dlThreadHandle = CreateThread(NULL, 0, clnt.runDLThread, &clnt, 0, &clnt.dlThreadID);
+	
 
 	return true;
 }
@@ -220,10 +220,12 @@ bool uploadRequest(Client& clnt)
 	string userRequest;
 
 	userRequest += "UL ";
-	userRequest += "Behnam's party mix.wav\n";
+	userRequest += "Behnam's party mix.wav\n";	
 
 	clnt.currentState = SENTULREQUEST;
-	clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, &clnt, 0, &clnt.ulThreadID);
+	clnt.dispatchClientRequest(userRequest);
+
+	
 	return true;
 }
 /*
