@@ -8,7 +8,7 @@
 #include "utils.h"
 #include "resource.h"
 #include <Commctrl.h>
-#include <SFML/Audio.hpp>
+//#include <SFML/Audio.hpp>
 #include <vector>
 #pragma comment(lib,"comctl32.lib")
 
@@ -70,10 +70,10 @@ int initOpenFileStruct(HWND, OPENFILENAME &);
 long delay (SYSTEMTIME, SYSTEMTIME);
 bool downloadRequest(Client&);
 bool uploadRequest(Client&);
-bool streamRequest(Client&);
+//bool streamRequest(Client&);
 bool micRequest(Client&);
 bool castRequest(Client&);
-
+/*
 class AudioStream : public sf::SoundStream
 {
     public:
@@ -112,5 +112,5 @@ class AudioStream : public sf::SoundStream
         std::vector<sf::Int16> m_samples;
         std::size_t m_currentSample;
 };
-
+*/
 #endif

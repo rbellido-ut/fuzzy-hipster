@@ -53,80 +53,16 @@ bool Client::runClient(WSADATA *wsadata, const char* hostname, const int port)
 		return false;
 	}
 
-	MessageBox(NULL, "IM CONNECTED! YEAAAAAA !", "Connected to server", MB_ICONINFORMATION);
+	MessageBox(NULL, "IM CONNECTEDDD! YEAAAAAA !", "Connected to server", MB_ICONINFORMATION);
 	currentState = WFUCOMMAND;
 
 	return true;
 
 	//now that we are connected , we are going to wait for user command
 
-
-
-	//cout << "Connected:    Server Name: " << hp_->h_name << std::endl;
-	//pptr = hp_->h_addr_list;
-	//cout << "\t\tIP Address: " <<  inet_ntoa(addr_.sin_addr) << std::endl;
-	//cout << "Server started, connected to socket " << connectSocket_ << std::endl;
-	
-	//DWORD recvThreadID;
-	//HANDLE recvThreadHandle;
-	//recvThreadHandle = CreateThread(NULL, 0, runRecvThread, this, 0, &recvThreadID);
-
-
-
-	/*
-	//while(TRUE)
-	//{
-		//string command, userRequest, songName;
-		//SOCKETDATA* data = allocData(connectSocket_);
-
-		//cout << "Enter your command: ";
-		//getline(cin, command);
-
-		if(command == "download")
-		{	//send download request
-			userRequest = "DL ";
-			songName = "Behnam's Party Mix\n";
-			userRequest += songName;
-		}
-		if(command == "upload")
-		{
-			//send upload request
-			userRequest = "UL ";
-			songName = "Behnam's Party Mix\n";
-			userRequest += songName;
-		}
-		if(command == "stream")
-		{
-			//send stream request
-		}
-		if(command == "multicast")
-		{
-			//send multicast request
-		}
-		if(command == "mic")
-		{
-			//send mic request
-		}
-
-		//cout << "Sent " << userRequest << endl;
-
-		//strcpy(data->databuf,command.c_str());
-
-		//if(data)
-		//{
-		//postSendRequest(data);
-		//}
-
-		//send(connectSocket_, userRequest.c_str(), sizeof(userRequest)+1, NULL);
-
-		::SleepEx(100, TRUE); //make this thread alertable
-	}
-	*/
-
-
 }
 
-bool Client::postRecvRequest(LPSOCKETDATA data){
+bool Client::dispatchWSARecvRequest(LPSOCKETDATA data){
     DWORD flag = 0;
     DWORD bytesRecvd = 0;
     int error;
@@ -189,7 +125,8 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		MessageBox(NULL, tmp.c_str(), NULL, NULL);
 		break;
 
-	case UPLOADING:
+	case WAITFORAPPROVAL:
+		MessageBox(NULL, tmp.c_str(), NULL, NULL);
 		break;
 
 	case STREAMING:
@@ -205,7 +142,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 }
 
-bool Client::postSendRequest(LPSOCKETDATA data)
+bool Client::dispatchWSASendRequest(LPSOCKETDATA data)
 {
     DWORD flag = 0;
     DWORD bytesSent = 0;
@@ -272,20 +209,20 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 }
 
 
-void Client::sendDLRequest(string dlReq){
+void Client::dispatchClientRequest(string usrReq){
 	
 					
 	SOCKETDATA* data = allocData(connectSocket_);
-	strncpy(data->databuf, dlReq.c_str(), dlReq.size());
+	strncpy(data->databuf, usrReq.c_str(), usrReq.size());
 
 	if(data)
 	{
-		postSendRequest(data);
+		dispatchWSASendRequest(data);
 	}
 
 	::SleepEx(100, TRUE); //make this thread alertable
 
-	MessageBox(NULL, "sent DL Req" , "YAY" , MB_ICONWARNING);
+	MessageBox(NULL, "sent Req" , "" , MB_ICONWARNING);
 }
 
 DWORD WINAPI Client::runDLThread(LPVOID param)
@@ -304,13 +241,41 @@ DWORD Client::dlThread(/*LPVOID param*/)
 		SOCKETDATA* data = allocData(connectSocket_);
 		if(data)
 		{
-			postRecvRequest(data);
+			dispatchWSARecvRequest(data);
 		}
 
 		::SleepEx(100, TRUE); //make this thread alertable
 	}
 
 	currentState = WFUCOMMAND;
+
+	return 1;
+}
+
+
+DWORD WINAPI Client::runULThread(LPVOID param)
+{
+	Client* c = (Client*) param;
+	return c->ulThread();
+}
+
+DWORD Client::ulThread(/*LPVOID param*/)
+{
+	
+	if(currentState != SENTULREQUEST)
+		return 0;
+
+
+	SOCKETDATA* data = allocData(connectSocket_);
+	if(data)
+	{
+		dispatchWSARecvRequest(data);
+	}
+
+	::SleepEx(100, TRUE); //make this thread alertable
+	
+
+	currentState = WAITFORAPPROVAL;
 
 	return 1;
 }
@@ -364,7 +329,7 @@ DWORD WINAPI Client::recvThread(/*LPVOID param*/)
 		//SOCKETDATA* data = allocData(connectSocket_);
 		//if(data)
 		//{
-		//postRecvRequest(data);
+		//dispatchWSARecvRequest(data);
 		//}
 
 		cout << "In Recv Thread" << endl;

@@ -65,6 +65,7 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 	static bool haveClient;
 	static Client clnt;
 	static int currentUserChoice;
+	static string userRequest;
 
 	switch(msg)
 	{
@@ -99,11 +100,11 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 					SendMessage(GetDlgItem(hWnd,IDC_EDIT_PORT), WM_GETTEXT,sizeof(szPort)/sizeof(szPort[0]),(LPARAM)szPort);
 					SendMessage(GetDlgItem(hWnd,IDC_EDIT_HOSTNAME), WM_GETTEXT,sizeof(szServer)/sizeof(szServer[0]),(LPARAM)szServer);
 
-					haveClient = true;
 					WSADATA wsaData;
 					if (clnt.runClient(&wsaData, szServer, atoi(szPort))) {
 						SendMessage(GetDlgItem(hWnd,IDC_MAIN_STATUS), SB_SETTEXT, STATUSBAR_STATUS, (LPARAM)"Connected");
 						EnableWindow(GetDlgItem(hWnd,IDC_BUTTON_OK), TRUE); 
+						haveClient = true;
 					}
 					else
 						MessageBox(hWnd, "Try Again!" , "Sorry" , MB_ICONWARNING);
@@ -147,7 +148,7 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						MessageBox(hWnd, "CAN ONLY DO ONE THING AT A TIME" , "Warning" , MB_ICONWARNING);
 					}
 					else {
-						streamRequest(clnt);
+						//streamRequest(clnt);
 					}
 					break;
 				}
@@ -201,28 +202,31 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 
 bool downloadRequest(Client &clnt)
 {
-	std::string userRequest;
+	string userRequest;
 
 	userRequest += "DL ";
 	userRequest += "Behnam's party mix.wav\n";
 					
-	clnt.sendDLRequest(userRequest);
+	clnt.dispatchClientRequest(userRequest);
 					
 	clnt.currentState = SENTDLREQUEST;
 	clnt.dlThreadHandle = CreateThread(NULL, 0, clnt.runDLThread, &clnt, 0, &clnt.dlThreadID);
-					
-	//postSendRequest
 
 	return true;
 }
 
 bool uploadRequest(Client& clnt)
 {
-	MessageBox(NULL, "upload req" , "Test" , MB_OK);
+	string userRequest;
+
+	userRequest += "UL ";
+	userRequest += "Behnam's party mix.wav\n";
+
 	clnt.currentState = SENTULREQUEST;
+	clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, &clnt, 0, &clnt.ulThreadID);
 	return true;
 }
-
+/*
 bool streamRequest(Client& clnt)
 {
 	MessageBox(NULL, "stream req" , "Test" , MB_OK);
@@ -231,7 +235,7 @@ bool streamRequest(Client& clnt)
 
 	userRequest += "ST";
 					
-	clnt.sendDLRequest(userRequest);
+	clnt.dispatchClientRequest(userRequest);
 					
 	clnt.currentState = STREAMING;
 
@@ -244,7 +248,7 @@ bool streamRequest(Client& clnt)
 
 	return true;
 }
-
+*/
 bool micRequest(Client& clnt)
 {
 	MessageBox(NULL, "mic req" , "Test" , MB_OK);
@@ -253,7 +257,7 @@ bool micRequest(Client& clnt)
 
 	userRequest += "MIC";
 					
-	clnt.sendDLRequest(userRequest);
+	clnt.dispatchClientRequest(userRequest);
 					
 	//clnt.currentState = STREAMING;
 	return true;

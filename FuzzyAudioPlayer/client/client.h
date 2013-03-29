@@ -17,9 +17,15 @@ public:
 	DWORD dlThreadID;
 	HANDLE dlThreadHandle;
 
+	DWORD ulThreadID;
 	DWORD Client::dlThread(/*LPVOID param*/);
 	static DWORD WINAPI Client::runDLThread(LPVOID param);
-	void sendDLRequest(std::string dlReq);
+
+	HANDLE ulThreadHandle;
+	DWORD Client::ulThread(/*LPVOID param*/);
+	static DWORD WINAPI Client::runULThread(LPVOID param);
+
+	void dispatchClientRequest(std::string dlReq);
 
 private:
 	SOCKET connectSocket_;
@@ -34,8 +40,8 @@ private:
 	LPSOCKETDATA allocData(SOCKET fd);
     void freeData(LPSOCKETDATA data);
 
-	bool postSendRequest(LPSOCKETDATA data);
-    bool postRecvRequest(LPSOCKETDATA data);
+	bool dispatchWSASendRequest(LPSOCKETDATA data);
+    bool dispatchWSARecvRequest(LPSOCKETDATA data);
 	void recvComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
     void sendComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
     static void CALLBACK runRecvComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
