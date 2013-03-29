@@ -23,22 +23,22 @@
 #define TCPPORT 5555
 #define UDPPORT 4444
 
-class Server ;
-class Client ;
+class Server;
+class Client;
 
 enum {
     TCP,
     UDP
 };
 
-typedef struct socket_data{
+typedef struct socket_data {
     SOCKET sock;
     WSABUF	wsabuf;
     char databuf[DATABUFSIZE];
     WSAOVERLAPPED overlap;
 }SOCKETDATA, *LPSOCKETDATA;
 
-typedef struct request_context{
+typedef struct request_context {
     LPSOCKETDATA data;
     Client* clnt;
 } REQUESTCONTEXT;

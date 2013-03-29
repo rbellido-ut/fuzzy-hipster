@@ -10,5 +10,6 @@ int main(int argc, char* argv[])
 	srvr.runServer(&wsaData);
 
 	getchar();
-	exit(0);
+
+	return EXIT_SUCCESS;
 }

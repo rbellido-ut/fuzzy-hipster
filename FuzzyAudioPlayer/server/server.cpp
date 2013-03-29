@@ -3,7 +3,8 @@
 
 using namespace std;
 
-DWORD WINAPI Server::runListenThread(LPVOID args) {
+DWORD WINAPI Server::runListenThread(LPVOID args)
+{
 	Server *s = (Server*) args;
 	return s->listenThread( &s->listenSocket_);
 }

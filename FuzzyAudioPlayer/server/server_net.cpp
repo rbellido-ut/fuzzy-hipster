@@ -16,7 +16,7 @@ SOCKET createServer(WSADATA *wsaData, int protocol)
 
 	if ((res = WSAStartup(wVersionRequested, wsaData)) != 0)
 	{
-		cerr << "WSAStartup falied with error " << res << endl;
+		cerr << "WSAStartup failed with error " << res << endl;
 		WSACleanup();
 		return NULL;
 	}
@@ -33,15 +33,17 @@ SOCKET createServer(WSADATA *wsaData, int protocol)
 
 	if (bind(listenSocket, (PSOCKADDR) &addr, sizeof(addr)) == SOCKET_ERROR)
 	{
-		cerr << "bind() falied with error " << WSAGetLastError() << endl;
+		cerr << "bind() failed with error " << WSAGetLastError() << endl;
 		return NULL;
 	}
+
+	cout << "Server bound to port " << ((protocol == TCP) ? TCPPORT : UDPPORT) << endl;
 
     if (protocol != UDP)
     {
         if (listen(listenSocket, 5))
         {
-            cerr << "listen() falied with error " << WSAGetLastError() << endl;
+            cerr << "listen() failed with error " << WSAGetLastError() << endl;
             closesocket(listenSocket);
             return NULL;
         }
@@ -50,7 +52,7 @@ SOCKET createServer(WSADATA *wsaData, int protocol)
 	ULONG nonblock = 1;
 	if(ioctlsocket(listenSocket, FIONBIO, &nonblock) == SOCKET_ERROR)
 	{
-		cerr << "ioctlsocket() falied with error " << WSAGetLastError() << endl;
+		cerr << "ioctlsocket() failed with error " << WSAGetLastError() << endl;
 		closesocket(listenSocket);
 		return NULL;
 	}
