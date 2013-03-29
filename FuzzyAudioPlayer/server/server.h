@@ -29,13 +29,16 @@ public:
 private:
 	// Private data members
 	SOCKET listenSocket_;
-	std::vector<SOCKET> clientList;
+	std::vector<SOCKET> clientList_;
+	int currentClient;
 
 	// Function prototypes
 	DWORD WINAPI listenThread(void *param);
 	DWORD WINAPI handleClient(void *param);
 	static DWORD WINAPI runListenThread(LPVOID args);
 	static DWORD WINAPI runHandleClientThread(LPVOID args);
+	DWORD WINAPI StreamThread(LPVOID lpParameter);
+	void ParseRequest(char * request);
 };
 
 #endif

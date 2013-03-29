@@ -1,5 +1,6 @@
 //Application logic
 #include "server.h"
+#include "net_stream.h"
 
 using namespace std;
 
@@ -7,6 +8,56 @@ DWORD WINAPI Server::runListenThread(LPVOID args)
 {
 	Server *s = (Server*) args;
 	return s->listenThread( &s->listenSocket_);
+}
+
+DWORD WINAPI Server::runHandleClientThread(LPVOID args)
+{
+	Server* s = (Server*) args;
+	return s->handleClient();
+}
+
+DWORD WINAPI Server::handleClient(LPVOID param)
+{
+	SOCKET* controlSocket = (SOCKET*) param;
+	int numBytesRecvd, bytesToRead;
+	char request[DATABUFSIZE];
+	char * p;
+
+	while (TRUE)
+	{
+		//listen for requests
+		//when you receive, parse the request
+
+		//recv(...)
+		//when you receive stuff, call parse request
+		
+		p = request;
+		bytesToRead = DATABUFSIZE;
+		while ((numBytesRecvd = recv(*controlSocket, p, bytesToRead, 0)) > 0)
+		{
+			p += numBytesRecvd;
+			bytesToRead -= numBytesRecvd;
+		}
+
+		ParseRequest(request);
+	}
+}
+
+void Server::ParseRequest(char * request)
+{
+	string req = request;
+	stringstream ss(req);
+	string filename;
+	string requesttype;
+
+	ss >> requesttype;
+	cout << requesttype << " ";
+
+	if (requesttype == "ST")
+	{
+		ss >> filename;
+		cout << filename << endl;
+	}
 }
 
 DWORD WINAPI Server::listenThread(LPVOID args)
@@ -33,6 +84,9 @@ DWORD WINAPI Server::listenThread(LPVOID args)
         else
         {
             cout << "Socket " << newClientSocket << " accepted." << endl;
+			//create handleClientThread,  passing &newClientSocket
+			//push back to clientlist
+			//CreateThread(NULL, 0, handleClient, (LPVOID) newClientSocket, 0, 0);
         }
 
         ::SleepEx(100, TRUE); //make this thread alertable

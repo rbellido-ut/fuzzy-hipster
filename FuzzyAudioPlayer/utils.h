@@ -34,7 +34,7 @@ enum {
 typedef struct socket_data {
     SOCKET sock;
     WSABUF	wsabuf;
-    char databuf[DATABUFSIZE];
+    char databuf[DATABUFSIZE]; // "ST partymix.wav\n"
     WSAOVERLAPPED overlap;
 }SOCKETDATA, *LPSOCKETDATA;
 

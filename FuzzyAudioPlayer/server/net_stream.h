@@ -9,8 +9,7 @@ class NetStream : public sf::InputStream
 
 public:
 	NetStream(std::string host, int port);
-	NetStream(const NetStream& ns) : filesize(ns.filesize), streamsocket(ns.streamsocket), streambuffer(ns.streambuffer) {};
-
+	//NetStream(const NetStream& ns) : filesize(ns.filesize), streamsocket(ns.streamsocket), streambuffer(ns.streambuffer) {};
 	~NetStream();
 
 	void close();
