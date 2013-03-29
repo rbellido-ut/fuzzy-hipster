@@ -64,7 +64,7 @@ DWORD WINAPI listenThread(LPVOID args)
 
 DWORD WINAPI handleClient(LPVOID param)
 {
-	SOCKET* controlSocket = (SOCKET*) param;
+	SOCKET controlSocket = *((SOCKET*) param);
 	int numBytesRecvd, bytesToRead;
 	char request[DATABUFSIZE];
 	char * p;
@@ -76,23 +76,28 @@ DWORD WINAPI handleClient(LPVOID param)
 		
 		p = request;
 		bytesToRead = DATABUFSIZE;
-		/*while ((numBytesRecvd = recv(*controlSocket, p, bytesToRead, 0)) > 0)
+		while ((numBytesRecvd = recv(controlSocket, p, bytesToRead, 0)) > 0)
 		{
 			p += numBytesRecvd;
 			bytesToRead -= numBytesRecvd;
 
 			if (numBytesRecvd <= DATABUFSIZE)
 				break;
-		}*/
-		numBytesRecvd = recv(*controlSocket, p, bytesToRead, 0);
+		}
+		//numBytesRecvd = recv(*controlSocket, p, bytesToRead, 0);
 
-		if (numBytesRecvd < 0)
+		/*if (numBytesRecvd < 0)
 		{
 			cout << "Error: " << WSAGetLastError() << endl;
 			continue;
+		}*/
+		if (WSAGetLastError() == WSAEWOULDBLOCK)
+		{
+				Sleep(1000);
+				continue;
 		}
 
-		ParseRequest(request, *controlSocket);
+		ParseRequest(request, controlSocket);
 	}
 }
 
