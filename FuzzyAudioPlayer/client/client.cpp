@@ -269,7 +269,7 @@ DWORD WINAPI Client::runDLThread(LPVOID param)
 DWORD Client::dlThread(/*LPVOID param*/)
 {
 	
-	while(1)
+	while(currentState == DOWNLOADING)
 	{
 		MessageBox(NULL, "In DL Thread", "", NULL);
 		Sleep(1000);
@@ -288,7 +288,7 @@ DWORD WINAPI Client::runULThread(LPVOID param)
 DWORD Client::ulThread(/*LPVOID param*/)
 {
 	
-	while(1)
+	while(currentState == UPLOADING)
 	{
 		MessageBox(NULL, "In UL Thread", "", NULL);
 		Sleep(1000);
