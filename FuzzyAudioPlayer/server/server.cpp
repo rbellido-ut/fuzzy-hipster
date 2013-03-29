@@ -85,11 +85,11 @@ DWORD WINAPI Server::runListenThread(LPVOID args)
 }
 
 
-DWORD WINAPI Server::runHandleClientThread(LPVOID args)
+/*DWORD WINAPI Server::runHandleClientThread(LPVOID args)
 {
 	Server* s = (Server*) args;
 	return s->handleClient();
-}
+}*/
 
 
 void Server::ParseRequest(char * request)

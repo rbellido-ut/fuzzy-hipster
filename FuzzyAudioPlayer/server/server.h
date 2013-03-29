@@ -17,9 +17,7 @@ public:
 	{
 	}
 
-	void runServer(WSADATA * wsadata)
-	{
-	}
+	void runServer(WSADATA * wsadata);
 
 private:
 	// Private data members
@@ -32,7 +30,7 @@ private:
 	DWORD WINAPI handleClient(void *param);
 	static DWORD WINAPI runListenThread(LPVOID args);
 	static DWORD WINAPI runHandleClientThread(LPVOID args);
-	DWORD WINAPI StreamThread(LPVOID lpParameter);
+	//DWORD WINAPI StreamThread(LPVOID lpParameter);
 	void ParseRequest(char * request);
 };
 
