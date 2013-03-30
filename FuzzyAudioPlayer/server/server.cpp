@@ -217,15 +217,15 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 
 			//fileToSend.open(filename.c_str());
 			fileToSend.open("test.wav", ios::binary);
-			//if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist
-				//break;
+			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist
+				break;
 
 			//echo the packet request to the client to signal server's intent to establish a download line
 			line = "DL " + filename + "\n";
 			send(clientsocket, line.c_str(), line.size(), 0); 
 			line = ""; //just clear the line buffer	
-			
-			while (getline(fileToSend, line))
+
+			while (fileToSend >> line)
 			{
 				if ((bytessent = send(clientsocket, line.c_str(), line.size(), 0)) == 0)
 				{
@@ -237,8 +237,9 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 				totalbytessent += bytessent;
 				cout << "Bytes sent: " << bytessent << endl;
 				cout << "Total bytes sent: " << totalbytessent << endl;
+				line.clear();
 			}
-			
+
 			line = "DL END\n";
 			send(clientsocket, line.c_str(), line.size(), 0);
 		break;
