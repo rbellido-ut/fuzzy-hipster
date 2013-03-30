@@ -6,4 +6,3 @@
 SOCKET createServer(WSADATA * wsadata, int protocol);
 
 #endif
-
