@@ -208,7 +208,7 @@ bool downloadRequest(Client &clnt)
 	userRequest += "Behnam's party mix.wav\n";
 					
 	clnt.currentState = SENTDLREQUEST;
-	clnt.dispatchClientRequest(userRequest);
+	clnt.dispatchOneSend(userRequest);
 
 	return true;
 }
@@ -221,7 +221,7 @@ bool uploadRequest(Client& clnt)
 	userRequest += "Behnam's party mix.wav\n";	
 
 	clnt.currentState = SENTULREQUEST;
-	clnt.dispatchClientRequest(userRequest);
+	clnt.dispatchOneSend(userRequest);
 
 	return true;
 }
@@ -234,7 +234,7 @@ bool streamRequest(Client& clnt)
 
 	userRequest += "ST";
 					
-	clnt.dispatchClientRequest(userRequest);
+	clnt.dispatchOneSend(userRequest);
 					
 	clnt.currentState = STREAMING;
 
@@ -256,7 +256,7 @@ bool micRequest(Client& clnt)
 
 	userRequest += "MIC";
 					
-	clnt.dispatchClientRequest(userRequest);
+	clnt.dispatchOneSend(userRequest);
 					
 	//clnt.currentState = STREAMING;
 	return true;

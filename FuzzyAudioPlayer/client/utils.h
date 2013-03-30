@@ -39,7 +39,7 @@ enum {
     WAITFORDOWNLOAD,
 	DOWNLOADING, //waiting for download data (after a download request was sent successfuly)
     SENTULREQUEST, //send an upload request
-    WAITFORAPPROVAL, //waiting for Server's approval (after a upload request was sent successfuly)
+    WAITFORUPLOAD, //waiting for Server's approval (after a upload request was sent successfuly)
     UPLOADING,
     STREAMING, //streaming data from server
     L2MULTICAST, //listening to multicast channel

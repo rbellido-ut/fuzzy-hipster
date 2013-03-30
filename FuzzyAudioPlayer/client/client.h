@@ -25,7 +25,7 @@ public:
 	DWORD Client::ulThread(LPVOID param);
 	static DWORD WINAPI Client::runULThread(LPVOID param);
 
-	void dispatchClientRequest(std::string dlReq);
+	void dispatchOneSend(std::string dlReq);
 	void Client::dispatchOneRecv();
 
 private:
