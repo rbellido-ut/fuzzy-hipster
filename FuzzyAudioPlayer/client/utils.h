@@ -36,7 +36,8 @@ enum {
 	NOTCONNECTED,
     WFUCOMMAND, //Waiting for User's command
     SENTDLREQUEST, //have sent the DL request
-    DOWNLOADING, //waiting for download data (after a download request was sent successfuly)
+    WAITFORDOWNLOAD,
+	DOWNLOADING, //waiting for download data (after a download request was sent successfuly)
     SENTULREQUEST, //send an upload request
     WAITFORAPPROVAL, //waiting for Server's approval (after a upload request was sent successfuly)
     UPLOADING,

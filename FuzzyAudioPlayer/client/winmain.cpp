@@ -209,8 +209,6 @@ bool downloadRequest(Client &clnt)
 					
 	clnt.currentState = SENTDLREQUEST;
 	clnt.dispatchClientRequest(userRequest);
-					
-	
 
 	return true;
 }
@@ -225,7 +223,6 @@ bool uploadRequest(Client& clnt)
 	clnt.currentState = SENTULREQUEST;
 	clnt.dispatchClientRequest(userRequest);
 
-	
 	return true;
 }
 /*
@@ -446,4 +443,6 @@ int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
 
 	return 0;
 }
+
+//Behnam's Party Mix.wav
 

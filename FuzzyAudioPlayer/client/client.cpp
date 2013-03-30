@@ -123,10 +123,11 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
     switch(clnt->currentState)
 	{
-	case DOWNLOADING:
+	case WAITFORDOWNLOAD:
+		clnt->currentState = DOWNLOADING;
 		MessageBox(NULL, "DL'ing", "", NULL);
-		clnt->dlThreadHandle = CreateThread(NULL, 0, clnt->runDLThread, &clnt, 0, &clnt->dlThreadID);
-		MessageBox(NULL, "UL Thread created", "DL'ing", NULL);
+		clnt->dlThreadHandle = CreateThread(NULL, 0, clnt->runDLThread, clnt, 0, &clnt->dlThreadID);
+		//MessageBox(NULL, "UL Thread created", "DL'ing", NULL);
 		break;
 
 	case WAITFORAPPROVAL:
@@ -135,8 +136,8 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		if(iss >> reqType && iss >> extra){
 			clnt->currentState = UPLOADING; 
 			MessageBox(NULL, "UL Approved", "APPROVED", NULL);
-			clnt->ulThreadHandle = CreateThread(NULL, 0, clnt->runULThread, &clnt, 0, &clnt->ulThreadID);
-			MessageBox(NULL, "UL Thread created", "UL'ing", NULL);
+			clnt->ulThreadHandle = CreateThread(NULL, 0, clnt->runULThread, clnt, 0, &clnt->ulThreadID);
+			//MessageBox(NULL, "UL Thread created", "UL'ing", NULL);
 		}
 		else
 		{
@@ -212,7 +213,7 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	switch(clnt->currentState)
 	{
 	case SENTDLREQUEST:
-		clnt->currentState = DOWNLOADING;
+		clnt->currentState = WAITFORDOWNLOAD;
 		dispatchOneRecv();
 		break;
 
@@ -263,14 +264,16 @@ void Client::dispatchOneRecv(){
 DWORD WINAPI Client::runDLThread(LPVOID param)
 {
 	Client* c = (Client*) param;
-	return c->dlThread();
+	return c->dlThread(c);
 }
 
-DWORD Client::dlThread(/*LPVOID param*/)
+DWORD Client::dlThread(LPVOID param)
 {
+	Client* c = (Client*) param;
 	
-	while(currentState == DOWNLOADING)
+	while(c->currentState == DOWNLOADING)
 	{
+		//save stuff to file here
 		MessageBox(NULL, "In DL Thread", "", NULL);
 		Sleep(1000);
 	}
@@ -282,14 +285,16 @@ DWORD Client::dlThread(/*LPVOID param*/)
 DWORD WINAPI Client::runULThread(LPVOID param)
 {
 	Client* c = (Client*) param;
-	return c->ulThread();
+	return c->ulThread(c);
 }
 
-DWORD Client::ulThread(/*LPVOID param*/)
+DWORD Client::ulThread(LPVOID param)
 {
+	Client* c = (Client*) param;
 	
-	while(currentState == UPLOADING)
+	while(c->currentState == UPLOADING)
 	{
+		//read stuff from file and send here
 		MessageBox(NULL, "In UL Thread", "", NULL);
 		Sleep(1000);
 	}
