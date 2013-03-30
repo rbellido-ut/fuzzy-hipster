@@ -30,6 +30,16 @@ enum {
     UDP
 };
 
+enum ServerState {
+	STREAMING,
+	DOWNLOADING,
+	UPLOADING,
+	MICCHATTING,
+	MULTICASTING,
+	UNDEFINED, //use this to initialize the state
+	SERVERROR
+};
+
 typedef struct socket_data {
     SOCKET sock;
     WSABUF	wsabuf;

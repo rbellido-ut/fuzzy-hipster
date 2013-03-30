@@ -24,7 +24,8 @@ using namespace std;
 
 DWORD WINAPI handleClient(LPVOID param);
 DWORD WINAPI listenThread(LPVOID args);
-void DecodeRequest(char * request, SOCKET clientsocket);
+ServerState DecodeRequest(char * request, string& filename);
+void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename = "");
 
 int main(int argc, char* argv[])
 {
@@ -125,6 +126,8 @@ DWORD WINAPI handleClient(LPVOID param)
 	int numBytesRecvd, bytesToRead;
 	char request[DATABUFSIZE];
 	char * p;
+	ServerState newState = UNDEFINED, prevState = UNDEFINED;
+	string filename;
 
 	while (TRUE)
 	{
@@ -154,10 +157,96 @@ DWORD WINAPI handleClient(LPVOID param)
 			}
 
 			cout << "Error: " << WSAGetLastError() << endl;
-			continue;
+			return 0;
 		}
 
-		DecodeRequest(request, controlSocket);
+		//updated previous state if necessary
+		if (prevState != UNDEFINED)
+			prevState = newState;
+
+		//get the new current state
+		newState = DecodeRequest(request, filename);
+
+		if (newState == SERVERROR)
+			break;
+
+		requestDispatcher(prevState, newState, controlSocket, filename);
+	}
+
+	return 1;
+}
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: requestDispatcher
+--
+-- DATE: March 29, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Ronald Bellido
+--
+-- PROGRAMMER: Ronald Bellido
+--
+-- INTERFACE: void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename)
+--					prevState - the previous state the server was in
+--					currentState - the new state the server is 
+--				
+--
+-- RETURNS: void
+--
+-- NOTES: This function keeps track of the current and previous server state, then executes the steps to
+the handle the current request. Note that any server errors is checked outside of this function, and thus 
+assumes that everything was pretty ok before executing this function.
+----------------------------------------------------------------------------------------------------------------------*/
+void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename)
+{
+	int bytessent		= 0;
+	int totalbytessent	= 0;
+	string line;
+	ifstream fileToSend;
+
+	cout << "Previous State: " << prevState << endl;
+
+	switch (currentState)
+	{
+		case STREAMING:
+
+		break;
+
+		case DOWNLOADING:
+
+			fileToSend.open(filename.c_str());
+			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist
+				break;
+
+			//echo the packet request to the client to signal server's intent to establish a download line
+			line = "DL " + filename + "\n";
+			send(clientsocket, line.c_str(), DATABUFSIZE, 0); 
+			line = ""; //just clear the line buffer	
+			
+			while (getline(fileToSend, line))
+			{
+				if ((bytessent = send(clientsocket, line.c_str(), line.size(), 0)) == 0)
+				{
+					cerr << "Failed to send! Exited with error " << GetLastError() << endl;
+					fileToSend.close();
+					return;
+				}
+
+				totalbytessent += bytessent;
+				cout << "Bytes sent: " << bytessent << endl;
+				cout << "Total bytes sent: " << totalbytessent << endl;
+			}
+
+			line = "DL END\n";
+			send(clientsocket, line.c_str(), DATABUFSIZE, 0);
+		break;
+
+		case UPLOADING:
+		break;
+
+		case MICCHATTING:
+		break;
 	}
 }
 
@@ -173,89 +262,58 @@ DWORD WINAPI handleClient(LPVOID param)
 --
 -- PROGRAMMER: Ronald Bellido, Jesse Braham
 --
--- INTERFACE: void DecodeRequest(char * request, SOCKET clientsocket)
+-- INTERFACE: void DecodeRequest(char * request, string& filename)
 --					request - the request packet to parse
---					clientsocket - the socket of the client that made the request
+--					filename - 
 --				
 --
--- RETURNS: void
+-- RETURNS: returns an int which will indicate one of the specified ServerStates in util.h (STREAMING, DOWNLOADING, etc.)
+--			On error, the function will return SERVERROR, which typcially means that there was an error parsing the request, or 
+--			an invalid request was received.
 --
 -- NOTES: This function parses a request packet with respect to the specification document. After parsing,
-it performs the appropriate steps to handle the request.
+it will return the current state of the server.
 ----------------------------------------------------------------------------------------------------------------------*/
-void DecodeRequest(char * request, SOCKET clientsocket)
+ServerState DecodeRequest(char * request, string& filename)
 {
 	string req = request;
-	SOCKET sck = clientsocket;
 	stringstream ss(req);
-	string requesttype, filename;
-	string tmp;
+	string requesttype;
 
 	ss >> requesttype;
-	cout << requesttype << " ";
+	cout << "received " << requesttype << " ";
 
 	if (requesttype == "ST")
 	{
-		while (ss >> tmp)
-		{
-			filename += tmp;
-			filename += " ";
-		}
+		getline(ss, filename); //read ss up to newline
 		cout << filename << endl;
+		return STREAMING;
 	}
 	else if (requesttype == "DL")
 	{
-		int bytessent		= 0;
-		int totalbytessent	= 0;
-
-		while (ss >> tmp)
-		{
-			filename += tmp;
-			filename += " ";
-		}
+		getline(ss, filename);
 
 		cout << filename << endl;
 
-		string line;
-		/*ifstream fileToSend;
-		fileToSend.open(filename.c_str());
-
-		if (!fileToSend.is_open())
-			return;*/
-
-		send(sck, request, DATABUFSIZE, 0); //sends a reply to client
-
-		/*while (getline(fileToSend, line))
-		{
-			if ((bytessent = send(*clientsocket, line.c_str(), line.size(), 0)) == 0)
-			{
-				cerr << "Failed to send! Exited with error " << GetLastError() << endl;
-				fileToSend.close();
-				closesocket(*clientsocket);
-				break;
-			}
-
-			totalbytessent += bytessent;
-			cout << "Bytes sent: " << bytessent << endl;
-			cout << "Total bytes sent: " << totalbytessent << endl;
-		}*/
-
-		req = "DL END\n";
-		send(sck, req.c_str(), DATABUFSIZE, 0);
+		return DOWNLOADING;
 	}
 	else if (requesttype == "UL")
 	{
-		while (ss >> tmp)
-		{
-			filename += tmp;
-			filename += " ";
-		}
+		getline(ss, filename);
 		cout << filename << endl;
+		return UPLOADING;
 	}
 	else if (requesttype == "MC")
 	{
+		//'hook' the client to the multicast broadcast channel
+		cout << "hooking client to the multicast channel" << endl;
+		return MULTICASTING;
 	}
 	else if (requesttype == "MIC")
 	{
+		cout << "2 way chat requested" << endl;
+		return MICCHATTING;
 	}
+
+	return SERVERROR;
 }
