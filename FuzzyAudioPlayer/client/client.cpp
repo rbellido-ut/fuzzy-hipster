@@ -107,16 +107,19 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
     LPSOCKETDATA data = (LPSOCKETDATA) rc->data;
     Client* clnt = rc->clnt;
 	
+	
 
     if(error || bytesTransferred == 0)
     {
         freeData(data);
         return;
     }
-
     //check to see what mode we are in and handle data accordingly
     //will only receive when in DL, Waiting for UL approval, Streaming, Multicasting, or microphone states
-    string tmp(data->databuf);
+	string tmp;
+	tmp = "";
+	tmp.append(data->databuf, bytesTransferred);
+
 	istringstream iss(tmp);
 	string reqType, extra;
 	
@@ -129,6 +132,8 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 			clnt->currentState = DOWNLOADING; 
 			//DL Approved
 			clnt->dlThreadHandle = CreateThread(NULL, 0, clnt->runDLThread, clnt, 0, &clnt->dlThreadID);
+			
+			clnt->fout.open("test.wav", ios::binary);
 		}
 		else
 		{
@@ -144,6 +149,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 			clnt->currentState = UPLOADING; 
 			MessageBox(NULL, "UL Approved", "APPROVED", NULL);
 			clnt->ulThreadHandle = CreateThread(NULL, 0, clnt->runULThread, clnt, 0, &clnt->ulThreadID);
+			
 		}
 		else
 		{
@@ -154,12 +160,13 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 	case DOWNLOADING:
 		
-		if(tmp == "DL END\n"){
+		if(tmp == "DL END"){
 			clnt->currentState = WFUCOMMAND;
+			clnt->fout.close();
 			break;
 		}else{
-			ofstream fout("DownloadedFile.txt", ios::binary);
-			fout.write(tmp.c_str(), tmp.size());
+			clnt->fout.write(tmp.c_str(), tmp.size());
+			
 		}
 
 		break;

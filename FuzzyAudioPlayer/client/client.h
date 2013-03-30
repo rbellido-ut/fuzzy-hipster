@@ -28,6 +28,8 @@ public:
 	void dispatchOneSend(std::string dlReq);
 	void Client::dispatchOneRecv();
 
+	std::ofstream fout;
+
 private:
 	SOCKET connectSocket_;
 	SOCKADDR_IN addr_;
