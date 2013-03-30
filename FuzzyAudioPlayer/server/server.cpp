@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------------------------------------------
--- SOURCE FILE: main.cpp
+-- SOURCE FILE: server.cpp
 --
 -- PROGRAM: FuzzyAudioPlayerServer
 --
@@ -17,7 +17,7 @@
 -- NOTES:
 ----------------------------------------------------------------------------------------------------------------------*/
 
-#include "../utils.h"
+#include "utils.h"
 #include "server_net.h"
 
 using namespace std;
