@@ -2,7 +2,7 @@
 #define __NET_STREAM_H
 
 #include "../utils.h"
-//#include <SFML/Audio.hpp>
+#include <SFML/Audio.hpp>
 
 class NetStream : public sf::InputStream
 {

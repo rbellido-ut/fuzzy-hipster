@@ -48,14 +48,6 @@ SOCKET createServer(WSADATA *wsaData, int protocol)
             return NULL;
         }
     }
-
-	ULONG nonblock = 1;
-	if(ioctlsocket(listenSocket, FIONBIO, &nonblock) == SOCKET_ERROR)
-	{
-		cerr << "ioctlsocket() failed with error " << WSAGetLastError() << endl;
-		closesocket(listenSocket);
-		return NULL;
-	}
 	
 	return listenSocket;
 }

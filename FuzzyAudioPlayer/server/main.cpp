@@ -84,17 +84,18 @@ DWORD WINAPI handleClient(LPVOID param)
 			if (numBytesRecvd <= DATABUFSIZE)
 				break;
 		}
-		//numBytesRecvd = recv(*controlSocket, p, bytesToRead, 0);
+		//numBytesRecvd = recv(controlSocket, p, bytesToRead, 0);
 
-		/*if (numBytesRecvd < 0)
+		if ((numBytesRecvd < 0))
 		{
+			if (WSAGetLastError() == WSAECONNRESET)
+			{
+				cout << "client disconnected" << endl;
+				return 0;
+			}
+
 			cout << "Error: " << WSAGetLastError() << endl;
 			continue;
-		}*/
-		if (WSAGetLastError() == WSAEWOULDBLOCK)
-		{
-				Sleep(1000);
-				continue;
 		}
 
 		ParseRequest(request, controlSocket);
