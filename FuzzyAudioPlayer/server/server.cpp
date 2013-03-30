@@ -12,7 +12,7 @@
 --
 -- DESIGNER: Ronald Bellido, Jesse Braham
 --
--- PROGRAMMER: Ronald Bellido
+-- PROGRAMMER: Ronald Bellido, Jesse Braham
 --
 -- NOTES:
 ----------------------------------------------------------------------------------------------------------------------*/
@@ -22,68 +22,9 @@
 
 using namespace std;
 
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION: DecodeRequest
---
--- DATE: March 25, 2013
---
--- REVISIONS: (Date and Description)
---
--- DESIGNER: Ronald Bellido
---
--- PROGRAMMER: Ronald Bellido
---
--- INTERFACE: void DecodeRequest(char * request, SOCKET clientsocket)
---					request - the request packet to parse
---					clientsocket - the socket of the client that made the request
---				
---
--- RETURNS: void
---
--- NOTES: This function parses a request packet with respect to the specification document. After parsing,
-it performs the appropriate steps to handle the request.
-----------------------------------------------------------------------------------------------------------------------*/
-void DecodeRequest(char * request, SOCKET clientsocket);
-
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION: handleClient
---
--- DATE: March 23, 2013
---
--- REVISIONS: (Date and Description)
---
--- DESIGNER: Ronald Bellido
---
--- PROGRAMMER: Ronald Bellido
---
--- INTERFACE: DWORD WINAPI handleClient(LPVOID param)
---				
---
--- RETURNS: DWORD
---
--- NOTES: Thread that listens for the client's requests. Calls DecodeRequest to parse the request received.
-----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI handleClient(LPVOID param);
-
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION: listenThread
---
--- DATE: March 23, 2013
---
--- REVISIONS: (Date and Description)
---
--- DESIGNER: Ronald Bellido
---
--- PROGRAMMER: Ronald Bellido
---
--- INTERFACE: DWORD WINAPI listenThread(LPVOID args)
---
--- RETURNS: DWORD
---
--- NOTES: Thread that listens for new client connections. When a new client connects (succesfully), it spawns a new
-thread, handleClient, to listen for that client's requests.
-----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI listenThread(LPVOID args);
+void DecodeRequest(char * request, SOCKET clientsocket);
 
 int main(int argc, char* argv[])
 {
@@ -105,6 +46,25 @@ int main(int argc, char* argv[])
 	return EXIT_SUCCESS;
 }
 
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: listenThread
+--
+-- DATE: March 23, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Ronald Bellido
+--
+-- PROGRAMMER: Ronald Bellido
+--
+-- INTERFACE: DWORD WINAPI listenThread(LPVOID args)
+--
+-- RETURNS: DWORD
+--
+-- NOTES: Thread that listens for new client connections. When a new client connects (succesfully), it spawns a new
+thread, handleClient, to listen for that client's requests.
+----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI listenThread(LPVOID args)
 {
     SOCKET* pListenSock = (SOCKET*) args;
@@ -140,6 +100,25 @@ DWORD WINAPI listenThread(LPVOID args)
     return 1;
 }
 
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: handleClient
+--
+-- DATE: March 23, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Ronald Bellido
+--
+-- PROGRAMMER: Ronald Bellido, Jesse Braham
+--
+-- INTERFACE: DWORD WINAPI handleClient(LPVOID param)
+--				
+--
+-- RETURNS: DWORD
+--
+-- NOTES: Thread that listens for the client's requests. Calls DecodeRequest to parse the request received.
+----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI handleClient(LPVOID param)
 {
 	SOCKET controlSocket = *((SOCKET*) param);
@@ -149,11 +128,12 @@ DWORD WINAPI handleClient(LPVOID param)
 
 	while (TRUE)
 	{
+		memset(request, 0, DATABUFSIZE);
 		//listen for requests
 		//when you receive, parse the request
-		
 		p = request;
 		bytesToRead = DATABUFSIZE;
+
 		while ((numBytesRecvd = recv(controlSocket, p, bytesToRead, 0)) > 0)
 		{
 			p += numBytesRecvd;
@@ -162,11 +142,12 @@ DWORD WINAPI handleClient(LPVOID param)
 			if (numBytesRecvd <= DATABUFSIZE)
 				break;
 		}
+
 		//numBytesRecvd = recv(controlSocket, p, bytesToRead, 0);
 
 		if ((numBytesRecvd < 0))
 		{
-			if (WSAGetLastError() == WSAECONNRESET)
+			if (GetLastError() == WSAECONNRESET)
 			{
 				cout << "client disconnected" << endl;
 				return 0;
@@ -180,14 +161,35 @@ DWORD WINAPI handleClient(LPVOID param)
 	}
 }
 
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: DecodeRequest
+--
+-- DATE: March 25, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Ronald Bellido
+--
+-- PROGRAMMER: Ronald Bellido, Jesse Braham
+--
+-- INTERFACE: void DecodeRequest(char * request, SOCKET clientsocket)
+--					request - the request packet to parse
+--					clientsocket - the socket of the client that made the request
+--				
+--
+-- RETURNS: void
+--
+-- NOTES: This function parses a request packet with respect to the specification document. After parsing,
+it performs the appropriate steps to handle the request.
+----------------------------------------------------------------------------------------------------------------------*/
 void DecodeRequest(char * request, SOCKET clientsocket)
 {
 	string req = request;
-
 	SOCKET sck = clientsocket;
 	stringstream ss(req);
-	string filename;
-	string requesttype;
+	string requesttype, filename;
+	string tmp;
 
 	ss >> requesttype;
 	cout << requesttype << " ";
@@ -201,7 +203,13 @@ void DecodeRequest(char * request, SOCKET clientsocket)
 	{
 		int bytessent = 0;
 		int totalbytessent = 0;
-		ss >> filename;
+
+		while (ss >> tmp)
+		{
+			filename += tmp;
+			filename += " ";
+		}
+		//ss >> filename;
 		cout << filename << endl;
 
 		string line;
