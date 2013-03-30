@@ -1,10 +1,88 @@
+/*------------------------------------------------------------------------------------------------------------------
+-- SOURCE FILE: main.cpp
+--
+-- PROGRAM: FuzzyAudioPlayerServer
+--
+-- FUNCTIONS:
+--
+--
+-- DATE: March 20, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Ronald Bellido, Jesse Braham
+--
+-- PROGRAMMER: Ronald Bellido
+--
+-- NOTES:
+----------------------------------------------------------------------------------------------------------------------*/
+
 #include "../utils.h"
 #include "server_net.h"
 
 using namespace std;
 
-void ParseRequest(char * request, SOCKET clientsocket);
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: DecodeRequest
+--
+-- DATE: March 25, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Ronald Bellido
+--
+-- PROGRAMMER: Ronald Bellido
+--
+-- INTERFACE: void DecodeRequest(char * request, SOCKET clientsocket)
+--					request - the request packet to parse
+--					clientsocket - the socket of the client that made the request
+--				
+--
+-- RETURNS: void
+--
+-- NOTES: This function parses a request packet with respect to the specification document. After parsing,
+it performs the appropriate steps to handle the request.
+----------------------------------------------------------------------------------------------------------------------*/
+void DecodeRequest(char * request, SOCKET clientsocket);
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: handleClient
+--
+-- DATE: March 23, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Ronald Bellido
+--
+-- PROGRAMMER: Ronald Bellido
+--
+-- INTERFACE: DWORD WINAPI handleClient(LPVOID param)
+--				
+--
+-- RETURNS: DWORD
+--
+-- NOTES: Thread that listens for the client's requests. Calls DecodeRequest to parse the request received.
+----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI handleClient(LPVOID param);
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: listenThread
+--
+-- DATE: March 23, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Ronald Bellido
+--
+-- PROGRAMMER: Ronald Bellido
+--
+-- INTERFACE: DWORD WINAPI listenThread(LPVOID args)
+--
+-- RETURNS: DWORD
+--
+-- NOTES: Thread that listens for new client connections. When a new client connects (succesfully), it spawns a new
+thread, handleClient, to listen for that client's requests.
+----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI listenThread(LPVOID args);
 
 int main(int argc, char* argv[])
@@ -98,11 +176,11 @@ DWORD WINAPI handleClient(LPVOID param)
 			continue;
 		}
 
-		ParseRequest(request, controlSocket);
+		DecodeRequest(request, controlSocket);
 	}
 }
 
-void ParseRequest(char * request, SOCKET clientsocket)
+void DecodeRequest(char * request, SOCKET clientsocket)
 {
 	string req = request;
 
