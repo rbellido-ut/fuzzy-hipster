@@ -133,7 +133,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 			//DL Approved
 			clnt->dlThreadHandle = CreateThread(NULL, 0, clnt->runDLThread, clnt, 0, &clnt->dlThreadID);
 			
-			clnt->fout.open("test.wav", ios::binary);
+			clnt->fout.open("result.wav", ios::binary);
 		}
 		else
 		{
