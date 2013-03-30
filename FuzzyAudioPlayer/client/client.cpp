@@ -53,7 +53,6 @@ bool Client::runClient(WSADATA *wsadata, const char* hostname, const int port)
 		return false;
 	}
 
-	MessageBox(NULL, "IM CONNECTEDDD! YEAAAAAA !", "Connected to server", MB_ICONINFORMATION);
 	currentState = WFUCOMMAND;
 
 	return true;
@@ -73,7 +72,7 @@ bool Client::dispatchWSARecvRequest(LPSOCKETDATA data){
         rc->clnt = this;
         rc->data = data;
         data->overlap.hEvent = rc;
-
+		
         error = WSARecv(data->sock, &data->wsabuf, 1, &bytesRecvd, &flag, &data->overlap, runRecvComplete);
         if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
         {
@@ -120,28 +119,47 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
     string tmp(data->databuf);
 	istringstream iss(tmp);
 	string reqType, extra;
+	
 
     switch(clnt->currentState)
 	{
 	case WAITFORDOWNLOAD:
-		clnt->currentState = DOWNLOADING;
-		MessageBox(NULL, "DL'ing", "", NULL);
-		clnt->dlThreadHandle = CreateThread(NULL, 0, clnt->runDLThread, clnt, 0, &clnt->dlThreadID);
-		//MessageBox(NULL, "UL Thread created", "DL'ing", NULL);
+		
+		if(iss >> reqType && iss >> extra){
+			clnt->currentState = DOWNLOADING; 
+			//DL Approved
+			clnt->dlThreadHandle = CreateThread(NULL, 0, clnt->runDLThread, clnt, 0, &clnt->dlThreadID);
+		}
+		else
+		{
+			MessageBox(NULL, "DL Denied", "NOT APPROVED", NULL);
+		}
+
 		break;
 
-	case WAITFORAPPROVAL:
+	case WAITFORUPLOAD:
 		MessageBox(NULL, "UL'ing", "", NULL);
-		//MessageBox(NULL, tmp.c_str(), NULL, NULL);
+		
 		if(iss >> reqType && iss >> extra){
 			clnt->currentState = UPLOADING; 
 			MessageBox(NULL, "UL Approved", "APPROVED", NULL);
 			clnt->ulThreadHandle = CreateThread(NULL, 0, clnt->runULThread, clnt, 0, &clnt->ulThreadID);
-			//MessageBox(NULL, "UL Thread created", "UL'ing", NULL);
 		}
 		else
 		{
 			MessageBox(NULL, "UL Denied", "NOT APPROVED", NULL);
+		}
+
+		break;
+
+	case DOWNLOADING:
+		
+		if(tmp == "DL END\n"){
+			clnt->currentState = WFUCOMMAND;
+			break;
+		}else{
+			ofstream fout("DownloadedFile.txt", ios::binary);
+			fout.write(tmp.c_str(), tmp.size());
 		}
 
 		break;
@@ -208,6 +226,8 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
         return;
     }
 	
+	//enter critical section?
+
 	//if we r here we have successfully sent
 	//check current state to determine next step
 	switch(clnt->currentState)
@@ -218,10 +238,8 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		break;
 
 	case SENTULREQUEST:
-		clnt->currentState = WAITFORAPPROVAL;
+		clnt->currentState = WAITFORUPLOAD;
 		dispatchOneRecv();
-		
-
 		break;
 					   
 	case UPLOADING:
@@ -231,23 +249,24 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 	}
 
+	//leave critical section?
+
 }
 
 
-void Client::dispatchClientRequest(string usrReq){
+void Client::dispatchOneSend(string usrData){
 	
 					
 	SOCKETDATA* data = allocData(connectSocket_);
-	strncpy(data->databuf, usrReq.c_str(), usrReq.size());
+	strncpy(data->databuf, usrData.c_str(), usrData.size());
 
 	if(data)
 	{
 		dispatchWSASendRequest(data);
 	}
 
-	::SleepEx(100, TRUE); //make this thread alertable
+	::SleepEx(INFINITE, TRUE); //make this thread alertable
 
-	//MessageBox(NULL, "sent Req" , "" , MB_ICONWARNING);
 }
 
 void Client::dispatchOneRecv(){
@@ -258,7 +277,8 @@ void Client::dispatchOneRecv(){
 		dispatchWSARecvRequest(data);
 	}
 
-	::SleepEx(100, TRUE); //make this thread alertable
+	::SleepEx(INFINITE, TRUE); //make this thread alertable
+
 }
 
 DWORD WINAPI Client::runDLThread(LPVOID param)
@@ -270,14 +290,14 @@ DWORD WINAPI Client::runDLThread(LPVOID param)
 DWORD Client::dlThread(LPVOID param)
 {
 	Client* c = (Client*) param;
-	
+
 	while(c->currentState == DOWNLOADING)
 	{
-		//save stuff to file here
-		MessageBox(NULL, "In DL Thread", "", NULL);
-		Sleep(1000);
+		dispatchOneRecv();
 	}
 	
+	
+	MessageBox(NULL, "DL Done", NULL, NULL);
 	return 0;
 }
 
@@ -295,6 +315,8 @@ DWORD Client::ulThread(LPVOID param)
 	while(c->currentState == UPLOADING)
 	{
 		//read stuff from file and send here
+		//while(can read from file)
+
 		MessageBox(NULL, "In UL Thread", "", NULL);
 		Sleep(1000);
 	}
