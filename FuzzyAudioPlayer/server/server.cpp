@@ -196,20 +196,24 @@ void DecodeRequest(char * request, SOCKET clientsocket)
 
 	if (requesttype == "ST")
 	{
-		ss >> filename;
+		while (ss >> tmp)
+		{
+			filename += tmp;
+			filename += " ";
+		}
 		cout << filename << endl;
 	}
 	else if (requesttype == "DL")
 	{
-		int bytessent = 0;
-		int totalbytessent = 0;
+		int bytessent		= 0;
+		int totalbytessent	= 0;
 
 		while (ss >> tmp)
 		{
 			filename += tmp;
 			filename += " ";
 		}
-		//ss >> filename;
+
 		cout << filename << endl;
 
 		string line;
@@ -241,6 +245,12 @@ void DecodeRequest(char * request, SOCKET clientsocket)
 	}
 	else if (requesttype == "UL")
 	{
+		while (ss >> tmp)
+		{
+			filename += tmp;
+			filename += " ";
+		}
+		cout << filename << endl;
 	}
 	else if (requesttype == "MC")
 	{
