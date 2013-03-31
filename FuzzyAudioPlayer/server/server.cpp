@@ -22,7 +22,7 @@
 
 using namespace std;
 
-DWORD WINAPI handleClient(LPVOID param);
+DWORD WINAPI handleClientRequests(LPVOID param);
 DWORD WINAPI listenThread(LPVOID args);
 ServerState DecodeRequest(char * request, string& filename);
 void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename = "");
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 -- RETURNS: DWORD
 --
 -- NOTES: Thread that listens for new client connections. When a new client connects (succesfully), it spawns a new
-thread, handleClient, to listen for that client's requests.
+thread, handleClientRequests, to listen for that client's requests.
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI listenThread(LPVOID args)
 {
@@ -92,7 +92,7 @@ DWORD WINAPI listenThread(LPVOID args)
             cout << "Socket " << newClientSocket << " accepted." << endl;
 			//create handleClientThread,  passing &newClientSocket
 			//push back to clientlist
-			CreateThread(NULL, 0, handleClient, (LPVOID) &newClientSocket, 0, 0);
+			CreateThread(NULL, 0, handleClientRequests, (LPVOID) &newClientSocket, 0, 0);
         }
 
         ::SleepEx(100, TRUE); //make this thread alertable
@@ -103,7 +103,7 @@ DWORD WINAPI listenThread(LPVOID args)
 
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION: handleClient
+-- FUNCTION: handleClientRequests
 --
 -- DATE: March 23, 2013
 --
@@ -113,14 +113,14 @@ DWORD WINAPI listenThread(LPVOID args)
 --
 -- PROGRAMMER: Ronald Bellido, Jesse Braham
 --
--- INTERFACE: DWORD WINAPI handleClient(LPVOID param)
+-- INTERFACE: DWORD WINAPI handleClientRequests(LPVOID param)
 --				
 --
 -- RETURNS: DWORD
 --
 -- NOTES: Thread that listens for the client's requests. Calls DecodeRequest to parse the request received.
 ----------------------------------------------------------------------------------------------------------------------*/
-DWORD WINAPI handleClient(LPVOID param)
+DWORD WINAPI handleClientRequests(LPVOID param)
 {
 	SOCKET controlSocket = *((SOCKET*) param);
 	int numBytesRecvd, bytesToRead;
@@ -207,6 +207,9 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 	char* tmp;
 	int n;
 
+	//computing filesizes
+	std::streampos filesize, begin, end;
+
 	cout << "Previous State: " << prevState << endl;
 
 	switch (currentState)
@@ -222,9 +225,16 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist
 				break;
 
-			//echo the packet request to the client to signal server's intent to establish a download line
-			line = "DL " + filename + "\n";
-			send(clientsocket, line.c_str(), line.size(), 0); 
+			//compute size of the file
+			begin = fileToSend.tellg();
+			fileToSend.seekg(0, ios::end);
+			filesize = fileToSend.tellg() - begin;
+			fileToSend.seekg(ios::beg);
+			cout << "File size of " << filename << ": " << filesize << " bytes" << endl;
+
+			//echo the file size to the client to signal server's intent to establish a download line
+			line = "DL " + filesize + '\n';
+			send(clientsocket, line.c_str(), line.size(), 0);
 			line = ""; //just clear the line buffer	
 
 			while (true)
@@ -284,7 +294,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 --
 -- INTERFACE: void DecodeRequest(char * request, string& filename)
 --					request - the request packet to parse
---					filename - 
+--					filename - the name of the file
 --				
 --
 -- RETURNS: returns an int which will indicate one of the specified ServerStates in util.h (STREAMING, DOWNLOADING, etc.)
