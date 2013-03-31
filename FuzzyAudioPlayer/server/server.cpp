@@ -200,7 +200,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 	string line;
 	ifstream fileToSend;
 	char* tmp;
-	int n;
+	streamsize numberOfBytesRead;
 
 	//computing filesizes
 	std::streampos filesize, begin, end;
@@ -236,11 +236,12 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			{
 				tmp = new char [DATABUFSIZE];
 
+				numberOfBytesRead = 0;
 				fileToSend.read(tmp, DATABUFSIZE);
 				
-				if((n = (int)fileToSend.gcount()) > 0)
+				if((numberOfBytesRead = fileToSend.gcount()) > 0)
 				{
-					line.append(tmp, n);
+					line.append(tmp, numberOfBytesRead);
 					if ((bytessent = send(clientsocket, line.c_str(), line.size(), 0)) == 0)
 					{
 						cerr << "Failed to send! Exited with error " << GetLastError() << endl;
