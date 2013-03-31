@@ -32,6 +32,10 @@ int main(int argc, char *argv[])
   printf(" TimeCastSrvr - multicast time server\n");
   printf("------------------------------------------------------\n");
 
+  /* ------------------------------------------------------------
+   *  The following block of code sets up a socket to dispatch
+   *  data from to the multicast group.
+   * ------------------------------------------------------------ */
   // Init WinSock
   nRet = WSAStartup(0x0202, &stWSAData);
   if (nRet)
@@ -40,11 +44,9 @@ int main(int argc, char *argv[])
       exit (1);
   }
 
-
   // Display current settings
   printf ("Multicast Address:%s, Port:%d, IP TTL:%d, Interval:%d\n",
     achMCAddr, nPort, lTTL, nInterval);
-
 
   // Get a datagram socket
   hSocket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -98,6 +100,16 @@ int main(int argc, char *argv[])
   destination.sin_addr.s_addr = inet_addr(achMCAddr);
   destination.sin_port =        htons(nPort);
 
+   /* ------------------------------------------------------------
+	*  END BLOCK
+    * ------------------------------------------------------------ */
+
+
+   /* ------------------------------------------------------------
+   *  The following block of code simply multicasts to each client
+   *  currently in the multicast group.  This is where we would
+   *  send our packetized audio data.
+   * ------------------------------------------------------------ */
   for (;;)
   {
     GetSystemTime (&stSysTime);
@@ -128,6 +140,10 @@ int main(int argc, char *argv[])
     Sleep(nInterval*1000);
 
   }
+
+   /* ------------------------------------------------------------
+   *  END BLOCK
+   * ------------------------------------------------------------ */
 
   // Close the socket
   closesocket(hSocket);
