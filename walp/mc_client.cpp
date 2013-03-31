@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 {
   int				nRet, nIP_TTL = 2;
   BOOL				fFlag;
-  SOCKADDR_IN		stLclAddr, stSrcAddr;
+  SOCKADDR_IN		local_address, server;
   struct ip_mreq	stMreq;         /* Multicast interface structure */
   SOCKET			hSocket;
   char				achInBuf [BUFSIZE];
@@ -36,7 +36,6 @@ int main(int argc, char *argv[])
       printf ("WSAStartup failed: %d\r\n", nRet);
       exit(1);
   }
-
 
   // Get a datagram socket
   hSocket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -56,11 +55,11 @@ int main(int argc, char *argv[])
   }
 
   // Name the socket (assign the local port number to receive on)
-  stLclAddr.sin_family      = AF_INET;
-  stLclAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  stLclAddr.sin_port        = htons(nPort);
+  local_address.sin_family      = AF_INET;
+  local_address.sin_addr.s_addr = htonl(INADDR_ANY);
+  local_address.sin_port        = htons(nPort);
 
-  nRet = bind(hSocket, (struct sockaddr*) &stLclAddr, sizeof(stLclAddr));
+  nRet = bind(hSocket, (struct sockaddr*)&local_address, sizeof(local_address));
   if (nRet == SOCKET_ERROR)
   {
       printf ("bind() port: %d failed, Err: %d\n", nPort, 
@@ -87,7 +86,7 @@ int main(int argc, char *argv[])
   {
     int addr_size = sizeof(struct sockaddr_in);
 
-    nRet = recvfrom(hSocket, achInBuf, BUFSIZE, 0, (struct sockaddr*)&stSrcAddr, &addr_size);
+    nRet = recvfrom(hSocket, achInBuf, BUFSIZE, 0, (struct sockaddr*)&server, &addr_size);
     if (nRet < 0)
 	{
       printf ("recvfrom() failed, Error: %d\n", WSAGetLastError());
@@ -100,8 +99,8 @@ int main(int argc, char *argv[])
       lpstSysTime->wHour,   lpstSysTime->wMinute, 
       lpstSysTime->wSecond, lpstSysTime->wMilliseconds,
       lpstSysTime->wMonth,  lpstSysTime->wDay,  lpstSysTime->wYear,
-      inet_ntoa(stSrcAddr.sin_addr), 
-      ntohs(stSrcAddr.sin_port));
+      inet_ntoa(server.sin_addr), 
+      ntohs(server.sin_port));
 
     // Set the local time using the system (UTC) time from server
     nRet = SetSystemTime(lpstSysTime);
