@@ -1,3 +1,36 @@
+/*------------------------------------------------------------------------------------------------------------------
+-- SOURCE FILE:		client.cpp -  This file contains the implementations of the client member functions
+--
+-- PROGRAM:			Fuzzy-Hipster
+--
+-- FUNCTIONS:		bool Client::runClient(WSADATA* wsadata, const char* hostname, const int port) 
+--					SOCKET Client::createTCPClient(WSADATA* wsaData, const char* hostname, const int port) 
+--					bool Client::dispatchWSARecvRequest(LPSOCKETDATA data)
+--					void CALLBACK Client::runRecvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--					void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--					bool Client::dispatchWSASendRequest(LPSOCKETDATA data)
+--					void CALLBACK Client::runSendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--					void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--					void Client::dispatchOneSend(string usrData)
+--					void Client::dispatchOneRecv()
+--					DWORD WINAPI Client::runDLThread(LPVOID param)
+--					DWORD Client::dlThread(LPVOID param)
+--					DWORD WINAPI Client::runULThread(LPVOID param)
+--					DWORD Client::ulThread(LPVOID param)
+--					LPSOCKETDATA Client::allocData(SOCKET socketFD)
+--					void Client::freeData(LPSOCKETDATA data)
+-- 
+-- DATE:			March 15, 2013
+--
+-- REVISIONS: 
+--
+-- DESIGNER:		Behnam Bastami
+--
+-- PROGRAMMER:		Behnam Bastami
+--
+-- NOTES:
+----------------------------------------------------------------------------------------------------------------------*/
+
 #include "client.h"
 
 using namespace std;
@@ -166,8 +199,30 @@ bool Client::dispatchWSARecvRequest(LPSOCKETDATA data)
 
 }
 
-
-
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	runRecvComplete
+--
+-- DATE:		March 12, 2013
+--
+-- REVISIONS:	March 27, 2013, made it work with this application
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	void CALLBACK Client::runRecvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--				error: indicates if there were any errors in the async receive call
+--				bytesTransferred: number of bytes received
+--				overlapped: the overlapped structure used to make the asynf recv call
+--				flags: other flags
+--
+-- RETURNS:		void
+--				
+--
+-- NOTES:		This function is used to run a class member function as a call back function for the completion routine,
+--				whenever an async recv request was completed, without having to make everything else static
+--				
+----------------------------------------------------------------------------------------------------------------------*/
 void CALLBACK Client::runRecvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 	REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
@@ -177,6 +232,31 @@ void CALLBACK Client::runRecvComplete (DWORD error, DWORD bytesTransferred, LPWS
 
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	recvComplete
+--
+-- DATE:		March 9, 2013
+--
+-- REVISIONS:	March 14, 2013, Made the function work for this application
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--				error: indicates if there were any errors in the async receive call
+--				bytesTransferred: number of bytes received
+--				overlapped: the overlapped structure used to make the asynf recv call
+--				flags: other flags
+--
+-- RETURNS:		void
+--				
+--
+-- NOTES:		This is the function thet gets executed after each async recv call is completed
+--				It extracts the received data from the data buffers and dictates how the client 
+--				should behave (do next) by changing the client state
+--
+----------------------------------------------------------------------------------------------------------------------*/
 void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 	REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
@@ -317,7 +397,30 @@ bool Client::dispatchWSASendRequest(LPSOCKETDATA data)
 
 }
 
-
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	runSendComplete
+--
+-- DATE:		March 11, 2013
+--
+-- REVISIONS:	March 27, 2013, made it work with this application
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	void CALLBACK Client::runSendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--				error: indicates if there were any errors in the async receive call
+--				bytesTransferred: number of bytes received
+--				overlapped: the overlapped structure used to make the asynf recv call
+--				flags: other flags
+--
+-- RETURNS:		void
+--				
+--
+-- NOTES:		This function is used to run a class member function as a call back function for the completion routine,
+--				whenever an async send request was completed, without having to make everything else static
+--				
+----------------------------------------------------------------------------------------------------------------------*/
 void CALLBACK Client::runSendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 	REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
@@ -326,6 +429,32 @@ void CALLBACK Client::runSendComplete (DWORD error, DWORD bytesTransferred, LPWS
 	c->sendComplete(error, bytesTransferred, overlapped, flags);
 
 }
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	sendComplete
+--
+-- DATE:		March 10, 2013
+--
+-- REVISIONS:	March 14, 2013, Made the function work for this application
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--				error: indicates if there were any errors in the async receive call
+--				bytesTransferred: number of bytes received
+--				overlapped: the overlapped structure used to make the asynf recv call
+--				flags: other flags
+--
+-- RETURNS:		void
+--				
+--
+-- NOTES:		This is the function thet gets executed after each async send call is completed
+--				It looks at the data that was sent and dictates how the client should behave (do next)
+--				by changing the client state
+--
+----------------------------------------------------------------------------------------------------------------------*/
 
 void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
@@ -343,8 +472,6 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 	if(data->databuf[bytesTransferred-1] == '\n')
 		endOfTransmit = true;
-
-	//enter critical section?
 
 	//if we r here we have successfully sent
 	//check current state to determine next step
@@ -371,12 +498,33 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 	}
 
-	//leave critical section?
 
 }
 
 
-void Client::dispatchOneSend(string usrData){
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	dispatchOneSend
+--
+-- DATE:		March 12, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	void Client::dispatchOneSend(string usrData)
+--				data: the user data to send, in the form of a c++ string
+--
+-- RETURNS:		void
+--				
+--
+-- NOTES:		This function makes an async Send request and then puts the thread in an alertable
+--				state, meaning that the same thread will serve the completed operation when it is completed
+--
+----------------------------------------------------------------------------------------------------------------------*/
+void Client::dispatchOneSend(string usrData)
+{
 
 
 	SOCKETDATA* data = allocData(connectSocket_);
@@ -391,7 +539,28 @@ void Client::dispatchOneSend(string usrData){
 
 }
 
-void Client::dispatchOneRecv(){
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	dispatchOneRecv
+--
+-- DATE:		March 12, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	void Client::dispatchOneRecv()
+--
+-- RETURNS:		void
+--				
+--
+-- NOTES:		This function makes an async Recv request and then puts the thread in an alertable
+--				state, meaning that the same thread will serve the completed operation when it is completed
+--
+----------------------------------------------------------------------------------------------------------------------*/
+void Client::dispatchOneRecv()
+{
 
 	SOCKETDATA* data = allocData(connectSocket_);
 	if(data)
@@ -403,12 +572,55 @@ void Client::dispatchOneRecv(){
 
 }
 
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	runDLThread
+--
+-- DATE:		March 20, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	DWORD WINAPI Client::runDLThread(LPVOID param)
+--				param: the parameter we would like to pass to the runned thread (a client object)
+--
+-- RETURNS:		The result of the thread proc operation
+--				
+--
+-- NOTES:		This function is used to run a class member function as the download thread proc,
+--				without having to make everything static
+--				
+----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI Client::runDLThread(LPVOID param)
 {
 	Client* c = (Client*) param;
 	return c->dlThread(c);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	dlThread
+--
+-- DATE:		March 21, 2013
+--
+-- REVISIONS:	March 26, 2013, started using dispatchOneRecv()
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	DWORD Client::dlThread(LPVOID param)
+--				param: the parameter we would like to pass to the runned thread (a client object)
+--
+-- RETURNS:		0 after download was completed
+--				
+--
+-- NOTES:		This is the Download thread proc function.
+--				It posts requests to receive data off the socket, while the client is in download mode.
+--				
+----------------------------------------------------------------------------------------------------------------------*/
 DWORD Client::dlThread(LPVOID param)
 {
 	Client* c = (Client*) param;
@@ -424,12 +636,55 @@ DWORD Client::dlThread(LPVOID param)
 }
 
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	runULThread
+--
+-- DATE:		March 20, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	DWORD WINAPI Client::runULThread(LPVOID param)
+--				param: the parameter we would like to pass to the runned thread (a client object)
+--
+-- RETURNS:		void
+--				
+--
+-- NOTES:		This function is used to run a class member function as the upload thread proc,
+--				without having to make everything static
+--				
+----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI Client::runULThread(LPVOID param)
 {
 	Client* c = (Client*) param;
 	return c->ulThread(c);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	ulThread
+--
+-- DATE:		March 28, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	DWORD Client::ulThread(LPVOID param)
+--				param: the parameter we would like to pass to the runned thread (a client object)
+--
+-- RETURNS:		0 after upload was completed or 1 on failure to open a file
+--				
+--
+-- NOTES:		This is the Upload thread proc function.
+--				While the client is in upload state, it reads data from the file and sends it to the server
+--				by posting async send calls
+--
+----------------------------------------------------------------------------------------------------------------------*/
 DWORD Client::ulThread(LPVOID param)
 {
 	Client* c = (Client*) param;
@@ -439,7 +694,7 @@ DWORD Client::ulThread(LPVOID param)
 	while(c->currentState == UPLOADING)
 	{
 		if (!uploadFileStream.is_open()) 
-			break;
+			return 1;
 
 		char* tmp;
 		string data;
@@ -477,6 +732,27 @@ DWORD Client::ulThread(LPVOID param)
 
 
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	allocData
+--
+-- DATE:		March 11, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	LPSOCKETDATA Client::allocData(SOCKET socketFD)
+--				
+--
+-- RETURNS:		returns a pointer to the memory block that was allocated for the LPSOCKETDATA struct
+--				
+--
+-- NOTES:		This function is used to safely allocate memory for a LPSOCKETDATA type variable
+--				It also sets up other variables that are needed for the operation
+--
+----------------------------------------------------------------------------------------------------------------------*/
 LPSOCKETDATA Client::allocData(SOCKET socketFD)
 {
 	LPSOCKETDATA data = NULL;
@@ -498,33 +774,32 @@ LPSOCKETDATA Client::allocData(SOCKET socketFD)
 	return data;
 }
 
-void Client::freeData(LPSOCKETDATA data){
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	freeData
+--
+-- DATE:		March 10, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	void Client::freeData(LPSOCKETDATA data)
+--				data: pointer to a LPSOCKETDATA struct that contain the information needed to 
+--					  perform an async call
+--
+-- RETURNS:		void
+--				
+--
+-- NOTES:		This function is used to safely free the memory block that was allocated for the 
+--				LPSOCKETDATA struct
+----------------------------------------------------------------------------------------------------------------------*/
+void Client::freeData(LPSOCKETDATA data)
+{
 	if(data)
 	{
-		//MessageBox(NULL, "Socket Closed", "", MB_ICONWARNING);
 		closesocket(data->sock);
 		delete data;
 	}
-}
-
-
-
-
-DWORD WINAPI Client::runRecvThread(LPVOID param)
-{
-	Client* c = (Client*) param;
-	return c->recvThread();
-}
-
-DWORD WINAPI Client::recvThread(/*LPVOID param*/)
-{
-
-	while(1)
-	{
-		MessageBox(NULL, "In DL Thread", "", NULL);
-		Sleep(1000);
-	}
-
-	return 0;
-
 }
