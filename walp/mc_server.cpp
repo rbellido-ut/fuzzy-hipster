@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 {
   int				nRet, i;
   BOOL				fFlag;
-  SOCKADDR_IN		stLclAddr, stDstAddr;
+  SOCKADDR_IN		server, destination;
   struct ip_mreq	stMreq;        /* Multicast interface structure */
   SOCKET			hSocket;
   WSADATA			stWSAData;
@@ -55,15 +55,14 @@ int main(int argc, char *argv[])
   }
 
   // Bind the socket
-  stLclAddr.sin_family      = AF_INET; 
-  stLclAddr.sin_addr.s_addr = htonl(INADDR_ANY); // any interface
-  stLclAddr.sin_port        = 0;                 // any port
+  server.sin_family      = AF_INET; 
+  server.sin_addr.s_addr = htonl(INADDR_ANY); // any interface
+  server.sin_port        = 0;                 // any port
   
-  nRet = bind(hSocket, (struct sockaddr*) &stLclAddr, sizeof(stLclAddr));
+  nRet = bind(hSocket, (struct sockaddr*)&server, sizeof(server));
   if (nRet == SOCKET_ERROR) 
   {
-      printf ("bind() port: %d failed, Err: %d\n", nPort, 
-      WSAGetLastError());
+      printf ("bind() port: %d failed, Err: %d\n", nPort, WSAGetLastError());
   }
 
   // Join the multicast group
@@ -95,16 +94,16 @@ int main(int argc, char *argv[])
   }
 
   // Assign our destination address
-  stDstAddr.sin_family =      AF_INET;
-  stDstAddr.sin_addr.s_addr = inet_addr(achMCAddr);
-  stDstAddr.sin_port =        htons(nPort);
+  destination.sin_family =      AF_INET;
+  destination.sin_addr.s_addr = inet_addr(achMCAddr);
+  destination.sin_port =        htons(nPort);
 
   for (;;)
   {
     GetSystemTime (&stSysTime);
 
     nRet = sendto(hSocket, (char *)&stSysTime, sizeof(stSysTime), 0,
-			(struct sockaddr*)&stDstAddr, sizeof(stDstAddr));
+			(struct sockaddr*)&destination, sizeof(destination));
     if (nRet < 0)
 	{
       printf ("sendto() failed, Error: %d\n", WSAGetLastError());
@@ -121,8 +120,8 @@ int main(int argc, char *argv[])
             stSysTime.wMonth, 
             stSysTime.wDay, 
             stSysTime.wYear, 
-            inet_ntoa(stDstAddr.sin_addr), 
-            ntohs(stDstAddr.sin_port));
+            inet_ntoa(destination.sin_addr), 
+            ntohs(destination.sin_port));
     }
 
     // Wait for the specified interval
