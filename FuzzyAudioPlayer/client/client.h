@@ -28,7 +28,8 @@ public:
 	void dispatchOneSend(std::string dlReq);
 	void Client::dispatchOneRecv();
 
-	std::ofstream fout;
+	std::ofstream downloadFileStream;
+	std::ifstream uploadFileStream;
 
 private:
 	SOCKET connectSocket_;
