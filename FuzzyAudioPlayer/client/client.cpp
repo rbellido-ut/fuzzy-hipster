@@ -238,7 +238,7 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		return;
 	}
 
-	if(data->databuf[bytesTransferred] == '\n')
+	if(data->databuf[bytesTransferred-1] == '\n')
 		endOfTransmit = true;
 
 	//enter critical section?
