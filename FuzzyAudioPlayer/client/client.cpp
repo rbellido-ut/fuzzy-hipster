@@ -2,6 +2,77 @@
 
 using namespace std;
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	runClient
+--
+-- DATE:		March 15, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	bool Client::runClient(WSADATA* wsadata, const char* hostname, const int port) 
+--				wsaData: pointer to WSADATA struct
+--				hostname: the host to connect to
+--				port: the port number on the host being connected to
+--
+-- RETURNS:		true on success and false on failure
+--				
+--
+-- NOTES:		This is the main entry point to the client side of the application, an async TCP socket is
+--				created by a call to createTCPClient() and if that call was successful, the socket is connected
+--				to the server which the user specified
+--
+----------------------------------------------------------------------------------------------------------------------*/
+bool Client::runClient(WSADATA* wsadata, const char* hostname, const int port) 
+{
+
+	char **pptr;
+
+	connectSocket_ = createTCPClient(wsadata, hostname, port);
+
+	if(connectSocket_ != NULL){
+		if (WSAConnect (connectSocket_, (struct sockaddr *)&addr_, sizeof(addr_), NULL, NULL, NULL, NULL) == INVALID_SOCKET)
+		{
+			MessageBox(NULL, "Can't connect to server", "Connection Error", MB_ICONERROR);
+			return false;
+		}
+
+		currentState = WFUCOMMAND;
+
+		return true;
+	}
+
+	return false;
+	
+	//now that we are connected , we are going to wait for user command
+
+}
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	createTCPClient
+--
+-- DATE:		March 15, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	SOCKET Client::createTCPClient(WSADATA* wsaData, const char* hostname, const int port) 
+--				wsaData: pointer to WSADATA struct
+--				hostname: the host to connect to
+--				port: the port number on the host being connected to
+--
+-- RETURNS:		A async socket if the socket was created successfully and NULL on failure
+--				
+--
+-- NOTES:		This function is called by runClient, to create a TCP async socket
+--
+----------------------------------------------------------------------------------------------------------------------*/
 SOCKET Client::createTCPClient(WSADATA* wsaData, const char* hostname, const int port) 
 {
 	int res;
@@ -18,16 +89,16 @@ SOCKET Client::createTCPClient(WSADATA* wsaData, const char* hostname, const int
 
 	if ((connectSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET)
 	{
-		//cerr << "Failed to get a socket with error " << WSAGetLastError() << endl;
+		MessageBox(NULL, "Failed to get create a socket!", "WSASocket Error", MB_ICONERROR);
 		return NULL;
 	}
 
 	// Initialize and set up the address structure
 	memset((char *)&addr_, 0, sizeof(addr_));
 	addr_.sin_family = AF_INET;
-	addr_.sin_port = htons(port); //TODO: this is hard coded
+	addr_.sin_port = htons(port); 
 
-	if ((hp_ = gethostbyname(hostname)) == NULL) //TODO: this is hard-coded
+	if ((hp_ = gethostbyname(hostname)) == NULL) 
 	{
 		MessageBox(NULL, "Unknown server address", "Connection Error", MB_ICONERROR);
 		return NULL;
@@ -40,39 +111,44 @@ SOCKET Client::createTCPClient(WSADATA* wsaData, const char* hostname, const int
 
 }
 
-bool Client::runClient(WSADATA *wsadata, const char* hostname, const int port) 
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	dispatchWSARecvRequest
+--
+-- DATE:		March 10, 2013
+--
+-- REVISIONS:	March 14, 2013, Made the function work with the client object
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	bool Client::dispatchWSARecvRequest(LPSOCKETDATA data)
+--				data: pointer to a LPSOCKETDATA struct which contains the information needed for a WSARecv call
+--					  including the socket, buffers, etc.
+--
+-- RETURNS:		true on success and false on failure
+--				
+--
+-- NOTES:		This function posts a WSARecv (Async Recv call) request specifying a call back function to be 
+--				executed upon the completion of receive call
+--
+----------------------------------------------------------------------------------------------------------------------*/
+bool Client::dispatchWSARecvRequest(LPSOCKETDATA data)
 {
-
-	char **pptr;
-
-	connectSocket_ = createTCPClient(wsadata, hostname, port);
-
-	if (WSAConnect (connectSocket_, (struct sockaddr *)&addr_, sizeof(addr_), NULL, NULL, NULL, NULL) == INVALID_SOCKET)
-	{
-		MessageBox(NULL, "Can't connect to server", "Connection Error", MB_ICONERROR);
-		return false;
-	}
-
-	currentState = WFUCOMMAND;
-
-	return true;
-
-	//now that we are connected , we are going to wait for user command
-
-}
-
-bool Client::dispatchWSARecvRequest(LPSOCKETDATA data){
 	DWORD flag = 0;
 	DWORD bytesRecvd = 0;
 	int error;
 
 	if(data)
 	{
+		//create a client request context which includes a client and a data structure
 		REQUESTCONTEXT* rc = (REQUESTCONTEXT*)malloc(sizeof(REQUESTCONTEXT));
 		rc->clnt = this;
 		rc->data = data;
 		data->overlap.hEvent = rc;
 
+		//perform the async recv and return right away
 		error = WSARecv(data->sock, &data->wsabuf, 1, &bytesRecvd, &flag, &data->overlap, runRecvComplete);
 		if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
 		{
@@ -191,23 +267,47 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	dispatchWSASendRequest
+--
+-- DATE:		March 9, 2013
+--
+-- REVISIONS:	March 14, 2013, Made the function work with the client object
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	bool Client::dispatchWSASendRequest(LPSOCKETDATA data)
+--				data: pointer to a LPSOCKETDATA struct which contains the information needed for a WSARecv call
+--					  including the socket, buffers, etc.
+--
+-- RETURNS:		true on success and false on failure
+--				
+--
+-- NOTES:		This function posts a WSASend (Async Send call) request specifying a call back function to be 
+--				executed upon the completion of send call
+--
+----------------------------------------------------------------------------------------------------------------------*/
 bool Client::dispatchWSASendRequest(LPSOCKETDATA data)
 {
 	DWORD flag = 0;
 	DWORD bytesSent = 0;
 	int error;
 
+	//create a client request context which includes a client and a data structure
 	REQUESTCONTEXT* rc = (REQUESTCONTEXT*)malloc(sizeof(REQUESTCONTEXT));
 	rc->clnt = this;
 	rc->data = data;
 	data->overlap.hEvent = rc;
 
+	//perform the async send and return right away
 	error = WSASend(data->sock, &data->wsabuf, 1, &bytesSent, flag, &data->overlap, runSendComplete);
 	if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
 	{
 		return true;
 	}
-	else
+	else	//errors
 	{
 		freeData(data);
 		free(rc);
