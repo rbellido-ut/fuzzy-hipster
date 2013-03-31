@@ -218,7 +218,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 		case DOWNLOADING:
 
 			//fileToSend.open(filename.c_str());
-			fileToSend.open("test.wav", ios::binary);
+			fileToSend.open("test.mp3", ios::binary);
 			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist
 				break;
 
@@ -257,7 +257,8 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 				 delete[] tmp;
 			}
 
-			line = "DL END\n";
+			//EOT in hex
+			line = '0x04';
 			send(clientsocket, line.c_str(), line.size(), 0);
 		break;
 

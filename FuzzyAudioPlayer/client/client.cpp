@@ -106,6 +106,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
     REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
     LPSOCKETDATA data = (LPSOCKETDATA) rc->data;
     Client* clnt = rc->clnt;
+	bool endOfTransmit = false;
 	
 	
 
@@ -120,6 +121,10 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	tmp = "";
 	tmp.append(data->databuf, bytesTransferred);
 
+	//if last character is EOT, End the transmit
+	if(data->databuf[bytesTransferred-1] == '0x04')
+		endOfTransmit = true;
+
 	istringstream iss(tmp);
 	string reqType, extra;
 	
@@ -133,7 +138,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 			//DL Approved
 			clnt->dlThreadHandle = CreateThread(NULL, 0, clnt->runDLThread, clnt, 0, &clnt->dlThreadID);
 			
-			clnt->fout.open("result.wav", ios::binary);
+			clnt->fout.open("result.mp3", ios::binary);
 		}
 		else
 		{
@@ -160,7 +165,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 	case DOWNLOADING:
 		
-		if(tmp == "DL END"){
+		if(endOfTransmit){
 			clnt->currentState = WFUCOMMAND;
 			clnt->fout.close();
 			break;
