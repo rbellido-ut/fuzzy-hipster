@@ -24,6 +24,7 @@ using namespace std;
 
 DWORD WINAPI handleClientRequests(LPVOID param);
 DWORD WINAPI listenThread(LPVOID args);
+DWORD WINAPI multicastThread(LPVOID args);
 ServerState DecodeRequest(char * request, string& filename);
 void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename = "");
 
@@ -344,4 +345,94 @@ ServerState DecodeRequest(char * request, string& filename)
 	}
 
 	return SERVERROR;
+}
+
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: multicastThread
+--
+-- DATE: March 31, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Braham
+--
+-- PROGRAMMER: Jesse Braham
+--
+-- INTERFACE: DWORD WINAPI multicastThread(LPVOID args)
+--
+-- RETURNS: DWORD
+--
+-- NOTES: This thread starts up a multicast server.
+----------------------------------------------------------------------------------------------------------------------*/
+DWORD WINAPI multicastThread(LPVOID args)
+{
+	char achMCAddr[MAXADDRSTR] = TIMECAST_ADDR;
+	u_short nPort              = TIMECAST_PORT;
+	u_long  lTTL               = TIMECAST_TTL;
+	
+	int				nRet;
+	BOOL			fFlag;
+	SOCKADDR_IN		server, destination;
+	struct ip_mreq	stMreq;
+	SOCKET			hSocket;
+	WSADATA			stWSAData;
+
+	nRet = WSAStartup(0x0202, &stWSAData);
+	if (nRet)
+	{
+		cerr << "WSAStartup failed: " << nRet << endl;	
+		return 0;
+	}
+
+	hSocket = socket(AF_INET, SOCK_DGRAM, 0);
+	if (hSocket == INVALID_SOCKET)
+	{
+		cerr << "socket() failed, Err: " << WSAGetLastError() << endl;	
+		return 0;
+	}
+
+	server.sin_family      = AF_INET; 
+	server.sin_addr.s_addr = htonl(INADDR_ANY);
+	server.sin_port        = 0;
+
+	nRet = bind(hSocket, (struct sockaddr*)&server, sizeof(server));
+	if (nRet == SOCKET_ERROR) 
+	{
+		cerr << "bind() port: " << nPort << " failed, Err: " << WSAGetLastError() << endl;
+		return 0;
+	}
+
+	stMreq.imr_multiaddr.s_addr = inet_addr(achMCAddr);
+	stMreq.imr_interface.s_addr = INADDR_ANY;
+
+	nRet = setsockopt(hSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&stMreq, sizeof(stMreq));
+	if (nRet == SOCKET_ERROR)
+	{
+		cerr << "setsockopt() IP_ADD_MEMBERSHIP address " << achMCAddr << " failed, Err: " << WSAGetLastError() << endl;
+		return 0;
+	}
+
+	nRet = setsockopt(hSocket, IPPROTO_IP, IP_MULTICAST_TTL, (char *)&lTTL, sizeof(lTTL));
+	if (nRet == SOCKET_ERROR)
+	{
+		cerr << "setsockopt() IP_MULTICAST_TTL failed, Err: " << WSAGetLastError() << endl;
+		return 0;
+	}
+
+	fFlag = FALSE;
+	nRet = setsockopt(hSocket, IPPROTO_IP,  IP_MULTICAST_LOOP, (char *)&fFlag, sizeof(fFlag));
+	if (nRet == SOCKET_ERROR)
+	{
+		cerr << "setsockopt() IP_MULTICAST_LOOP failed, Err: " << WSAGetLastError() << endl;
+		return 0;
+	}
+
+	destination.sin_family =      AF_INET;
+	destination.sin_addr.s_addr = inet_addr(achMCAddr);
+	destination.sin_port =        htons(nPort);
+
+	// SEND DATA HERE
+
+	return 1;
 }
