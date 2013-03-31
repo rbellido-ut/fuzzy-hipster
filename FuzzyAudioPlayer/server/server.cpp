@@ -204,6 +204,8 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 	int totalbytessent	= 0;
 	string line;
 	ifstream fileToSend;
+	char* tmp;
+	int n;
 
 	cout << "Previous State: " << prevState << endl;
 
@@ -225,19 +227,34 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			send(clientsocket, line.c_str(), line.size(), 0); 
 			line = ""; //just clear the line buffer	
 
-			while (fileToSend >> line)
+			while (true)
 			{
-				if ((bytessent = send(clientsocket, line.c_str(), line.size(), 0)) == 0)
+				tmp = new char [DATABUFSIZE];
+
+				fileToSend.read(tmp, DATABUFSIZE);
+				
+				if((n=fileToSend.gcount()) > 0)
 				{
-					cerr << "Failed to send! Exited with error " << GetLastError() << endl;
-					fileToSend.close();
-					return;
+					line.append(tmp, n);
+					if ((bytessent = send(clientsocket, line.c_str(), line.size(), 0)) == 0)
+					{
+						cerr << "Failed to send! Exited with error " << GetLastError() << endl;
+						fileToSend.close();
+						return;
+					}
+
+					totalbytessent += bytessent;
+					cout << "Bytes sent: " << bytessent << endl;
+					cout << "Total bytes sent: " << totalbytessent << endl;
+					line.clear();
+				}
+				else
+				{
+					delete[] tmp;
+					break;
 				}
 
-				totalbytessent += bytessent;
-				cout << "Bytes sent: " << bytessent << endl;
-				cout << "Total bytes sent: " << totalbytessent << endl;
-				line.clear();
+				 delete[] tmp;
 			}
 
 			line = "DL END\n";
