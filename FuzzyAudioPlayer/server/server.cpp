@@ -238,7 +238,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 
 				fileToSend.read(tmp, DATABUFSIZE);
 				
-				if((n=fileToSend.gcount()) > 0)
+				if((n = (int)fileToSend.gcount()) > 0)
 				{
 					line.append(tmp, n);
 					if ((bytessent = send(clientsocket, line.c_str(), line.size(), 0)) == 0)
