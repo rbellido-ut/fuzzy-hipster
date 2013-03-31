@@ -133,8 +133,11 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	{
 	case WAITFORDOWNLOAD:
 
-		if(iss >> reqType && iss >> extra){
+		if(iss >> reqType && getline(iss, extra)){
+			clnt->sizeOfDownloadFile = 0;
 			clnt->currentState = DOWNLOADING; 
+			extra.erase(0, extra.find_first_not_of(' ')); // get file size
+
 			//DL Approved
 			clnt->downloadFileStream.open("result.mp3", ios::binary);
 			clnt->dlThreadHandle = CreateThread(NULL, 0, clnt->runDLThread, clnt, 0, &clnt->dlThreadID);
@@ -149,9 +152,9 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	case WAITFORUPLOAD:
 		MessageBox(NULL, "UL'ing", "", NULL);
 
-		if(iss >> reqType && iss >> extra){
+		if(iss >> reqType && getline(iss, extra)){
 			clnt->currentState = UPLOADING; 
-			MessageBox(NULL, "UL Approved", "APPROVED", NULL);
+			extra.erase(0, extra.find_first_not_of(' ')); // get file name
 			//UL Approved
 			clnt->uploadFileStream.open("result.mp3", ios::binary);
 			clnt->ulThreadHandle = CreateThread(NULL, 0, clnt->runULThread, clnt, 0, &clnt->ulThreadID);

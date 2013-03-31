@@ -233,7 +233,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			cout << "File size of " << filename << ": " << filesize << " bytes" << endl;
 
 			//echo the file size to the client to signal server's intent to establish a download line
-			line = "DL " + filesize + '\n';
+			line = "DL " + filename + '\n';
 			send(clientsocket, line.c_str(), line.size(), 0);
 			line = ""; //just clear the line buffer	
 
