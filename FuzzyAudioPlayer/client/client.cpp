@@ -62,31 +62,31 @@ bool Client::runClient(WSADATA *wsadata, const char* hostname, const int port)
 }
 
 bool Client::dispatchWSARecvRequest(LPSOCKETDATA data){
-    DWORD flag = 0;
-    DWORD bytesRecvd = 0;
-    int error;
+	DWORD flag = 0;
+	DWORD bytesRecvd = 0;
+	int error;
 
-    if(data)
-    {
-        REQUESTCONTEXT* rc = (REQUESTCONTEXT*)malloc(sizeof(REQUESTCONTEXT));
-        rc->clnt = this;
-        rc->data = data;
-        data->overlap.hEvent = rc;
-		
-        error = WSARecv(data->sock, &data->wsabuf, 1, &bytesRecvd, &flag, &data->overlap, runRecvComplete);
-        if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
-        {
-            return true;
-        }
-        else
+	if(data)
+	{
+		REQUESTCONTEXT* rc = (REQUESTCONTEXT*)malloc(sizeof(REQUESTCONTEXT));
+		rc->clnt = this;
+		rc->data = data;
+		data->overlap.hEvent = rc;
+
+		error = WSARecv(data->sock, &data->wsabuf, 1, &bytesRecvd, &flag, &data->overlap, runRecvComplete);
+		if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
 		{
-            freeData(data);
+			return true;
+		}
+		else
+		{
+			freeData(data);
 			free(rc);
 			MessageBox(NULL, "WSARecv() failed", "Critical Error", MB_ICONERROR);
-            return false;
-        }
+			return false;
+		}
 
-    }
+	}
 
 }
 
@@ -94,46 +94,50 @@ bool Client::dispatchWSARecvRequest(LPSOCKETDATA data){
 
 void CALLBACK Client::runRecvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
-    REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
-    Client* c = (Client*) rc->clnt;
+	REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
+	Client* c = (Client*) rc->clnt;
 
-    c->recvComplete(error, bytesTransferred, overlapped, flags);
+	c->recvComplete(error, bytesTransferred, overlapped, flags);
 
 }
 
 void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
-    REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
-    LPSOCKETDATA data = (LPSOCKETDATA) rc->data;
-    Client* clnt = rc->clnt;
-	
-	
+	REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
+	LPSOCKETDATA data = (LPSOCKETDATA) rc->data;
+	Client* clnt = rc->clnt;
+	bool endOfTransmit = false;
 
-    if(error || bytesTransferred == 0)
-    {
-        freeData(data);
-        return;
-    }
-    //check to see what mode we are in and handle data accordingly
-    //will only receive when in DL, Waiting for UL approval, Streaming, Multicasting, or microphone states
+
+
+	if(error || bytesTransferred == 0)
+	{
+		freeData(data);
+		return;
+	}
+	//check to see what mode we are in and handle data accordingly
+	//will only receive when in DL, Waiting for UL approval, Streaming, Multicasting, or microphone states
 	string tmp;
 	tmp = "";
 	tmp.append(data->databuf, bytesTransferred);
 
+	//if last character is EOT, End the transmit
+	if(data->databuf[bytesTransferred-1] == '\n')
+		endOfTransmit = true;
+
 	istringstream iss(tmp);
 	string reqType, extra;
-	
 
-    switch(clnt->currentState)
+
+	switch(clnt->currentState)
 	{
 	case WAITFORDOWNLOAD:
-		
+
 		if(iss >> reqType && iss >> extra){
 			clnt->currentState = DOWNLOADING; 
 			//DL Approved
+			clnt->downloadFileStream.open("result.mp3", ios::binary);
 			clnt->dlThreadHandle = CreateThread(NULL, 0, clnt->runDLThread, clnt, 0, &clnt->dlThreadID);
-			
-			clnt->fout.open("result.wav", ios::binary);
 		}
 		else
 		{
@@ -144,12 +148,13 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 	case WAITFORUPLOAD:
 		MessageBox(NULL, "UL'ing", "", NULL);
-		
+
 		if(iss >> reqType && iss >> extra){
 			clnt->currentState = UPLOADING; 
 			MessageBox(NULL, "UL Approved", "APPROVED", NULL);
+			//UL Approved
+			clnt->uploadFileStream.open("result.mp3", ios::binary);
 			clnt->ulThreadHandle = CreateThread(NULL, 0, clnt->runULThread, clnt, 0, &clnt->ulThreadID);
-			
 		}
 		else
 		{
@@ -159,16 +164,15 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		break;
 
 	case DOWNLOADING:
-		
-		if(tmp == "DL END"){
+
+		if(endOfTransmit){
 			clnt->currentState = WFUCOMMAND;
-			clnt->fout.close();
+			clnt->downloadFileStream.close();
 			break;
 		}else{
-			clnt->fout.write(tmp.c_str(), tmp.size());
-			
-		}
+			clnt->downloadFileStream.write(tmp.c_str(), tmp.size());
 
+		}
 		break;
 
 	case STREAMING:
@@ -186,53 +190,57 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 bool Client::dispatchWSASendRequest(LPSOCKETDATA data)
 {
-    DWORD flag = 0;
-    DWORD bytesSent = 0;
-    int error;
+	DWORD flag = 0;
+	DWORD bytesSent = 0;
+	int error;
 
-    REQUESTCONTEXT* rc = (REQUESTCONTEXT*)malloc(sizeof(REQUESTCONTEXT));
-    rc->clnt = this;
-    rc->data = data;
-    data->overlap.hEvent = rc;
+	REQUESTCONTEXT* rc = (REQUESTCONTEXT*)malloc(sizeof(REQUESTCONTEXT));
+	rc->clnt = this;
+	rc->data = data;
+	data->overlap.hEvent = rc;
 
-    error = WSASend(data->sock, &data->wsabuf, 1, &bytesSent, flag, &data->overlap, runSendComplete);
-    if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
-    {
-        return true;
-    }
-    else
-    {
-        freeData(data);
-        free(rc);
-        MessageBox(NULL, "WSASend() failed", "Critical Error", MB_ICONERROR);
+	error = WSASend(data->sock, &data->wsabuf, 1, &bytesSent, flag, &data->overlap, runSendComplete);
+	if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
+	{
+		return true;
+	}
+	else
+	{
+		freeData(data);
+		free(rc);
+		MessageBox(NULL, "WSASend() failed", "Critical Error", MB_ICONERROR);
 		return false;
-    }
+	}
 
 }
 
 
 void CALLBACK Client::runSendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
-    REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
-    Client* c = (Client*) rc->clnt;
+	REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
+	Client* c = (Client*) rc->clnt;
 
-    c->sendComplete(error, bytesTransferred, overlapped, flags);
+	c->sendComplete(error, bytesTransferred, overlapped, flags);
 
 }
 
 void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 
-    REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
-    LPSOCKETDATA data = (LPSOCKETDATA) rc->data;
-    Client* clnt = rc->clnt;
+	REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
+	LPSOCKETDATA data = (LPSOCKETDATA) rc->data;
+	Client* clnt = rc->clnt;
+	bool endOfTransmit = false;
 
-    if(error || bytesTransferred == 0)
-    {
-        freeData(data);
-        return;
-    }
-	
+	if(error || bytesTransferred == 0)
+	{
+		freeData(data);
+		return;
+	}
+
+	if(data->databuf[bytesTransferred-1] == '\n')
+		endOfTransmit = true;
+
 	//enter critical section?
 
 	//if we r here we have successfully sent
@@ -248,11 +256,15 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		clnt->currentState = WAITFORUPLOAD;
 		dispatchOneRecv();
 		break;
-					   
+
 	case UPLOADING:
+		if(endOfTransmit)
+		{
+			clnt->currentState = WFUCOMMAND;
+		}
 		break;
 
-	//...
+		//...
 
 	}
 
@@ -262,8 +274,8 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 
 void Client::dispatchOneSend(string usrData){
-	
-					
+
+
 	SOCKETDATA* data = allocData(connectSocket_);
 	strncpy(data->databuf, usrData.c_str(), usrData.size());
 
@@ -302,9 +314,9 @@ DWORD Client::dlThread(LPVOID param)
 	{
 		dispatchOneRecv();
 	}
-	
-	
-	MessageBox(NULL, "DL Done", NULL, NULL);
+
+
+	MessageBox(NULL, "DL Done", "Download Successful", NULL);
 	return 0;
 }
 
@@ -318,16 +330,45 @@ DWORD WINAPI Client::runULThread(LPVOID param)
 DWORD Client::ulThread(LPVOID param)
 {
 	Client* c = (Client*) param;
-	
+
+
+
 	while(c->currentState == UPLOADING)
 	{
-		//read stuff from file and send here
-		//while(can read from file)
+		if (!uploadFileStream.is_open()) 
+			break;
 
-		MessageBox(NULL, "In UL Thread", "", NULL);
-		Sleep(1000);
+		char* tmp;
+		string data;
+
+		while (true)
+		{
+			tmp = new char [DATABUFSIZE];
+			int n = 0;
+			data.clear();
+
+			c->uploadFileStream.read(tmp, DATABUFSIZE);
+			if((n=c->uploadFileStream.gcount()) > 0)
+			{
+				data.append(tmp, n);
+				dispatchOneSend(data.c_str());
+				data.clear();
+			}
+			else
+			{
+				delete[] tmp;
+				break;
+			}
+
+			delete[] tmp;
+		}
+
+		data = "UL END\n";
+		dispatchOneSend(data);
+		
 	}
-	
+
+	MessageBox(NULL, "UL Done", "Upload Successful", NULL);
 	return 0;
 }
 
@@ -335,32 +376,32 @@ DWORD Client::ulThread(LPVOID param)
 
 LPSOCKETDATA Client::allocData(SOCKET socketFD)
 {
-    LPSOCKETDATA data = NULL;
+	LPSOCKETDATA data = NULL;
 
-    try{
-        data = new SOCKETDATA();
+	try{
+		data = new SOCKETDATA();
 
-    }catch(std::bad_alloc&){
+	}catch(std::bad_alloc&){
 		MessageBox(NULL, "Allocate socket data failed", "Error!", MB_ICONERROR);
-        return NULL;
-    }
+		return NULL;
+	}
 
-    data->overlap.hEvent = (WSAEVENT)data;
-    data->sock = socketFD;
-    data->wsabuf.buf = data->databuf;
-    data->wsabuf.len = sizeof(data->databuf);
+	data->overlap.hEvent = (WSAEVENT)data;
+	data->sock = socketFD;
+	data->wsabuf.buf = data->databuf;
+	data->wsabuf.len = sizeof(data->databuf);
 
 
-    return data;
+	return data;
 }
 
 void Client::freeData(LPSOCKETDATA data){
-    if(data)
-    {
+	if(data)
+	{
 		//MessageBox(NULL, "Socket Closed", "", MB_ICONWARNING);
-        closesocket(data->sock);
-        delete data;
-    }
+		closesocket(data->sock);
+		delete data;
+	}
 }
 
 
@@ -380,7 +421,7 @@ DWORD WINAPI Client::recvThread(/*LPVOID param*/)
 		MessageBox(NULL, "In DL Thread", "", NULL);
 		Sleep(1000);
 	}
-	
+
 	return 0;
 
 }

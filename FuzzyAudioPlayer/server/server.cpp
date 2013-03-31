@@ -204,6 +204,8 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 	int totalbytessent	= 0;
 	string line;
 	ifstream fileToSend;
+	char* tmp;
+	int n;
 
 	cout << "Previous State: " << prevState << endl;
 
@@ -216,7 +218,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 		case DOWNLOADING:
 
 			//fileToSend.open(filename.c_str());
-			fileToSend.open("test.wav", ios::binary);
+			fileToSend.open("test.mp3", ios::binary);
 			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist
 				break;
 
@@ -225,22 +227,38 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			send(clientsocket, line.c_str(), line.size(), 0); 
 			line = ""; //just clear the line buffer	
 
-			while (fileToSend >> line)
+			while (true)
 			{
-				if ((bytessent = send(clientsocket, line.c_str(), line.size(), 0)) == 0)
+				tmp = new char [DATABUFSIZE];
+
+				fileToSend.read(tmp, DATABUFSIZE);
+				
+				if((n=fileToSend.gcount()) > 0)
 				{
-					cerr << "Failed to send! Exited with error " << GetLastError() << endl;
-					fileToSend.close();
-					return;
+					line.append(tmp, n);
+					if ((bytessent = send(clientsocket, line.c_str(), line.size(), 0)) == 0)
+					{
+						cerr << "Failed to send! Exited with error " << GetLastError() << endl;
+						fileToSend.close();
+						return;
+					}
+
+					totalbytessent += bytessent;
+					cout << "Bytes sent: " << bytessent << endl;
+					cout << "Total bytes sent: " << totalbytessent << endl;
+					line.clear();
+				}
+				else
+				{
+					delete[] tmp;
+					break;
 				}
 
-				totalbytessent += bytessent;
-				cout << "Bytes sent: " << bytessent << endl;
-				cout << "Total bytes sent: " << totalbytessent << endl;
-				line.clear();
+				 delete[] tmp;
 			}
 
-			line = "DL END\n";
+			//EOT in hex
+			line = '\n';
 			send(clientsocket, line.c_str(), line.size(), 0);
 		break;
 
