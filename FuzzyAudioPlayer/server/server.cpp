@@ -32,12 +32,6 @@ int main(int argc, char* argv[])
 	SOCKET listenSocket;
 	std::vector<SOCKET> clientList;
 
-	/*Server srvr;
-	WSADATA wsaData;
-	srvr.runServer(&wsaData);
-
-	getchar();*/
-
 	WSADATA wsadata;
 	listenSocket = createServer(&wsadata, TCP);
 
@@ -277,6 +271,12 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 
 		case MICCHATTING:
 		break;
+
+		case MULTICASTING:
+			// Spawn a new thread:
+			//		Set up Multicast server
+			//		Stream audio to the multicast address
+		break;
 	}
 }
 
@@ -322,9 +322,7 @@ ServerState DecodeRequest(char * request, string& filename)
 	else if (requesttype == "DL")
 	{
 		getline(ss, filename);
-
 		cout << filename << endl;
-
 		return DOWNLOADING;
 	}
 	else if (requesttype == "UL")
