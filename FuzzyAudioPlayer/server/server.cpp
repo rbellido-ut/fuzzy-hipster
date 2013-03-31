@@ -258,7 +258,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			}
 
 			//EOT in hex
-			line = '0x04';
+			line = '\n';
 			send(clientsocket, line.c_str(), line.size(), 0);
 		break;
 

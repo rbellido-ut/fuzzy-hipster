@@ -122,7 +122,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	tmp.append(data->databuf, bytesTransferred);
 
 	//if last character is EOT, End the transmit
-	if(data->databuf[bytesTransferred-1] == '0x04')
+	if(data->databuf[bytesTransferred-1] == '\n')
 		endOfTransmit = true;
 
 	istringstream iss(tmp);
