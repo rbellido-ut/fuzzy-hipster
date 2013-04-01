@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #pragma comment(lib,"ws2_32.lib")
+#pragma comment(lib,"libzplay.lib")
 
 #include <WinSock2.h>
 #include <Windows.h>
@@ -45,7 +46,10 @@ enum {
     L2MULTICAST, //listening to multicast channel
     MICROPHONE, //in mic mode
 	SENTSTREQUEST,
-	WAITFORSTREAM
+	WAITFORSTREAM,
+	LIST, // get song list from server
+	SENTLISTREQUEST,
+	WAITFORLIST
 };
 
 typedef struct socket_data{

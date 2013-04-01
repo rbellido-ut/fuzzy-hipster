@@ -322,6 +322,9 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 		break;
 
+	case WAITFORLIST:
+		break;
+
 	case WAITFORDOWNLOAD:	//after DL request was sent in dlThread
 
 
@@ -534,6 +537,10 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	//check current state to determine next step
 	switch(clnt->currentState)
 	{
+	case SENTLISTREQUEST:
+		clnt->currentState = WAITFORLIST;
+		dispatchOneRecv();
+		break;
 	case SENTSTREQUEST:
 		clnt->currentState = WAITFORSTREAM;
 		dispatchOneRecv();
@@ -738,6 +745,38 @@ DWORD Client::stThread(LPVOID param)
 	while(1)
 	{
 		if(c->currentState != STREAMING)
+		{
+			if(c->currentState == WFUCOMMAND)
+				break;
+
+			continue;
+		}
+		dispatchOneRecv();
+	}
+
+	return 0;
+}
+
+DWORD WINAPI Client::runListThread(LPVOID param)
+{
+	Client* c = (Client*) param;
+	return c->listThread(c);
+}
+
+DWORD Client::listThread(LPVOID param)
+{
+	Client* c = (Client*) param;
+	string userRequest;
+
+	userRequest += "LIST ";
+	userRequest += "Behnam's party mix.wav\n";
+
+	c->currentState = SENTLISTREQUEST;
+	c->dispatchOneSend(userRequest);
+
+	while(1)
+	{
+		if(c->currentState != LIST)
 		{
 			if(c->currentState == WFUCOMMAND)
 				break;

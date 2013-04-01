@@ -105,6 +105,9 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						SendMessage(GetDlgItem(hWnd,IDC_MAIN_STATUS), SB_SETTEXT, STATUSBAR_STATUS, (LPARAM)"Connected");
 						EnableWindow(GetDlgItem(hWnd,IDC_BUTTON_OK), TRUE); 
 						haveClient = true;
+
+						// get song list from server
+						clnt.listThreadHandle = CreateThread(NULL, 0, clnt.runListThread, &clnt, 0, &clnt.listThreadID);
 					}
 					else
 						MessageBox(hWnd, "Try Again!" , "Sorry" , MB_ICONWARNING);

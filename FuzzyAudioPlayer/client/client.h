@@ -20,9 +20,9 @@ public:
 
 	int currentState;
 	DWORD dlThreadID;
-	HANDLE dlThreadHandle, stThreadHandle, ulThreadHandle;
+	HANDLE dlThreadHandle, stThreadHandle, ulThreadHandle, listThreadHandle;
 
-	DWORD stThreadID, ulThreadID;
+	DWORD stThreadID, ulThreadID, listThreadID;
 	DWORD stThread(LPVOID);
 	static DWORD WINAPI runSTThread(LPVOID);
 
@@ -31,6 +31,9 @@ public:
 
 	DWORD ulThread(LPVOID param);
 	static DWORD WINAPI runULThread(LPVOID param);
+
+	DWORD listThread(LPVOID param);
+	static DWORD WINAPI runListThread(LPVOID param);
 
 	void dispatchOneSend(std::string dlReq);
 	void dispatchOneRecv();
