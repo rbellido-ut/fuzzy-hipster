@@ -294,6 +294,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 			clnt->dlFileSize = fileSize;
 			clnt->downloadedAmount = 0;
 
+
 			//DL Approved
 			clnt->currentState = DOWNLOADING; 
 			clnt->downloadFileStream.open("result.mp3", ios::binary);

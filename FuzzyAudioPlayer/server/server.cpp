@@ -25,8 +25,8 @@ using namespace std;
 DWORD WINAPI handleClientRequests(LPVOID param);
 DWORD WINAPI listenThread(LPVOID args);
 DWORD WINAPI multicastThread(LPVOID args);
-ServerState DecodeRequest(char * request, string& filename);
-void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename = "");
+ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize);
+void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename = "", int uploadfilesize = 0);
 
 int main(int argc, char* argv[])
 {
@@ -123,6 +123,7 @@ DWORD WINAPI handleClientRequests(LPVOID param)
 	char * p;
 	ServerState newState = UNDEFINED, prevState = UNDEFINED;
 	string filename;
+	int uploadfilesize;
 
 	while (TRUE)
 	{
@@ -141,8 +142,6 @@ DWORD WINAPI handleClientRequests(LPVOID param)
 				break;
 		}
 
-		//numBytesRecvd = recv(controlSocket, p, bytesToRead, 0);
-
 		if ((numBytesRecvd < 0))
 		{
 			if (GetLastError() == WSAECONNRESET)
@@ -160,12 +159,12 @@ DWORD WINAPI handleClientRequests(LPVOID param)
 			prevState = newState;
 
 		//get the new current state
-		newState = DecodeRequest(request, filename);
+		newState = DecodeRequest(request, filename, uploadfilesize);
 
 		if (newState == SERVERROR)
 			break;
 
-		requestDispatcher(prevState, newState, controlSocket, filename);
+		requestDispatcher(prevState, newState, controlSocket, filename, uploadfilesize);
 	}
 
 	return 1;
@@ -184,7 +183,10 @@ DWORD WINAPI handleClientRequests(LPVOID param)
 --
 -- INTERFACE: void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename)
 --					prevState - the previous state the server was in
---					currentState - the new state the server is 
+--					currentState - the new state of the server
+--					clientsocket - the socket of the client to send
+--					filename - the name of the file being transferred; it's an empty string by default
+--					uploadfilesize - size of the file to upload in bytes with default value of 0
 --				
 --
 -- RETURNS: void
@@ -193,19 +195,22 @@ DWORD WINAPI handleClientRequests(LPVOID param)
 the handle the current request. Note that any server errors is checked outside of this function, and thus 
 assumes that everything was pretty ok before executing this function.
 ----------------------------------------------------------------------------------------------------------------------*/
-void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename)
+void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename, int uploadfilesize)
 {
-	int bytessent		= 0;
-	int totalbytessent	= 0;
+	int bytessent = 0, bytesrecvd = 0;
+	int totalbytessent	= 0, totalbytesrecvd = 0;
 	string line;
 	ifstream fileToSend;
+	ofstream fileRecvd;
 	char* tmp;
 	streamsize numberOfBytesRead;
 
 	//computing filesizes
-	std::streampos filesize, begin, end;
+	ostringstream oss;
+	std::streampos begin, end;
+	int filesize = 0;
 
-	cout << "Previous State: " << prevState << endl;
+	//cout << "Previous State: " << prevState << endl;
 
 	switch (currentState)
 	{
@@ -214,21 +219,26 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 		break;
 
 		case DOWNLOADING:
+			fileToSend.open("test.mp3", ios::binary); //TODO: hardcoded!s
 
-			//fileToSend.open(filename.c_str());
-			fileToSend.open("test.mp3", ios::binary);
-			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist
+			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist. Deny client to download file.
+			{
+				line = "DL\n";
+				send(clientsocket, line.c_str(), line.size(), 0);
+				line = "";
 				break;
+			}
 
 			//compute size of the file
 			begin = fileToSend.tellg();
 			fileToSend.seekg(0, ios::end);
 			filesize = fileToSend.tellg() - begin;
-			fileToSend.seekg(ios::beg);
+			fileToSend.seekg(begin);
 			cout << "File size of " << filename << ": " << filesize << " bytes" << endl;
 
 			//echo the file size to the client to signal server's intent to establish a download line
-			line = "DL " + filename + '\n';
+			oss << "DL " << filesize << "\n";
+			line = oss.str();
 			send(clientsocket, line.c_str(), line.size(), 0);
 			line = ""; //just clear the line buffer	
 
@@ -241,11 +251,12 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 				
 				if((numberOfBytesRead = fileToSend.gcount()) > 0)
 				{
-					line.append(tmp, numberOfBytesRead);
-					if ((bytessent = send(clientsocket, line.c_str(), line.size(), 0)) == 0)
+					line.append(tmp, static_cast<unsigned int>(numberOfBytesRead));
+					if (((bytessent = send(clientsocket, line.c_str(), line.size(), 0))) == 0 || (bytessent == -1))
 					{
 						cerr << "Failed to send! Exited with error " << GetLastError() << endl;
 						fileToSend.close();
+						delete[] tmp;
 						return;
 					}
 
@@ -253,22 +264,65 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 					cout << "Bytes sent: " << bytessent << endl;
 					cout << "Total bytes sent: " << totalbytessent << endl;
 					line.clear();
-				}
-				else
-				{
-					delete[] tmp;
+				} 
+				
+				if (totalbytessent == filesize)
 					break;
-				}
-
-				 delete[] tmp;
 			}
 
 			//EOT in hex
+			cout << "done downloading" << endl;
 			line = "DLEND\n";
 			send(clientsocket, line.c_str(), line.size(), 0);
+			fileToSend.close();
+			delete[] tmp;
 		break;
 
 		case UPLOADING:
+			cout << "filesize of the file to upload: " << filesize << endl;
+
+			line = "UL " + filename + '\n';
+			send(clientsocket, line.c_str(), line.size(), 0);
+			line = ""; //just clear the line buffer	
+
+			fileRecvd.open("lol.cd1", ios::binary); //TODO: hardcoded!
+			
+			if (!fileRecvd.is_open()) //server can't open the file. Deny client to download file.
+			{
+				line = "UL\n";
+				send(clientsocket, line.c_str(), line.size(), 0);
+				line = "";
+				break;
+			}
+			
+			while (true)
+			{
+				tmp = new char[DATABUFSIZE];
+				memset(tmp, 0, DATABUFSIZE);
+
+				if (((bytesrecvd = recv(clientsocket, tmp, DATABUFSIZE, 0)) == 0) || (bytesrecvd == -1))
+				{
+					cerr << "recv failed with error " << GetLastError() << endl;
+					fileRecvd.close();
+					delete[] tmp;
+					return;
+				}
+
+				fileRecvd.write(tmp, bytesrecvd);
+				totalbytesrecvd += bytesrecvd;
+				cout << "Bytes received: " << bytesrecvd << endl;
+				cout << "Total bytes received: " << totalbytesrecvd << endl;
+
+				if (totalbytesrecvd == uploadfilesize) //Uploading is done
+				{
+					cout << "done uploading" << endl;
+					fileRecvd.close();
+					delete[] tmp;
+					break;
+				}
+				delete[] tmp;
+			}
+
 		break;
 
 		case MICCHATTING:
@@ -294,19 +348,20 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 --
 -- PROGRAMMER: Ronald Bellido, Jesse Braham
 --
--- INTERFACE: void DecodeRequest(char * request, string& filename)
+-- INTERFACE: ServerState DecodeRequest(char * request, string& filename)
 --					request - the request packet to parse
 --					filename - the name of the file
+--					uploadfilesize - the size of the file to upload
 --				
 --
--- RETURNS: returns an int which will indicate one of the specified ServerStates in util.h (STREAMING, DOWNLOADING, etc.)
+-- RETURNS: returns ServerState which will indicate one of the specified ServerStates in util.h (STREAMING, DOWNLOADING, etc.)
 --			On error, the function will return SERVERROR, which typcially means that there was an error parsing the request, or 
 --			an invalid request was received.
 --
 -- NOTES: This function parses a request packet with respect to the specification document. After parsing,
 it will return the current state of the server.
 ----------------------------------------------------------------------------------------------------------------------*/
-ServerState DecodeRequest(char * request, string& filename)
+ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
 {
 	string req = request;
 	stringstream ss(req);
@@ -315,7 +370,7 @@ ServerState DecodeRequest(char * request, string& filename)
 	ss >> requesttype;
 	cout << "received " << requesttype << " ";
 
-	if (requesttype == "ST")
+	if (requesttype == "ST") //received: ST filename\n"
 	{
 		getline(ss, filename); //read ss up to newline
 		cout << filename << endl;
@@ -323,23 +378,24 @@ ServerState DecodeRequest(char * request, string& filename)
 	}
 	else if (requesttype == "DL")
 	{
-		getline(ss, filename);
+		getline(ss, filename); //received: DL filename\n
 		cout << filename << endl;
 		return DOWNLOADING;
 	}
 	else if (requesttype == "UL")
 	{
-		getline(ss, filename);
-		cout << filename << endl;
+		ss >> uploadfilesize;
+		getline(ss, filename); // received: UL filename uploadfilesize \n
+		cout << uploadfilesize << filename << endl;
 		return UPLOADING;
 	}
-	else if (requesttype == "MC")
+	else if (requesttype == "MC") //received: MC\n
 	{
 		//'hook' the client to the multicast broadcast channel
 		cout << "hooking client to the multicast channel" << endl;
 		return MULTICASTING;
 	}
-	else if (requesttype == "MIC")
+	else if (requesttype == "MIC") //received: MIC\n
 	{
 		cout << "2 way chat requested" << endl;
 		return MICCHATTING;
