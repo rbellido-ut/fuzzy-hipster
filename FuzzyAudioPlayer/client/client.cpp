@@ -282,7 +282,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 	// if STREAMING, append to a custom SF stream
 	//sf::Music streamplayer;
-	clnt->inputstream_.streambuffer.append(data->databuf, bytesTransferred);
+	//clnt->inputstream_.streambuffer.append(data->databuf, bytesTransferred);
 
 	//if last character is EOT, End the transmit
 	if(clnt->downloadedAmount == clnt->dlFileSize)
@@ -378,13 +378,13 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	case STREAMING:
 		if(endOfTransmit)
 		{
-			audiobuffer_.loadFromStream(inputstream_);
+			/*audiobuffer_.loadFromStream(inputstream_);
 			stream_.load(audiobuffer_);
 			stream_.play();
 
 			// let it play until it is finished
 			while (stream_.getStatus() == AudioStream::Playing)
-				sf::sleep(sf::seconds(0.1f));
+				sf::sleep(sf::seconds(0.1f));*/
 			clnt->currentState = WFUCOMMAND;
 			clnt->downloadFileStream.close();
 			clnt->dlFileSize = 0;

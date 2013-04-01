@@ -1,7 +1,7 @@
 #include "utils.h"
-#include <SFML/Audio.hpp>
+/*#include <SFML/Audio.hpp>
 #include "NetStream.h"
-#include "AudioStream.h"
+#include "AudioStream.h"*/
 
 class Client {
 
@@ -45,10 +45,10 @@ private:
 	SOCKET connectSocket_;
 	SOCKADDR_IN addr_;
 	hostent *hp_;
-	AudioStream stream_;
+	/*AudioStream stream_;
 	NetStream inputstream_;
 	sf::Music streamplayer_;
-	sf::SoundBuffer audiobuffer_;
+	sf::SoundBuffer audiobuffer_;*/
 
 	SOCKET createTCPClient(WSADATA*, const char*, const int);
 

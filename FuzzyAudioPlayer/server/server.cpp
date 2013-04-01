@@ -303,7 +303,64 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 		break;
 
 		case STREAMING:
-			// same as downloading
+			// note: SFML does NOT support mp3 files because the codecs are licensed so don't include them here
+			fileToSend.open("sm64_happy_message.wav", ios::binary); //TODO: hardcoded!s
+
+			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist. Deny client to download file.
+			{
+				line = "ST\n";
+				send(clientsocket, line.c_str(), line.size(), 0);
+				line = "";
+				break;
+			}
+
+			//compute size of the file
+			begin = fileToSend.tellg();
+			fileToSend.seekg(0, ios::end);
+			filesize = fileToSend.tellg() - begin;
+			fileToSend.seekg(begin);
+			cout << "File size of " << filename << ": " << filesize << " bytes" << endl;
+
+			//echo the file size to the client to signal server's intent to establish a download line
+			oss << "ST " << filesize << "\n";
+			line = oss.str();
+			send(clientsocket, line.c_str(), line.size(), 0);
+			line = ""; //just clear the line buffer	
+
+			while (true)
+			{
+				tmp = new char [DATABUFSIZE];
+
+				numberOfBytesRead = 0;
+				fileToSend.read(tmp, DATABUFSIZE);
+				
+				if((numberOfBytesRead = fileToSend.gcount()) > 0)
+				{
+					line.append(tmp, static_cast<unsigned int>(numberOfBytesRead));
+					if (((bytessent = send(clientsocket, line.c_str(), line.size(), 0))) == 0 || (bytessent == -1))
+					{
+						cerr << "Failed to send! Exited with error " << GetLastError() << endl;
+						fileToSend.close();
+						delete[] tmp;
+						return;
+					}
+
+					totalbytessent += bytessent;
+					cout << "Bytes sent: " << bytessent << endl;
+					cout << "Total bytes sent: " << totalbytessent << endl;
+					line.clear();
+				} 
+				
+				if (totalbytessent == filesize)
+					break;
+			}
+
+			//EOT in hex
+			cout << "done downloading" << endl;
+			line = "DLEND\n";
+			send(clientsocket, line.c_str(), line.size(), 0);
+			fileToSend.close();
+			delete[] tmp;
 		case DOWNLOADING:
 			// note: SFML does NOT support mp3 files because the codecs are licensed so don't include them here
 			fileToSend.open("sm64_happy_message.wav", ios::binary); //TODO: hardcoded!s
