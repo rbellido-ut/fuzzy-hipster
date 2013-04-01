@@ -79,7 +79,7 @@ bool Client::runClient(WSADATA* wsadata, const char* hostname, const int port)
 	}
 
 	return false;
-	
+
 	//now that we are connected , we are going to wait for user command
 
 }
@@ -293,7 +293,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		{
 			clnt->dlFileSize = fileSize;
 			clnt->downloadedAmount = 0;
-			
+
 			//DL Approved
 			clnt->currentState = DOWNLOADING; 
 			clnt->downloadFileStream.open("result.mp3", ios::binary);
@@ -310,7 +310,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	case WAITFORUPLOAD:
 
 		if(iss >> reqType && getline(iss, extra)){
-			
+
 			extra.erase(0, extra.find_first_not_of(' ')); // get file name
 			if(extra.empty()) //if only received "DL"
 			{
@@ -319,7 +319,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 				//close file
 				break;
 			}
-			
+
 			//UL Approved
 			clnt->currentState = UPLOADING; 
 			clnt->uploadedAmount = 0;
@@ -479,8 +479,6 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		return;
 	}
 
-	if(clnt->ulFileSize == clnt->uploadedAmount)
-		endOfTransmit = true;
 
 	//if we r here we have successfully sent
 	//check current state to determine next step
@@ -497,7 +495,7 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		break;
 
 	case UPLOADING:
-		if(endOfTransmit)
+		if(clnt->ulFileSize == clnt->uploadedAmount)
 		{
 			clnt->currentState = WFUCOMMAND;
 			clnt->uploadFileStream.close();
@@ -640,7 +638,7 @@ DWORD Client::dlThread(LPVOID param)
 
 	userRequest += "DL ";
 	userRequest += "Behnam's party mix.wav\n";
-					
+
 	c->currentState = SENTDLREQUEST;
 	c->dispatchOneSend(userRequest);
 
@@ -650,7 +648,7 @@ DWORD Client::dlThread(LPVOID param)
 		{
 			if(c->currentState == WFUCOMMAND)
 				break;
-			
+
 			continue;
 		}
 		dispatchOneRecv();
@@ -660,7 +658,6 @@ DWORD Client::dlThread(LPVOID param)
 	MessageBox(NULL, "DL Done", "Download Successful", NULL);
 	return 0;
 }
-
 
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION:	runULThread
@@ -719,8 +716,7 @@ DWORD Client::ulThread(LPVOID param)
 	string userRequest;
 	ostringstream oss;
 
-	//uploadFileStream
-	clnt->uploadFileStream.open("result.mp3", ios::binary);
+	clnt->uploadFileStream.open("test2.wav", ios::binary);
 	streampos begin, end;
 	begin = clnt->uploadFileStream.tellg();
 	clnt->uploadFileStream.seekg(0, ios::end);
@@ -736,46 +732,37 @@ DWORD Client::ulThread(LPVOID param)
 	while(1)
 	{
 
-		if(clnt->currentState != UPLOADING)
-		{
-			if(clnt->currentState == WFUCOMMAND)
-				break;
-		
-			continue;
-		}
-
 		if (!uploadFileStream.is_open())
 			return 1;
 
 		char* tmp;
 		string data;
 
-		while (clnt->currentState == UPLOADING)
+		tmp = new char [DATABUFSIZE];
+		memset(tmp, 0, DATABUFSIZE);
+		numberOfBytesRead = 0;
+		data.clear();
+
+		clnt->uploadFileStream.read(tmp, DATABUFSIZE);
+		if((numberOfBytesRead = clnt->uploadFileStream.gcount()) > 0)
 		{
-			tmp = new char [DATABUFSIZE];
-			numberOfBytesRead = 0;
+			data.append(tmp, numberOfBytesRead);
+			dispatchOneSend(data);
 			data.clear();
+		}
 
-			clnt->uploadFileStream.read(tmp, DATABUFSIZE);
-			if((numberOfBytesRead = clnt->uploadFileStream.gcount()) > 0)
-			{
-				data.append(tmp, numberOfBytesRead);
-				dispatchOneSend(data);
-				clnt->uploadedAmount += numberOfBytesRead;
-				data.clear();
-			}
-			else
-			{
-				delete[] tmp;
-				clnt->currentState = WFUCOMMAND;
-				MessageBox(NULL, "UL Done", "Upload Successful", NULL);
-				break;
-			}
+		delete[] tmp;
+		clnt->uploadedAmount += numberOfBytesRead;
 
-			delete[] tmp;
+		if(clnt->uploadedAmount == clnt->ulFileSize)
+		{
+			clnt->currentState = WFUCOMMAND;
+			break;
+		
 		}
 	}
 
+	MessageBox(NULL, "UL Done", "Upload Successful", NULL);
 	return 0;
 }
 
