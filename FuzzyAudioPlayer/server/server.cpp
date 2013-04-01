@@ -215,9 +215,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 	switch (currentState)
 	{
 		case STREAMING:
-
-		break;
-
+			// same as downloading
 		case DOWNLOADING:
 			fileToSend.open("test.mp3", ios::binary); //TODO: hardcoded!s
 

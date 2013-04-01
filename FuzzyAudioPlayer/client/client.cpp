@@ -281,8 +281,8 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	tmp.append(data->databuf, bytesTransferred);
 
 	// if STREAMING, append to a custom SF stream
-	sf::Music streamplayer;
-	clnt->stream_.streambuffer.append(data->databuf, bytesTransferred);
+	//sf::Music streamplayer;
+	clnt->inputstream_.streambuffer.append(data->databuf, bytesTransferred);
 
 	//if last character is EOT, End the transmit
 	if(clnt->downloadedAmount == clnt->dlFileSize)
@@ -304,8 +304,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 			//ST Approved
 			clnt->currentState = STREAMING; 
-			streamplayer.openFromStream(stream_);
-			streamplayer.play();
+
 			//clnt->downloadFileStream.open("result.mp3", ios::binary);
 
 		}
@@ -388,7 +387,17 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		else
 		{
 			downloadedAmount += bytesTransferred;
+			audiobuffer_.loadFromStream(inputstream_);
+			//streamplayer_.stop();
+			//streamplayer_.openFromStream(stream_);
+			stream_.load(audiobuffer_);
+			stream_.play();
+			//streamplayer_.play();
 			//clnt->downloadFileStream.write(tmp.c_str(), tmp.size());
+
+			// let it play until it is finished
+			while (stream_.getStatus() == AudioStream::Playing)
+				sf::sleep(sf::seconds(0.1f));
 		}
 		break;
 
@@ -723,7 +732,7 @@ DWORD Client::stThread(LPVOID param)
 	Client* c = (Client*) param;
 	string userRequest;
 
-	userRequest += "DL "; // server sees this as a download request
+	userRequest += "ST ";
 	userRequest += "Behnam's party mix.wav\n";
 
 	c->currentState = SENTSTREQUEST;
@@ -741,8 +750,6 @@ DWORD Client::stThread(LPVOID param)
 		dispatchOneRecv();
 	}
 
-
-	MessageBox(NULL, "DL Done", "Download Successful", NULL);
 	return 0;
 }
 
