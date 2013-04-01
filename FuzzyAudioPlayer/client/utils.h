@@ -43,7 +43,9 @@ enum {
     UPLOADING,
     STREAMING, //streaming data from server
     L2MULTICAST, //listening to multicast channel
-    MICROPHONE //in mic mode
+    MICROPHONE, //in mic mode
+	SENTSTREQUEST,
+	WAITFORSTREAM
 };
 
 typedef struct socket_data{

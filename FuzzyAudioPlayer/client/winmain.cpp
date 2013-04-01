@@ -148,7 +148,7 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						MessageBox(hWnd, "CAN ONLY DO ONE THING AT A TIME" , "Warning" , MB_ICONWARNING);
 					}
 					else {
-						//streamRequest(clnt);
+						streamRequest(clnt);
 					}
 					break;
 				}
@@ -213,29 +213,31 @@ bool uploadRequest(Client& clnt)
 
 	return true;
 }
-/*
+
 bool streamRequest(Client& clnt)
 {
-MessageBox(NULL, "stream req" , "Test" , MB_OK);
+	clnt.stThreadHandle = CreateThread(NULL, 0, clnt.runSTThread, &clnt, 0, &clnt.stThreadID);
 
-std::string userRequest;
+	/*MessageBox(NULL, "stream req" , "Test" , MB_OK);
 
-userRequest += "ST";
+	std::string userRequest;
 
-clnt.dispatchOneSend(userRequest);
+	userRequest += "ST";
 
-clnt.currentState = STREAMING;
+	clnt.dispatchOneSend(userRequest);
 
-// need to read streamed data received from server into a SFML buffer then play it with the SFML lib
-sf::SoundBuffer buffer;
-buffer.loadFromFile("D:\\test.ogg");
-AudioStream stream;
-stream.load(buffer);
-stream.play();
+	clnt.currentState = STREAMING;
 
-return true;
+	// need to read streamed data received from server into a SFML buffer then play it with the SFML lib
+	sf::SoundBuffer buffer;
+	buffer.loadFromFile("D:\\test.ogg");
+	AudioStream stream;
+	stream.load(buffer);
+	stream.play();*/
+
+	return true;
 }
-*/
+
 bool micRequest(Client& clnt)
 {
 	MessageBox(NULL, "mic req" , "Test" , MB_OK);

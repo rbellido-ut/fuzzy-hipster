@@ -1,4 +1,6 @@
 #include "utils.h"
+#include <SFML/Audio.hpp>
+#include "NetStream.h"
 
 class Client {
 
@@ -15,18 +17,20 @@ public:
 
 	int currentState;
 	DWORD dlThreadID;
-	HANDLE dlThreadHandle;
+	HANDLE dlThreadHandle, stThreadHandle, ulThreadHandle;
 
-	DWORD ulThreadID;
-	DWORD Client::dlThread(LPVOID param);
-	static DWORD WINAPI Client::runDLThread(LPVOID param);
+	DWORD stThreadID, ulThreadID;
+	DWORD stThread(LPVOID);
+	static DWORD WINAPI runSTThread(LPVOID);
 
-	HANDLE ulThreadHandle;
-	DWORD Client::ulThread(LPVOID param);
-	static DWORD WINAPI Client::runULThread(LPVOID param);
+	DWORD dlThread(LPVOID);
+	static DWORD WINAPI runDLThread(LPVOID);
+
+	DWORD ulThread(LPVOID param);
+	static DWORD WINAPI runULThread(LPVOID param);
 
 	void dispatchOneSend(std::string dlReq);
-	void Client::dispatchOneRecv();
+	void dispatchOneRecv();
 
 	std::ofstream downloadFileStream;
 	std::ifstream uploadFileStream;
@@ -40,6 +44,7 @@ private:
 	SOCKET connectSocket_;
 	SOCKADDR_IN addr_;
 	hostent *hp_;
+	NetStream stream_;
 
 	SOCKET createTCPClient(WSADATA*, const char*, const int);
 
@@ -57,3 +62,42 @@ private:
     static void CALLBACK runSendComplete (DWORD Error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 
 };
+
+/*class AudioStream : public sf::SoundStream
+{
+    public:
+        void load(const sf::SoundBuffer& buffer)
+        {
+            m_samples.assign(buffer.getSamples(), buffer.getSamples() + buffer.getSampleCount());
+            m_currentSample = 0;
+            initialize(buffer.getChannelCount(), buffer.getSampleRate());
+        }
+
+    private:
+        virtual bool onGetData(Chunk& data)
+        {
+            const int samplesToStream = 50000;
+            data.samples = &m_samples[m_currentSample];
+
+            if (m_currentSample + samplesToStream <= m_samples.size())
+            {
+                data.sampleCount = samplesToStream;
+                m_currentSample += samplesToStream;
+                return true;
+            }
+            else
+            {
+                data.sampleCount = m_samples.size() - m_currentSample;
+                m_currentSample = m_samples.size();
+                return false;
+            }
+        }
+
+        virtual void onSeek(sf::Time timeOffset)
+        {
+            m_currentSample = static_cast<std::size_t>(timeOffset.asSeconds() * getSampleRate() * getChannelCount());
+        }
+
+        std::vector<sf::Int16> m_samples;
+        std::size_t m_currentSample;
+};*/

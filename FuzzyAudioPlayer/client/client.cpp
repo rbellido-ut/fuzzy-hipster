@@ -277,6 +277,10 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	tmp = "";
 	tmp.append(data->databuf, bytesTransferred);
 
+	// if STREAMING, append to a custom SF stream
+	sf::Music streamplayer;
+	clnt->stream_.streambuffer.append(data->databuf, bytesTransferred);
+
 	//if last character is EOT, End the transmit
 	if(clnt->downloadedAmount == clnt->dlFileSize)
 		endOfTransmit = true;
@@ -287,6 +291,26 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 	switch(clnt->currentState)
 	{
+	case WAITFORSTREAM:
+		if(iss >> reqType && iss >> fileSize)
+		{
+			clnt->dlFileSize = fileSize;
+			clnt->downloadedAmount = 0;
+
+			//ST Approved
+			clnt->currentState = STREAMING; 
+			streamplayer.openFromStream(stream_);
+			streamplayer.play();
+			//clnt->downloadFileStream.open("result.mp3", ios::binary);
+
+		}
+		else
+		{
+			clnt->currentState = WFUCOMMAND;
+			MessageBox(NULL, "ST Denied", "NOT APPROVED", NULL);
+		}
+
+		break;
 	case WAITFORDOWNLOAD:
 
 		if(iss >> reqType && iss >> fileSize)//getline(iss, extra)){
@@ -346,6 +370,19 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		break;
 
 	case STREAMING:
+		if(endOfTransmit)
+		{
+			clnt->currentState = WFUCOMMAND;
+			clnt->downloadFileStream.close();
+			clnt->dlFileSize = 0;
+			clnt->downloadedAmount = 0;
+			break;
+		}
+		else
+		{
+			downloadedAmount += bytesTransferred;
+			//clnt->downloadFileStream.write(tmp.c_str(), tmp.size());
+		}
 		break;
 
 	case L2MULTICAST:
@@ -485,6 +522,10 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	//check current state to determine next step
 	switch(clnt->currentState)
 	{
+	case SENTSTREQUEST:
+		clnt->currentState = WAITFORSTREAM;
+		dispatchOneRecv();
+		break;
 	case SENTDLREQUEST:
 		clnt->currentState = WAITFORDOWNLOAD;
 		dispatchOneRecv();
@@ -650,6 +691,40 @@ DWORD Client::dlThread(LPVOID param)
 	while(1)
 	{
 		if(c->currentState != DOWNLOADING)
+		{
+			if(c->currentState == WFUCOMMAND)
+				break;
+
+			continue;
+		}
+		dispatchOneRecv();
+	}
+
+
+	MessageBox(NULL, "DL Done", "Download Successful", NULL);
+	return 0;
+}
+
+DWORD WINAPI Client::runSTThread(LPVOID param)
+{
+	Client* c = (Client*) param;
+	return c->stThread(c);
+}
+
+DWORD Client::stThread(LPVOID param)
+{
+	Client* c = (Client*) param;
+	string userRequest;
+
+	userRequest += "DL "; // server sees this as a download request
+	userRequest += "Behnam's party mix.wav\n";
+
+	c->currentState = SENTSTREQUEST;
+	c->dispatchOneSend(userRequest);
+
+	while(1)
+	{
+		if(c->currentState != STREAMING)
 		{
 			if(c->currentState == WFUCOMMAND)
 				break;
