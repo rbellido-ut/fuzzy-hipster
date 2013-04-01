@@ -27,6 +27,10 @@ DWORD WINAPI listenThread(LPVOID args);
 DWORD WINAPI multicastThread(LPVOID args);
 ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize);
 void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename = "", int uploadfilesize = 0);
+int populateSongList();
+
+// A vector of songs in the 'Music' directory.
+vector<string> song_list;
 
 int main(int argc, char* argv[])
 {
@@ -59,7 +63,7 @@ int main(int argc, char* argv[])
 -- RETURNS: DWORD
 --
 -- NOTES: Thread that listens for new client connections. When a new client connects (succesfully), it spawns a new
-thread, handleClientRequests, to listen for that client's requests.
+--			thread, handleClientRequests, to listen for that client's requests.
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI listenThread(LPVOID args)
 {
@@ -192,8 +196,8 @@ DWORD WINAPI handleClientRequests(LPVOID param)
 -- RETURNS: void
 --
 -- NOTES: This function keeps track of the current and previous server state, then executes the steps to
-the handle the current request. Note that any server errors is checked outside of this function, and thus 
-assumes that everything was pretty ok before executing this function.
+--			the handle the current request. Note that any server errors is checked outside of this function, and thus 
+--			assumes that everything was pretty ok before executing this function.
 ----------------------------------------------------------------------------------------------------------------------*/
 void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename, int uploadfilesize)
 {
@@ -358,7 +362,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 --			an invalid request was received.
 --
 -- NOTES: This function parses a request packet with respect to the specification document. After parsing,
-it will return the current state of the server.
+--			it will return the current state of the server.
 ----------------------------------------------------------------------------------------------------------------------*/
 ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
 {
@@ -491,4 +495,54 @@ DWORD WINAPI multicastThread(LPVOID args)
 	// SEND DATA HERE
 
 	return 1;
+}
+
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: populateSongList
+--
+-- DATE: April 1, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Braham
+--
+-- PROGRAMMER: Jesse Braham
+--
+-- INTERFACE: int populateSongList()
+--
+-- RETURNS: int
+--
+-- NOTES:  This function scans the 'Music' directory (located in the current execution directory) for files, appends
+--			the name of each file to the song_list, and returns the total number of files scanned.
+----------------------------------------------------------------------------------------------------------------------*/
+int populateSongList()
+{
+	HANDLE hFind;
+	WIN32_FIND_DATA data;
+	char buf[MAX_PATH];
+	string dir;
+	int num_songs = 0;
+
+	GetModuleFileName(NULL, buf, MAX_PATH);
+	string::size_type pos = string(buf).find_last_of("\\/");
+	dir = string(buf).substr(0, pos);
+	dir += "\\Music\\*.*";
+
+	hFind = FindFirstFile(dir.c_str(), &data);
+	if (hFind != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			if (data.cFileName[0] != '.')
+			{
+				num_songs++;
+				song_list.push_back(data.cFileName);
+			}
+		} while (FindNextFile(hFind, &data));
+
+		FindClose(hFind);
+	}
+
+	return num_songs;
 }
