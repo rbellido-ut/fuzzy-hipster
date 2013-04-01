@@ -47,7 +47,7 @@ private:
 	hostent *hp_;
 	AudioStream stream_;
 	NetStream inputstream_;
-	//sf::Music streamplayer_;
+	sf::Music streamplayer_;
 	sf::SoundBuffer audiobuffer_;
 
 	SOCKET createTCPClient(WSADATA*, const char*, const int);

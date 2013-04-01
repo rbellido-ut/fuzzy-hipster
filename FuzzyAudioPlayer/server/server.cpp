@@ -217,7 +217,8 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 		case STREAMING:
 			// same as downloading
 		case DOWNLOADING:
-			fileToSend.open("test.mp3", ios::binary); //TODO: hardcoded!s
+			// note: SFML does NOT support mp3 files because the codecs are licensed so don't include them here
+			fileToSend.open("sm64_happy_message.wav", ios::binary); //TODO: hardcoded!s
 
 			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist. Deny client to download file.
 			{

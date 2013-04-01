@@ -378,6 +378,13 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	case STREAMING:
 		if(endOfTransmit)
 		{
+			audiobuffer_.loadFromStream(inputstream_);
+			stream_.load(audiobuffer_);
+			stream_.play();
+
+			// let it play until it is finished
+			while (stream_.getStatus() == AudioStream::Playing)
+				sf::sleep(sf::seconds(0.1f));
 			clnt->currentState = WFUCOMMAND;
 			clnt->downloadFileStream.close();
 			clnt->dlFileSize = 0;
@@ -387,17 +394,20 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		else
 		{
 			downloadedAmount += bytesTransferred;
-			audiobuffer_.loadFromStream(inputstream_);
+
 			//streamplayer_.stop();
-			//streamplayer_.openFromStream(stream_);
+			//streamplayer_.openFromStream(inputstream_);
+			//streamplayer_.play();
+
+			/*audiobuffer_.loadFromStream(inputstream_);
 			stream_.load(audiobuffer_);
 			stream_.play();
-			//streamplayer_.play();
-			//clnt->downloadFileStream.write(tmp.c_str(), tmp.size());
 
 			// let it play until it is finished
 			while (stream_.getStatus() == AudioStream::Playing)
-				sf::sleep(sf::seconds(0.1f));
+				sf::sleep(sf::seconds(0.1f));*/
+
+			//clnt->downloadFileStream.write(tmp.c_str(), tmp.size());
 		}
 		break;
 
