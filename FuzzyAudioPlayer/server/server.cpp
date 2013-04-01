@@ -307,8 +307,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 		break;
 
 		case STREAMING:
-			// note: SFML does NOT support mp3 files because the codecs are licensed so don't include them here
-			fileToSend.open("sm64_happy_message.wav", ios::binary); //TODO: hardcoded!s
+			fileToSend.open("Moonli-SLrec-6202.wav", ios::binary); //TODO: hardcoded!s
 
 			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist. Deny client to download file.
 			{
@@ -333,10 +332,10 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 
 			while (true)
 			{
-				tmp = new char [DATABUFSIZE];
+				tmp = new char [1024];
 
 				numberOfBytesRead = 0;
-				fileToSend.read(tmp, DATABUFSIZE);
+				fileToSend.read(tmp, 1024);
 				
 				if((numberOfBytesRead = fileToSend.gcount()) > 0)
 				{
@@ -361,12 +360,12 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 
 			//EOT in hex
 			cout << "done downloading" << endl;
-			line = "DLEND\n";
+			line = "STEND\n";
 			send(clientsocket, line.c_str(), line.size(), 0);
 			fileToSend.close();
 			delete[] tmp;
+			break;
 		case DOWNLOADING:
-			// note: SFML does NOT support mp3 files because the codecs are licensed so don't include them here
 			fileToSend.open("sm64_happy_message.wav", ios::binary); //TODO: hardcoded!s
 
 			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist. Deny client to download file.
