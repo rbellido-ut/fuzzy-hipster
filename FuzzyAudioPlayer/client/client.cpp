@@ -274,6 +274,8 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	
 	//check to see what mode we are in and handle data accordingly
 	//will only receive when in DL, Waiting for UL approval, Streaming, Multicasting, or microphone states
+	
+	//append the binary data received to a c++ string
 	string tmp;
 	tmp = "";
 	tmp.append(data->databuf, bytesTransferred);
@@ -282,6 +284,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	if(clnt->downloadedAmount == clnt->dlFileSize)
 		endOfTransmit = true;
 
+	//open a input string stream from the binary string
 	istringstream iss(tmp);
 	string reqType, extra;
 	int fileSize;
@@ -311,9 +314,9 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 	case WAITFORUPLOAD:	//after UL request was sent in ulThread
 
-		if(iss >> reqType && getline(iss, extra)){
+		if(iss >> reqType && getline(iss, extra)){	//get request type and file name
 
-			extra.erase(0, extra.find_first_not_of(' ')); // get file name
+			extra.erase(0, extra.find_first_not_of(' ')); // trim leading white space in file name
 			if(extra.empty()) //if only received "DL"
 			{
 				clnt->currentState = WFUCOMMAND;
@@ -331,18 +334,18 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 	case DOWNLOADING:	//while downloading
 
-		if(endOfTransmit)
+		if(endOfTransmit)	//if we have downloaded the entire file bytes
 		{
-			clnt->currentState = WFUCOMMAND;
-			clnt->downloadFileStream.close();
-			clnt->dlFileSize = 0;
+			clnt->currentState = WFUCOMMAND;	//set our state to waiting for user command
+			clnt->downloadFileStream.close();	//close the file stream
+			clnt->dlFileSize = 0;			//reset class member values
 			clnt->downloadedAmount = 0;
 			break;
 		}
-		else
+		else	
 		{
 			downloadedAmount += bytesTransferred; //update the number of bytes downloaded sofar
-			clnt->downloadFileStream.write(tmp.c_str(), tmp.size());
+			clnt->downloadFileStream.write(tmp.c_str(), tmp.size()); //write to the file
 		}
 		break;
 
@@ -438,7 +441,7 @@ void CALLBACK Client::runSendComplete (DWORD error, DWORD bytesTransferred, LPWS
 	REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
 	Client* c = (Client*) rc->clnt;
 
-	c->sendComplete(error, bytesTransferred, overlapped, flags);
+	c->sendComplete(error, bytesTransferred, overlapped, flags);	//call the member function
 
 }
 
@@ -481,22 +484,21 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		return;
 	}
 
-
 	//if we r here we have successfully sent
 	//check current state to determine next step
 	switch(clnt->currentState)
 	{
-	case SENTDLREQUEST:
+	case SENTDLREQUEST:	//a download request was sent successfully
 		clnt->currentState = WAITFORDOWNLOAD;
 		dispatchOneRecv();
 		break;
 
-	case SENTULREQUEST:
+	case SENTULREQUEST:	//an upload request was sent successfully
 		clnt->currentState = WAITFORUPLOAD;
 		dispatchOneRecv();
 		break;
 
-	case UPLOADING:
+	case UPLOADING:		//while we are uploading
 		if(clnt->ulFileSize == clnt->uploadedAmount)
 		{
 			clnt->currentState = WFUCOMMAND;
@@ -508,7 +510,7 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		clnt->uploadedAmount += bytesTransferred;
 		break;
 
-		//...
+		//...other cases as need be...
 
 	}
 
