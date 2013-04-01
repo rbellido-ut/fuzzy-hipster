@@ -273,6 +273,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 	char* tmp;
 	streamsize numberOfBytesRead;
 	vector<string> song_list;
+	int num_songs;
 
 	//computing filesizes
 	ostringstream oss;
@@ -284,18 +285,21 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 	switch (currentState)
 	{
 		case LIST:
-			populateSongList((vector<string>&)song_list);
+			num_songs = populateSongList((vector<string>&)song_list);
 
-			for (vector<string>::iterator it = song_list.begin(); it != song_list.end(); ++it)
+			if (num_songs > 0)
 			{
-				line += *it;
-				line += "\n";
-			}
+				for (vector<string>::iterator it = song_list.begin(); it != song_list.end(); ++it)
+				{
+					line += *it;
+					line += "\n";
+				}
 
-			if (((bytessent = send(clientsocket, line.c_str(), line.size(), 0))) == 0 || (bytessent == -1))
-			{
-				cerr << "Failed to send packet, Error: " << GetLastError() << endl;
-				return;
+				if (((bytessent = send(clientsocket, line.c_str(), line.size(), 0))) == 0 || (bytessent == -1))
+				{
+					cerr << "Failed to send packet, Error: " << GetLastError() << endl;
+					return;
+				}
 			}
 
 			line = "LISTEND\n";
