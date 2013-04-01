@@ -34,6 +34,7 @@
 #include "client.h"
 
 using namespace std;
+using namespace libZPlay;
 
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION:	runClient
@@ -280,10 +281,6 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	tmp = "";
 	tmp.append(data->databuf, bytesTransferred);
 
-	// if STREAMING, append to a custom SF stream
-	//sf::Music streamplayer;
-	//clnt->inputstream_.streambuffer.append(data->databuf, bytesTransferred);
-
 	//if last character is EOT, End the transmit
 	if(clnt->downloadedAmount == clnt->dlFileSize)
 		endOfTransmit = true;
@@ -304,9 +301,18 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 			//ST Approved
 			clnt->currentState = STREAMING; 
-
+			
+			char buff[1024];
+			int n;
+			string firstframe;
+			while (!player_->OpenStream(1,1,firstframe.data(),firstframe.size(),sfWav)) //cannot be sfAutoDetect
+			{
+				n = recv(connectSocket_,buff,1024,0);
+				firstframe.append(buff,n);
+				n=0;
+				//MessageBox(NULL,player_->GetError(),NULL,MB_OK);
+			}
 			//clnt->downloadFileStream.open("result.mp3", ios::binary);
-
 		}
 		else
 		{
@@ -324,11 +330,9 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 			clnt->dlFileSize = fileSize;
 			clnt->downloadedAmount = 0;
 
-
 			//DL Approved
 			clnt->currentState = DOWNLOADING; 
 			clnt->downloadFileStream.open("result.mp3", ios::binary); //TODO: hardcoded
-
 		}
 		else
 		{
@@ -378,13 +382,6 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	case STREAMING:
 		if(endOfTransmit)
 		{
-			/*audiobuffer_.loadFromStream(inputstream_);
-			stream_.load(audiobuffer_);
-			stream_.play();
-
-			// let it play until it is finished
-			while (stream_.getStatus() == AudioStream::Playing)
-				sf::sleep(sf::seconds(0.1f));*/
 			clnt->currentState = WFUCOMMAND;
 			clnt->downloadFileStream.close();
 			clnt->dlFileSize = 0;
@@ -395,18 +392,8 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		{
 			downloadedAmount += bytesTransferred;
 
-			//streamplayer_.stop();
-			//streamplayer_.openFromStream(inputstream_);
-			//streamplayer_.play();
-
-			/*audiobuffer_.loadFromStream(inputstream_);
-			stream_.load(audiobuffer_);
-			stream_.play();
-
-			// let it play until it is finished
-			while (stream_.getStatus() == AudioStream::Playing)
-				sf::sleep(sf::seconds(0.1f));*/
-
+			player_->PushDataToStream(data->wsabuf.buf, bytesTransferred);
+			player_->Play();
 			//clnt->downloadFileStream.write(tmp.c_str(), tmp.size());
 		}
 		break;

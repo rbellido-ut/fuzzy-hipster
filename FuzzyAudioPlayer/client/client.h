@@ -1,7 +1,5 @@
 #include "utils.h"
-/*#include <SFML/Audio.hpp>
-#include "NetStream.h"
-#include "AudioStream.h"*/
+#include "libzplay.h"
 
 class Client {
 
@@ -10,8 +8,12 @@ public:
 	{ 
 		currentState = NOTCONNECTED;
 		connectSocket_ = 0; 
+		player_ = libZPlay::CreateZPlay();
 	}
-	~Client(){ }
+	~Client()
+	{
+		player_->Release();
+	}
 
 	bool runClient(WSADATA *wsadata, const char*, const int);
 	
@@ -45,10 +47,7 @@ private:
 	SOCKET connectSocket_;
 	SOCKADDR_IN addr_;
 	hostent *hp_;
-	/*AudioStream stream_;
-	NetStream inputstream_;
-	sf::Music streamplayer_;
-	sf::SoundBuffer audiobuffer_;*/
+	libZPlay::ZPlay *player_;
 
 	SOCKET createTCPClient(WSADATA*, const char*, const int);
 
