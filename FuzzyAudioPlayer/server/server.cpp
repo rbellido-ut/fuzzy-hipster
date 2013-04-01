@@ -284,7 +284,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 	switch (currentState)
 	{
 		case LIST:
-			populateSongList(song_list);
+			populateSongList((vector<string>&)song_list);
 		break;
 
 		case STREAMING:
