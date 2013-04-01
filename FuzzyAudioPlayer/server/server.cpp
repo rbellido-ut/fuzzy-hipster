@@ -168,6 +168,79 @@ DWORD WINAPI handleClientRequests(LPVOID param)
 	return 1;
 }
 
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: DecodeRequest
+--
+-- DATE: March 25, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Ronald Bellido
+--
+-- PROGRAMMER: Ronald Bellido, Jesse Braham
+--
+-- INTERFACE: ServerState DecodeRequest(char * request, string& filename)
+--					request - the request packet to parse
+--					filename - the name of the file
+--					uploadfilesize - the size of the file to upload
+--				
+--
+-- RETURNS: returns ServerState which will indicate one of the specified ServerStates in util.h (STREAMING, DOWNLOADING, etc.)
+--			On error, the function will return SERVERROR, which typcially means that there was an error parsing the request, or 
+--			an invalid request was received.
+--
+-- NOTES: This function parses a request packet with respect to the specification document. After parsing,
+--			it will return the current state of the server.
+----------------------------------------------------------------------------------------------------------------------*/
+ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
+{
+	string req = request;
+	stringstream ss(req);
+	string requesttype;
+
+	ss >> requesttype;
+	cout << "received " << requesttype << " ";
+
+	if (requesttype == "LIST")
+	{
+		return LIST;
+	}
+	else if (requesttype == "ST") //received: ST filename\n"
+	{
+		getline(ss, filename); //read ss up to newline
+		cout << filename << endl;
+		return STREAMING;
+	}
+	else if (requesttype == "DL")
+	{
+		getline(ss, filename); //received: DL filename\n
+		cout << filename << endl;
+		return DOWNLOADING;
+	}
+	else if (requesttype == "UL")
+	{
+		ss >> uploadfilesize;
+		getline(ss, filename); // received: UL filename uploadfilesize \n
+		cout << uploadfilesize << filename << endl;
+		return UPLOADING;
+	}
+	else if (requesttype == "MC") //received: MC\n
+	{
+		//'hook' the client to the multicast broadcast channel
+		cout << "hooking client to the multicast channel" << endl;
+		return MULTICASTING;
+	}
+	else if (requesttype == "MIC") //received: MIC\n
+	{
+		cout << "2 way chat requested" << endl;
+		return MICCHATTING;
+	}
+
+	return SERVERROR;
+}
+
+
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION: requestDispatcher
 --
@@ -212,6 +285,9 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 
 	switch (currentState)
 	{
+		case LIST:
+		break;
+
 		case STREAMING:
 			// same as downloading
 		case DOWNLOADING:
@@ -331,74 +407,6 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			//		Stream audio to the multicast address
 		break;
 	}
-}
-
-
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION: DecodeRequest
---
--- DATE: March 25, 2013
---
--- REVISIONS: (Date and Description)
---
--- DESIGNER: Ronald Bellido
---
--- PROGRAMMER: Ronald Bellido, Jesse Braham
---
--- INTERFACE: ServerState DecodeRequest(char * request, string& filename)
---					request - the request packet to parse
---					filename - the name of the file
---					uploadfilesize - the size of the file to upload
---				
---
--- RETURNS: returns ServerState which will indicate one of the specified ServerStates in util.h (STREAMING, DOWNLOADING, etc.)
---			On error, the function will return SERVERROR, which typcially means that there was an error parsing the request, or 
---			an invalid request was received.
---
--- NOTES: This function parses a request packet with respect to the specification document. After parsing,
---			it will return the current state of the server.
-----------------------------------------------------------------------------------------------------------------------*/
-ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
-{
-	string req = request;
-	stringstream ss(req);
-	string requesttype;
-
-	ss >> requesttype;
-	cout << "received " << requesttype << " ";
-
-	if (requesttype == "ST") //received: ST filename\n"
-	{
-		getline(ss, filename); //read ss up to newline
-		cout << filename << endl;
-		return STREAMING;
-	}
-	else if (requesttype == "DL")
-	{
-		getline(ss, filename); //received: DL filename\n
-		cout << filename << endl;
-		return DOWNLOADING;
-	}
-	else if (requesttype == "UL")
-	{
-		ss >> uploadfilesize;
-		getline(ss, filename); // received: UL filename uploadfilesize \n
-		cout << uploadfilesize << filename << endl;
-		return UPLOADING;
-	}
-	else if (requesttype == "MC") //received: MC\n
-	{
-		//'hook' the client to the multicast broadcast channel
-		cout << "hooking client to the multicast channel" << endl;
-		return MULTICASTING;
-	}
-	else if (requesttype == "MIC") //received: MIC\n
-	{
-		cout << "2 way chat requested" << endl;
-		return MICCHATTING;
-	}
-
-	return SERVERROR;
 }
 
 

@@ -39,6 +39,7 @@ enum {
 };
 
 enum ServerState {
+	LIST,
 	STREAMING,
 	DOWNLOADING,
 	UPLOADING,
