@@ -23,9 +23,6 @@
 
 using namespace std;
 
-// A vector of songs in the 'Music' directory.
-vector<string> song_list;
-
 int main(int argc, char* argv[])
 {
 	SOCKET listenSocket;
@@ -275,6 +272,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 	ofstream fileRecvd;
 	char* tmp;
 	streamsize numberOfBytesRead;
+	vector<string> song_list;
 
 	//computing filesizes
 	ostringstream oss;
@@ -286,6 +284,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 	switch (currentState)
 	{
 		case LIST:
+			populateSongList(song_list);
 		break;
 
 		case STREAMING:
@@ -548,7 +547,7 @@ string getMusicDir()
 -- NOTES:  This function scans the 'Music' directory (located in the current execution directory) for files, appends
 --			the name of each file to the song_list, and returns the total number of files scanned.
 ----------------------------------------------------------------------------------------------------------------------*/
-int populateSongList()
+int populateSongList(vector<string>& song_list)
 {
 	HANDLE hFind;
 	WIN32_FIND_DATA data;
