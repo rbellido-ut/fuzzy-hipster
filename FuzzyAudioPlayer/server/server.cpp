@@ -285,6 +285,21 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 	{
 		case LIST:
 			populateSongList((vector<string>&)song_list);
+
+			for (vector<string>::iterator it = song_list.begin(); it != song_list.end(); ++it)
+			{
+				line += *it;
+				line += "\n";
+			}
+
+			if (((bytessent = send(clientsocket, line.c_str(), line.size(), 0))) == 0 || (bytessent == -1))
+			{
+				cerr << "Failed to send packet, Error: " << GetLastError() << endl;
+				return;
+			}
+
+			line = "LISTEND\n";
+			send(clientsocket, line.c_str(), line.size(), 0);
 		break;
 
 		case STREAMING:
