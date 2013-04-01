@@ -228,9 +228,9 @@ bool Client::dispatchWSARecvRequest(LPSOCKETDATA data)
 void CALLBACK Client::runRecvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 	REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
-	Client* c = (Client*) rc->clnt;
+	Client* clnt = (Client*) rc->clnt;
 
-	c->recvComplete(error, bytesTransferred, overlapped, flags); //call the member function
+	clnt->recvComplete(error, bytesTransferred, overlapped, flags); //call the member function
 
 }
 
@@ -439,9 +439,9 @@ bool Client::dispatchWSASendRequest(LPSOCKETDATA data)
 void CALLBACK Client::runSendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 	REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
-	Client* c = (Client*) rc->clnt;
+	Client* clnt = (Client*) rc->clnt;
 
-	c->sendComplete(error, bytesTransferred, overlapped, flags);	//call the member function
+	clnt->sendComplete(error, bytesTransferred, overlapped, flags);	//call the member function
 
 }
 
@@ -543,14 +543,14 @@ void Client::dispatchOneSend(string usrData)
 
 
 	SOCKETDATA* data = allocData(connectSocket_);
-	//strncpy(data->databuf, usrData.c_str(), usrData.size());
+	
+	//fillup the data buffers
 	memcpy(data->databuf, usrData.c_str(), usrData.size());
-
 	data->wsabuf.len = usrData.size();
 
 	if(data)
 	{
-		dispatchWSASendRequest(data);
+		dispatchWSASendRequest(data);	//call WSASend
 	}
 
 	::SleepEx(INFINITE, TRUE); //make this thread alertable
@@ -581,6 +581,7 @@ void Client::dispatchOneRecv()
 {
 
 	SOCKETDATA* data = allocData(connectSocket_);
+	
 	if(data)
 	{
 		dispatchWSARecvRequest(data);
@@ -614,8 +615,8 @@ void Client::dispatchOneRecv()
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI Client::runDLThread(LPVOID param)
 {
-	Client* c = (Client*) param;
-	return c->dlThread(c);
+	Client* clnt = (Client*) param;
+	return clnt->dlThread(clnt);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -641,20 +642,20 @@ DWORD WINAPI Client::runDLThread(LPVOID param)
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD Client::dlThread(LPVOID param)
 {
-	Client* c = (Client*) param;
+	Client* clnt = (Client*) param;
 	string userRequest;
 
 	userRequest += "DL ";
 	userRequest += "Behnam's party mix.wav\n";
 
-	c->currentState = SENTDLREQUEST;
-	c->dispatchOneSend(userRequest);
+	clnt->currentState = SENTDLREQUEST;
+	clnt->dispatchOneSend(userRequest);
 
 	while(1)
 	{
-		if(c->currentState != DOWNLOADING)
+		if(clnt->currentState != DOWNLOADING)
 		{
-			if(c->currentState == WFUCOMMAND)
+			if(clnt->currentState == WFUCOMMAND)
 				break;
 
 			continue;
@@ -690,8 +691,8 @@ DWORD Client::dlThread(LPVOID param)
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI Client::runULThread(LPVOID param)
 {
-	Client* c = (Client*) param;
-	return c->ulThread(c);
+	Client* clnt = (Client*) param;
+	return clnt->ulThread(clnt);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
