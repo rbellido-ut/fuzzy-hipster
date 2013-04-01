@@ -18,17 +18,10 @@
 ----------------------------------------------------------------------------------------------------------------------*/
 
 #include "utils.h"
+#include "server.h"
 #include "server_net.h"
 
 using namespace std;
-
-DWORD WINAPI handleClientRequests(LPVOID param);
-DWORD WINAPI listenThread(LPVOID args);
-DWORD WINAPI multicastThread(LPVOID args);
-ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize);
-void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename = "", int uploadfilesize = 0);
-string getMusicDir();
-int populateSongList();
 
 // A vector of songs in the 'Music' directory.
 vector<string> song_list;
