@@ -285,7 +285,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			send(clientsocket, line.c_str(), line.size(), 0);
 			line = ""; //just clear the line buffer	
 
-			fileRecvd.open("result.wav", ios::binary); //TODO: hardcoded!
+			fileRecvd.open("lol.cd1", ios::binary); //TODO: hardcoded!
 			
 			if (!fileRecvd.is_open()) //server can't open the file. Deny client to download file.
 			{
@@ -307,14 +307,11 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 					delete[] tmp;
 					return;
 				}
-				
+
+				fileRecvd.write(tmp, bytesrecvd);
 				totalbytesrecvd += bytesrecvd;
 				cout << "Bytes received: " << bytesrecvd << endl;
 				cout << "Total bytes received: " << totalbytesrecvd << endl;
-
-				string xxx;
-				xxx = "";
-				xxx.append(tmp, bytesrecvd);
 
 				if (totalbytesrecvd == uploadfilesize) //Uploading is done
 				{
@@ -323,8 +320,6 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 					delete[] tmp;
 					break;
 				}
-
-				fileRecvd.write(tmp, bytesrecvd);
 				delete[] tmp;
 			}
 
@@ -389,8 +384,9 @@ ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
 	}
 	else if (requesttype == "UL")
 	{
+		ss >> uploadfilesize;
 		getline(ss, filename); // received: UL filename uploadfilesize \n
-		cout << filename << uploadfilesize << endl;
+		cout << uploadfilesize << filename << endl;
 		return UPLOADING;
 	}
 	else if (requesttype == "MC") //received: MC\n
