@@ -27,6 +27,7 @@ DWORD WINAPI listenThread(LPVOID args);
 DWORD WINAPI multicastThread(LPVOID args);
 ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize);
 void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename = "", int uploadfilesize = 0);
+string getMusicDir();
 int populateSongList();
 
 // A vector of songs in the 'Music' directory.
@@ -499,6 +500,36 @@ DWORD WINAPI multicastThread(LPVOID args)
 
 
 /*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: getMusicDir
+--
+-- DATE: April 1, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Braham
+--
+-- PROGRAMMER: Jesse Braham
+--
+-- INTERFACE: string getMusicDir()
+--
+-- RETURNS: string
+--
+-- NOTES:  This function locates the 'Music' directory and returns the absolute path to said directory.
+----------------------------------------------------------------------------------------------------------------------*/
+string getMusicDir()
+{
+	char buf[MAX_PATH];
+	string dir;
+
+	GetModuleFileName(NULL, buf, MAX_PATH);
+	string::size_type pos = string(buf).find_last_of("\\/");
+	dir = string(buf).substr(0, pos);
+	dir += "\\Music\\*";
+
+	return dir;
+}
+
+/*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION: populateSongList
 --
 -- DATE: April 1, 2013
@@ -520,15 +551,11 @@ int populateSongList()
 {
 	HANDLE hFind;
 	WIN32_FIND_DATA data;
-	char buf[MAX_PATH];
-	string dir;
 	int num_songs = 0;
+	string dir;
 
-	GetModuleFileName(NULL, buf, MAX_PATH);
-	string::size_type pos = string(buf).find_last_of("\\/");
-	dir = string(buf).substr(0, pos);
-	dir += "\\Music\\*.*";
-
+	dir = getMusicDir();
+	
 	hFind = FindFirstFile(dir.c_str(), &data);
 	if (hFind != INVALID_HANDLE_VALUE)
 	{
