@@ -202,26 +202,14 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 
 bool downloadRequest(Client &clnt)
 {
-	string userRequest;
-
-	userRequest += "DL ";
-	userRequest += "Behnam's party mix.wav\n";
-					
-	clnt.currentState = SENTDLREQUEST;
-	clnt.dispatchOneSend(userRequest);
+	clnt.dlThreadHandle = CreateThread(NULL, 0, clnt.runDLThread, &clnt, 0, &clnt.dlThreadID);
 
 	return true;
 }
 
 bool uploadRequest(Client& clnt)
 {
-	string userRequest;
-
-	userRequest += "UL ";
-	userRequest += "Behnam's party mix.wav\n";	
-
-	clnt.currentState = SENTULREQUEST;
-	clnt.dispatchOneSend(userRequest);
+	clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, &clnt, 0, &clnt.ulThreadID);
 
 	return true;
 }
