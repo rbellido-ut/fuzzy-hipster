@@ -63,10 +63,12 @@ bool Client::runClient(WSADATA* wsadata, const char* hostname, const int port)
 {
 
 	char **pptr;
-
+	
+	//create a socket
 	connectSocket_ = createTCPClient(wsadata, hostname, port);
 
 	if(connectSocket_ != NULL){
+		//connect the socket
 		if (WSAConnect (connectSocket_, (struct sockaddr *)&addr_, sizeof(addr_), NULL, NULL, NULL, NULL) == INVALID_SOCKET)
 		{
 			MessageBox(NULL, "Can't connect to server", "Connection Error", MB_ICONERROR);
@@ -181,13 +183,13 @@ bool Client::dispatchWSARecvRequest(LPSOCKETDATA data)
 		rc->data = data;
 		data->overlap.hEvent = rc;
 
-		//perform the async recv and return right away
+		//perform the async recv and return right away, runRecvComplete will be called upon completion
 		error = WSARecv(data->sock, &data->wsabuf, 1, &bytesRecvd, &flag, &data->overlap, runRecvComplete);
 		if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
 		{
 			return true;
 		}
-		else
+		else	//errors
 		{
 			freeData(data);
 			free(rc);
@@ -226,9 +228,9 @@ bool Client::dispatchWSARecvRequest(LPSOCKETDATA data)
 void CALLBACK Client::runRecvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 	REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
-	Client* c = (Client*) rc->clnt;
+	Client* clnt = (Client*) rc->clnt;
 
-	c->recvComplete(error, bytesTransferred, overlapped, flags);
+	clnt->recvComplete(error, bytesTransferred, overlapped, flags); //call the member function
 
 }
 
@@ -264,15 +266,16 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	Client* clnt = rc->clnt;
 	bool endOfTransmit = false;
 
-
-
 	if(error || bytesTransferred == 0)
 	{
 		freeData(data);
 		return;
 	}
+	
 	//check to see what mode we are in and handle data accordingly
 	//will only receive when in DL, Waiting for UL approval, Streaming, Multicasting, or microphone states
+	
+	//append the binary data received to a c++ string
 	string tmp;
 	tmp = "";
 	tmp.append(data->databuf, bytesTransferred);
@@ -285,12 +288,14 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	if(clnt->downloadedAmount == clnt->dlFileSize)
 		endOfTransmit = true;
 
+	//open a input string stream from the binary string
 	istringstream iss(tmp);
 	string reqType, extra;
 	int fileSize;
 
 	switch(clnt->currentState)
 	{
+
 	case WAITFORSTREAM:
 		if(iss >> reqType && iss >> fileSize)
 		{
@@ -311,9 +316,11 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		}
 
 		break;
-	case WAITFORDOWNLOAD:
 
-		if(iss >> reqType && iss >> fileSize)//getline(iss, extra)){
+	case WAITFORDOWNLOAD:	//after DL request was sent in dlThread
+
+
+		if(iss >> reqType && iss >> fileSize)
 		{
 			clnt->dlFileSize = fileSize;
 			clnt->downloadedAmount = 0;
@@ -321,7 +328,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 			//DL Approved
 			clnt->currentState = DOWNLOADING; 
-			clnt->downloadFileStream.open("result.mp3", ios::binary);
+			clnt->downloadFileStream.open("result.mp3", ios::binary); //TODO: hardcoded
 
 		}
 		else
@@ -332,11 +339,11 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 		break;
 
-	case WAITFORUPLOAD:
+	case WAITFORUPLOAD:	//after UL request was sent in ulThread
 
-		if(iss >> reqType && getline(iss, extra)){
+		if(iss >> reqType && getline(iss, extra)){	//get request type and file name
 
-			extra.erase(0, extra.find_first_not_of(' ')); // get file name
+			extra.erase(0, extra.find_first_not_of(' ')); // trim leading white space in file name
 			if(extra.empty()) //if only received "DL"
 			{
 				clnt->currentState = WFUCOMMAND;
@@ -352,20 +359,20 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 		break;
 
-	case DOWNLOADING:
+	case DOWNLOADING:	//while downloading
 
-		if(endOfTransmit)
+		if(endOfTransmit)	//if we have downloaded the entire file bytes
 		{
-			clnt->currentState = WFUCOMMAND;
-			clnt->downloadFileStream.close();
-			clnt->dlFileSize = 0;
+			clnt->currentState = WFUCOMMAND;	//set our state to waiting for user command
+			clnt->downloadFileStream.close();	//close the file stream
+			clnt->dlFileSize = 0;			//reset class member values
 			clnt->downloadedAmount = 0;
 			break;
 		}
-		else
+		else	
 		{
-			downloadedAmount += bytesTransferred;
-			clnt->downloadFileStream.write(tmp.c_str(), tmp.size());
+			downloadedAmount += bytesTransferred; //update the number of bytes downloaded sofar
+			clnt->downloadFileStream.write(tmp.c_str(), tmp.size()); //write to the file
 		}
 		break;
 
@@ -472,9 +479,9 @@ bool Client::dispatchWSASendRequest(LPSOCKETDATA data)
 void CALLBACK Client::runSendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 	REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
-	Client* c = (Client*) rc->clnt;
+	Client* clnt = (Client*) rc->clnt;
 
-	c->sendComplete(error, bytesTransferred, overlapped, flags);
+	clnt->sendComplete(error, bytesTransferred, overlapped, flags);	//call the member function
 
 }
 
@@ -517,7 +524,6 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		return;
 	}
 
-
 	//if we r here we have successfully sent
 	//check current state to determine next step
 	switch(clnt->currentState)
@@ -526,17 +532,17 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		clnt->currentState = WAITFORSTREAM;
 		dispatchOneRecv();
 		break;
-	case SENTDLREQUEST:
+	case SENTDLREQUEST:	//a download request was sent successfully
 		clnt->currentState = WAITFORDOWNLOAD;
 		dispatchOneRecv();
 		break;
 
-	case SENTULREQUEST:
+	case SENTULREQUEST:	//an upload request was sent successfully
 		clnt->currentState = WAITFORUPLOAD;
 		dispatchOneRecv();
 		break;
 
-	case UPLOADING:
+	case UPLOADING:		//while we are uploading
 		if(clnt->ulFileSize == clnt->uploadedAmount)
 		{
 			clnt->currentState = WFUCOMMAND;
@@ -548,7 +554,7 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		clnt->uploadedAmount += bytesTransferred;
 		break;
 
-		//...
+		//...other cases as need be...
 
 	}
 
@@ -581,14 +587,14 @@ void Client::dispatchOneSend(string usrData)
 
 
 	SOCKETDATA* data = allocData(connectSocket_);
-	//strncpy(data->databuf, usrData.c_str(), usrData.size());
+	
+	//fillup the data buffers
 	memcpy(data->databuf, usrData.c_str(), usrData.size());
-
 	data->wsabuf.len = usrData.size();
 
 	if(data)
 	{
-		dispatchWSASendRequest(data);
+		dispatchWSASendRequest(data);	//call WSASend
 	}
 
 	::SleepEx(INFINITE, TRUE); //make this thread alertable
@@ -619,6 +625,7 @@ void Client::dispatchOneRecv()
 {
 
 	SOCKETDATA* data = allocData(connectSocket_);
+	
 	if(data)
 	{
 		dispatchWSARecvRequest(data);
@@ -652,8 +659,8 @@ void Client::dispatchOneRecv()
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI Client::runDLThread(LPVOID param)
 {
-	Client* c = (Client*) param;
-	return c->dlThread(c);
+	Client* clnt = (Client*) param;
+	return clnt->dlThread(clnt);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -679,20 +686,20 @@ DWORD WINAPI Client::runDLThread(LPVOID param)
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD Client::dlThread(LPVOID param)
 {
-	Client* c = (Client*) param;
+	Client* clnt = (Client*) param;
 	string userRequest;
 
 	userRequest += "DL ";
 	userRequest += "Behnam's party mix.wav\n";
 
-	c->currentState = SENTDLREQUEST;
-	c->dispatchOneSend(userRequest);
+	clnt->currentState = SENTDLREQUEST;
+	clnt->dispatchOneSend(userRequest);
 
 	while(1)
 	{
-		if(c->currentState != DOWNLOADING)
+		if(clnt->currentState != DOWNLOADING)
 		{
-			if(c->currentState == WFUCOMMAND)
+			if(clnt->currentState == WFUCOMMAND)
 				break;
 
 			continue;
@@ -762,8 +769,8 @@ DWORD Client::stThread(LPVOID param)
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI Client::runULThread(LPVOID param)
 {
-	Client* c = (Client*) param;
-	return c->ulThread(c);
+	Client* clnt = (Client*) param;
+	return clnt->ulThread(clnt);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
