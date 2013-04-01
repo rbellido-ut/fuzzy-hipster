@@ -290,7 +290,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	case WAITFORDOWNLOAD:
 
 		if(iss >> reqType && getline(iss, extra)){
-			clnt->sizeOfDownloadFile = 0;
+			//clnt->sizeOfDownloadFile = 0;
 			clnt->currentState = DOWNLOADING; 
 			extra.erase(0, extra.find_first_not_of(' ')); // get file size
 
