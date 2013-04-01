@@ -502,6 +502,8 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 			clnt->ulFileSize = 0;
 			clnt->uploadedAmount = 0;
 		}
+
+		clnt->uploadedAmount += bytesTransferred;
 		break;
 
 		//...
@@ -539,6 +541,8 @@ void Client::dispatchOneSend(string usrData)
 	SOCKETDATA* data = allocData(connectSocket_);
 	//strncpy(data->databuf, usrData.c_str(), usrData.size());
 	memcpy(data->databuf, usrData.c_str(), usrData.size());
+
+	data->wsabuf.len = usrData.size();
 
 	if(data)
 	{
@@ -716,7 +720,7 @@ DWORD Client::ulThread(LPVOID param)
 	string userRequest;
 	ostringstream oss;
 
-	clnt->uploadFileStream.open("test2.wav", ios::binary);
+	clnt->uploadFileStream.open("result.mp3", ios::binary);
 	streampos begin, end;
 	begin = clnt->uploadFileStream.tellg();
 	clnt->uploadFileStream.seekg(0, ios::end);
@@ -752,8 +756,7 @@ DWORD Client::ulThread(LPVOID param)
 		}
 
 		delete[] tmp;
-		clnt->uploadedAmount += numberOfBytesRead;
-
+		
 		if(clnt->uploadedAmount == clnt->ulFileSize)
 		{
 			clnt->currentState = WFUCOMMAND;
