@@ -63,10 +63,12 @@ bool Client::runClient(WSADATA* wsadata, const char* hostname, const int port)
 {
 
 	char **pptr;
-
+	
+	//create a socket
 	connectSocket_ = createTCPClient(wsadata, hostname, port);
 
 	if(connectSocket_ != NULL){
+		//connect the socket
 		if (WSAConnect (connectSocket_, (struct sockaddr *)&addr_, sizeof(addr_), NULL, NULL, NULL, NULL) == INVALID_SOCKET)
 		{
 			MessageBox(NULL, "Can't connect to server", "Connection Error", MB_ICONERROR);
@@ -181,13 +183,13 @@ bool Client::dispatchWSARecvRequest(LPSOCKETDATA data)
 		rc->data = data;
 		data->overlap.hEvent = rc;
 
-		//perform the async recv and return right away
+		//perform the async recv and return right away, runRecvComplete will be called upon completion
 		error = WSARecv(data->sock, &data->wsabuf, 1, &bytesRecvd, &flag, &data->overlap, runRecvComplete);
 		if(error == 0 || (error == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING))
 		{
 			return true;
 		}
-		else
+		else	//errors
 		{
 			freeData(data);
 			free(rc);
@@ -228,7 +230,7 @@ void CALLBACK Client::runRecvComplete (DWORD error, DWORD bytesTransferred, LPWS
 	REQUESTCONTEXT* rc = (REQUESTCONTEXT*) overlapped->hEvent;
 	Client* c = (Client*) rc->clnt;
 
-	c->recvComplete(error, bytesTransferred, overlapped, flags);
+	c->recvComplete(error, bytesTransferred, overlapped, flags); //call the member function
 
 }
 
@@ -264,13 +266,12 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	Client* clnt = rc->clnt;
 	bool endOfTransmit = false;
 
-
-
 	if(error || bytesTransferred == 0)
 	{
 		freeData(data);
 		return;
 	}
+	
 	//check to see what mode we are in and handle data accordingly
 	//will only receive when in DL, Waiting for UL approval, Streaming, Multicasting, or microphone states
 	string tmp;
@@ -287,9 +288,9 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 	switch(clnt->currentState)
 	{
-	case WAITFORDOWNLOAD:
+	case WAITFORDOWNLOAD:	//after DL request was sent in dlThread
 
-		if(iss >> reqType && iss >> fileSize)//getline(iss, extra)){
+		if(iss >> reqType && iss >> fileSize)
 		{
 			clnt->dlFileSize = fileSize;
 			clnt->downloadedAmount = 0;
@@ -297,7 +298,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 			//DL Approved
 			clnt->currentState = DOWNLOADING; 
-			clnt->downloadFileStream.open("result.mp3", ios::binary);
+			clnt->downloadFileStream.open("result.mp3", ios::binary); //TODO: hardcoded
 
 		}
 		else
@@ -308,7 +309,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 		break;
 
-	case WAITFORUPLOAD:
+	case WAITFORUPLOAD:	//after UL request was sent in ulThread
 
 		if(iss >> reqType && getline(iss, extra)){
 
@@ -328,7 +329,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 		break;
 
-	case DOWNLOADING:
+	case DOWNLOADING:	//while downloading
 
 		if(endOfTransmit)
 		{
@@ -340,7 +341,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		}
 		else
 		{
-			downloadedAmount += bytesTransferred;
+			downloadedAmount += bytesTransferred; //update the number of bytes downloaded sofar
 			clnt->downloadFileStream.write(tmp.c_str(), tmp.size());
 		}
 		break;
