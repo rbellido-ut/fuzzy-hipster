@@ -30,6 +30,11 @@ public:
 
 	std::ofstream downloadFileStream;
 	std::ifstream uploadFileStream;
+	int sizeOfDownloadFile;
+	int sizeOfUploadFile;
+
+	int dlFileSize, ulFileSize;
+	int downloadedAmount, uploadedAmount;
 
 private:
 	SOCKET connectSocket_;

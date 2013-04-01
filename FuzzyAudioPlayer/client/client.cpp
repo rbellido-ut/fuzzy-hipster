@@ -278,59 +278,69 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	tmp.append(data->databuf, bytesTransferred);
 
 	//if last character is EOT, End the transmit
-	if(tmp == "DLEND\n")
+	if(clnt->downloadedAmount == clnt->dlFileSize)
 		endOfTransmit = true;
 
 	istringstream iss(tmp);
 	string reqType, extra;
-
+	int fileSize;
 
 	switch(clnt->currentState)
 	{
 	case WAITFORDOWNLOAD:
 
-		if(iss >> reqType && getline(iss, extra)){
-			clnt->sizeOfDownloadFile = 0;
-			clnt->currentState = DOWNLOADING; 
-			extra.erase(0, extra.find_first_not_of(' ')); // get file size
-
+		if(iss >> reqType && iss >> fileSize)//getline(iss, extra)){
+		{
+			clnt->dlFileSize = fileSize;
+			clnt->downloadedAmount = 0;
+			
 			//DL Approved
+			clnt->currentState = DOWNLOADING; 
 			clnt->downloadFileStream.open("result.mp3", ios::binary);
-			clnt->dlThreadHandle = CreateThread(NULL, 0, clnt->runDLThread, clnt, 0, &clnt->dlThreadID);
+
 		}
 		else
 		{
+			clnt->currentState = WFUCOMMAND;
 			MessageBox(NULL, "DL Denied", "NOT APPROVED", NULL);
 		}
 
 		break;
 
 	case WAITFORUPLOAD:
-		MessageBox(NULL, "UL'ing", "", NULL);
 
 		if(iss >> reqType && getline(iss, extra)){
-			clnt->currentState = UPLOADING; 
+			
 			extra.erase(0, extra.find_first_not_of(' ')); // get file name
+			if(extra.empty()) //if only received "DL"
+			{
+				clnt->currentState = WFUCOMMAND;
+				MessageBox(NULL, "UL Denied", "NOT APPROVED", NULL);
+				//close file
+				break;
+			}
+			
 			//UL Approved
-			clnt->uploadFileStream.open("result.mp3", ios::binary);
-			clnt->ulThreadHandle = CreateThread(NULL, 0, clnt->runULThread, clnt, 0, &clnt->ulThreadID);
-		}
-		else
-		{
-			MessageBox(NULL, "UL Denied", "NOT APPROVED", NULL);
+			clnt->currentState = UPLOADING; 
+			clnt->uploadedAmount = 0;
 		}
 
 		break;
 
 	case DOWNLOADING:
 
-		if(endOfTransmit){
+		if(endOfTransmit)
+		{
 			clnt->currentState = WFUCOMMAND;
 			clnt->downloadFileStream.close();
+			clnt->dlFileSize = 0;
+			clnt->downloadedAmount = 0;
 			break;
-		}else{
+		}
+		else
+		{
+			downloadedAmount += bytesTransferred;
 			clnt->downloadFileStream.write(tmp.c_str(), tmp.size());
-
 		}
 		break;
 
@@ -455,7 +465,6 @@ void CALLBACK Client::runSendComplete (DWORD error, DWORD bytesTransferred, LPWS
 --				by changing the client state
 --
 ----------------------------------------------------------------------------------------------------------------------*/
-
 void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
 
@@ -470,7 +479,7 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		return;
 	}
 
-	if(data->databuf[bytesTransferred-1] == '\n')
+	if(clnt->ulFileSize == clnt->uploadedAmount)
 		endOfTransmit = true;
 
 	//if we r here we have successfully sent
@@ -491,6 +500,9 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		if(endOfTransmit)
 		{
 			clnt->currentState = WFUCOMMAND;
+			clnt->uploadFileStream.close();
+			clnt->ulFileSize = 0;
+			clnt->uploadedAmount = 0;
 		}
 		break;
 
@@ -500,7 +512,6 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 
 }
-
 
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION:	dispatchOneSend
@@ -528,7 +539,8 @@ void Client::dispatchOneSend(string usrData)
 
 
 	SOCKETDATA* data = allocData(connectSocket_);
-	strncpy(data->databuf, usrData.c_str(), usrData.size());
+	//strncpy(data->databuf, usrData.c_str(), usrData.size());
+	memcpy(data->databuf, usrData.c_str(), usrData.size());
 
 	if(data)
 	{
@@ -624,9 +636,23 @@ DWORD WINAPI Client::runDLThread(LPVOID param)
 DWORD Client::dlThread(LPVOID param)
 {
 	Client* c = (Client*) param;
+	string userRequest;
 
-	while(c->currentState == DOWNLOADING)
+	userRequest += "DL ";
+	userRequest += "Behnam's party mix.wav\n";
+					
+	c->currentState = SENTDLREQUEST;
+	c->dispatchOneSend(userRequest);
+
+	while(1)
 	{
+		if(c->currentState != DOWNLOADING)
+		{
+			if(c->currentState == WFUCOMMAND)
+				break;
+			
+			continue;
+		}
 		dispatchOneRecv();
 	}
 
@@ -687,46 +713,69 @@ DWORD WINAPI Client::runULThread(LPVOID param)
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD Client::ulThread(LPVOID param)
 {
-	Client* c = (Client*) param;
+	Client* clnt = (Client*) param;
 
+	streamsize numberOfBytesRead;
+	string userRequest;
+	ostringstream oss;
 
+	//uploadFileStream
+	clnt->uploadFileStream.open("result.mp3", ios::binary);
+	streampos begin, end;
+	begin = clnt->uploadFileStream.tellg();
+	clnt->uploadFileStream.seekg(0, ios::end);
+	clnt->ulFileSize = clnt->uploadFileStream.tellg()-begin;
+	clnt->uploadFileStream.seekg(begin);
 
-	while(c->currentState == UPLOADING)
+	oss << "UL " << clnt->ulFileSize << " Behnam's party mix.wav\n";
+	userRequest = oss.str();
+
+	clnt->currentState = SENTULREQUEST;
+	clnt->dispatchOneSend(userRequest);
+
+	while(1)
 	{
-		if (!uploadFileStream.is_open()) 
+
+		if(clnt->currentState != UPLOADING)
+		{
+			if(clnt->currentState == WFUCOMMAND)
+				break;
+		
+			continue;
+		}
+
+		if (!uploadFileStream.is_open())
 			return 1;
 
 		char* tmp;
 		string data;
 
-		while (true)
+		while (clnt->currentState == UPLOADING)
 		{
 			tmp = new char [DATABUFSIZE];
-			int n = 0;
+			numberOfBytesRead = 0;
 			data.clear();
 
-			c->uploadFileStream.read(tmp, DATABUFSIZE);
-			if((n=c->uploadFileStream.gcount()) > 0)
+			clnt->uploadFileStream.read(tmp, DATABUFSIZE);
+			if((numberOfBytesRead = clnt->uploadFileStream.gcount()) > 0)
 			{
-				data.append(tmp, n);
-				dispatchOneSend(data.c_str());
+				data.append(tmp, numberOfBytesRead);
+				dispatchOneSend(data);
+				clnt->uploadedAmount += numberOfBytesRead;
 				data.clear();
 			}
 			else
 			{
 				delete[] tmp;
+				clnt->currentState = WFUCOMMAND;
+				MessageBox(NULL, "UL Done", "Upload Successful", NULL);
 				break;
 			}
 
 			delete[] tmp;
 		}
-
-		data = "UL END\n";
-		dispatchOneSend(data);
-		
 	}
 
-	MessageBox(NULL, "UL Done", "Upload Successful", NULL);
 	return 0;
 }
 
