@@ -19,7 +19,7 @@ int startMicSession()
 	int n;
 	if (netstream->OpenStream(1, 1, &n, 1, sfPCM) == 0)
 	{
-		cerr << "Error: " << netstream->GetError() << endl;
+		cerr << "Error in OpenStream: " << netstream->GetError() << endl;
 		netstream->Release();
 		free(micvar);
 		return 0;
@@ -29,7 +29,7 @@ int startMicSession()
 
 	if (player->OpenFile("wavein://", sfAutodetect) == 0)
 	{
-		cerr << "Error: " << player->GetError() << endl;
+		cerr << "Error in OpenFile: " << player->GetError() << endl;
 		netstream->Release();
 		player->Release();
 		free(micvar);
@@ -79,7 +79,7 @@ int __stdcall micCallback(void * instance, void * user_data, TCallbackMessage me
 		case MsgWaveBuffer:
 			if (sendto(micvar->micsocket, (const char *) param1, param2, 0, (const SOCKADDR *)& micvar->micaddr, sizeof(micvar->micaddr)) < 0)
 			{
-				cerr << "Error streaming UDP with microphone: " << GetLastError() << endl;
+				cerr << "Error in sendto: " << GetLastError() << endl;
 				return 0;
 			}
 		break;
