@@ -641,6 +641,7 @@ DWORD WINAPI multicastThread(LPVOID args)
 				if (totalbytessent == filesize) break;
 
 				delete[] tmp;
+				Sleep(25);
 			}
 
 			fileToSend.close();

@@ -427,7 +427,6 @@ bool createMicSocket () {
 
 bool castRequest(Client& clnt)
 {
-	MessageBox(NULL, "multicast req" , "Test" , MB_OK);
 	CreateThread(NULL, 0, multicastThread, NULL, NULL, NULL);
 	return true;
 }
@@ -506,11 +505,26 @@ DWORD WINAPI multicastThread(LPVOID args)
 
 	netplay->Play();
 
+	string firstframe;
+	char buff[DATABUFSIZE];
+	int addr_size = sizeof(struct sockaddr_in);
+
+	nRet = recvfrom(hSocket, buff, DATABUFSIZE, 0, (struct sockaddr*)&server, &addr_size);
+	firstframe.append(buff, nRet);
+
+	while (!netplay->OpenStream(true,true,firstframe.data(),firstframe.size(),sfMp3)) //cannot be sfAutoDetect
+	{
+		nRet = recvfrom(hSocket, buff, DATABUFSIZE, 0, (struct sockaddr*)&server, &addr_size);
+		firstframe.append(buff,nRet);
+		nRet=0;
+	}
+
+	netplay->Play();
+
 	// Read continuously, play data
 	while (TRUE)
 	{
 		char *tmp = new char[DATABUFSIZE];
-		int addr_size = sizeof(struct sockaddr_in);
 
 		nRet = recvfrom(hSocket, tmp, DATABUFSIZE, 0, (struct sockaddr*)&server, &addr_size);
 		if (nRet < 0)
