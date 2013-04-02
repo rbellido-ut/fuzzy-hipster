@@ -294,7 +294,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 				for (vector<string>::iterator it = song_list.begin(); it != song_list.end(); ++it)
 				{
 					line += *it;
-					line += "\n";
+					line += '\n';
 				}
 
 				if (((bytessent = send(clientsocket, line.c_str(), line.size(), 0))) == 0 || (bytessent == -1))
@@ -304,6 +304,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 				}
 			}
 
+			// send EOT
 			line = '\x004';
 			send(clientsocket, line.c_str(), line.size(), 0);
 		break;

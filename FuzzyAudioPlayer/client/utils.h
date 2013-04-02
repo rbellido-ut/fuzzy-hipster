@@ -47,9 +47,8 @@ enum {
     MICROPHONE, //in mic mode
 	SENTSTREQUEST,
 	WAITFORSTREAM,
-	LIST, // get song list from server
-	SENTLISTREQUEST,
-	WAITFORLIST
+	SENTLISTREQUEST, 
+	WAITFORLIST // get song list from server
 };
 
 typedef struct socket_data{
