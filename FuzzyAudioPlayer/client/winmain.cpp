@@ -116,6 +116,8 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 					{
 						SendMessage(GetDlgItem(hWnd,IDC_MAIN_STATUS), SB_SETTEXT, STATUSBAR_STATUS, (LPARAM)"Connected");
 						EnableWindow(GetDlgItem(hWnd,IDC_BUTTON_OK), TRUE); 
+						EnableWindow(GetDlgItem(hWnd, IDC_EDIT_PORT), FALSE);
+						EnableWindow(GetDlgItem(hWnd, IDC_EDIT_HOSTNAME), FALSE);
 						haveClient = true;
 
 						listRequest(clnt,&hWnd);
@@ -192,6 +194,12 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 					}
 					break;
 				}
+			}
+			break;
+
+		case IDC_BUTTON_PLAY:
+			{
+
 			}
 			break;
 		}
