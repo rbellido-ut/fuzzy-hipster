@@ -319,7 +319,9 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 		break;
 
 		case STREAMING:
-			fileToSend.open("test.mp3", ios::binary); //TODO: hardcoded!s
+			// get absolute path, remove added *, append filename (but remove appended space)
+			fileToSend.open(getMusicDir().substr(0,getMusicDir().size()-1).insert(getMusicDir().size()-1,filename.substr(1,filename.size())), ios::binary);
+			//fileToSend.open("test.mp3", ios::binary); //TODO: hardcoded!s
 
 			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist. Deny client to download file.
 			{
@@ -383,7 +385,8 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			delete[] tmp;
 			break;
 		case DOWNLOADING:
-			fileToSend.open("sm64_happy_message.wav", ios::binary); //TODO: hardcoded!s
+			// get absolute path, remove added *, append filename (but remove appended space)
+			fileToSend.open(getMusicDir().substr(0,getMusicDir().size()-1).insert(getMusicDir().size()-1,filename.substr(1,filename.size())), ios::binary);
 
 			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist. Deny client to download file.
 			{
