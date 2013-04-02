@@ -172,6 +172,9 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						MessageBox(hWnd, "CAN ONLY DO ONE THING AT A TIME" , "Warning" , MB_ICONWARNING);
 					}
 					else {
+						// get user input
+						SendMessage(GetDlgItem(hWnd,IDC_EDIT_PORT), WM_GETTEXT,sizeof(szPort)/sizeof(szPort[0]),(LPARAM)szPort);
+						SendMessage(GetDlgItem(hWnd,IDC_EDIT_HOSTNAME), WM_GETTEXT,sizeof(szServer)/sizeof(szServer[0]),(LPARAM)szServer);
 						micRequest(clnt);
 					}
 					break;
@@ -395,7 +398,7 @@ bool createMicSocket () {
 	memset((char *)&micServer, 0, sizeof(struct sockaddr_in));
 	micServer.sin_family = AF_INET;
 	micServer.sin_port = htons(UDPPORT);
-	if ((hp = gethostbyname("localhost")) == NULL)
+	if ((hp = gethostbyname(szServer)) == NULL)
 	{
 		MessageBox(NULL, "Unknown server address", NULL, NULL);
 		return false;
