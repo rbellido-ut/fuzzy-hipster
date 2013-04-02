@@ -17,9 +17,7 @@
 -- NOTES:
 ----------------------------------------------------------------------------------------------------------------------*/
 
-#include "utils.h"
 #include "server.h"
-#include "server_net.h"
 
 using namespace std;
 
@@ -476,6 +474,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 		break;
 
 		case MICCHATTING:
+			startMicSession();
 		break;
 
 		case MULTICASTING:

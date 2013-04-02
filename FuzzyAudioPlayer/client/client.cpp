@@ -61,10 +61,7 @@ using namespace libZPlay;
 --
 ----------------------------------------------------------------------------------------------------------------------*/
 bool Client::runClient(WSADATA* wsadata, const char* hostname, const int port) 
-{
-
-	char **pptr;
-	
+{	
 	//create a socket
 	connectSocket_ = createTCPClient(wsadata, hostname, port);
 
@@ -199,7 +196,7 @@ bool Client::dispatchWSARecvRequest(LPSOCKETDATA data)
 		}
 
 	}
-
+	return false;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -829,7 +826,7 @@ DWORD Client::ulThread(LPVOID param)
 	streampos begin, end;
 	begin = clnt->uploadFileStream.tellg();
 	clnt->uploadFileStream.seekg(0, ios::end);
-	clnt->ulFileSize = clnt->uploadFileStream.tellg()-begin;
+	clnt->ulFileSize = static_cast<long int>(clnt->uploadFileStream.tellg()-begin);
 	clnt->uploadFileStream.seekg(begin);
 
 	oss << "UL " << clnt->ulFileSize << " Behnam's party mix.wav\n";
@@ -855,7 +852,7 @@ DWORD Client::ulThread(LPVOID param)
 		clnt->uploadFileStream.read(tmp, DATABUFSIZE);
 		if((numberOfBytesRead = clnt->uploadFileStream.gcount()) > 0)
 		{
-			data.append(tmp, numberOfBytesRead);
+			data.append(tmp, (unsigned long) numberOfBytesRead);
 			dispatchOneSend(data);
 			data.clear();
 		}
