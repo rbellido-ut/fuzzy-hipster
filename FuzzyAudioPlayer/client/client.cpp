@@ -191,7 +191,7 @@ bool Client::dispatchWSARecvRequest(LPSOCKETDATA data)
 		{
 			freeData(data);
 			free(rc);
-			MessageBox(NULL, "WSARecv() failed", "Critical Error", MB_ICONERROR);
+			//MessageBox(NULL, "WSARecv() failed", "Critical Error", MB_ICONERROR);
 			return false;
 		}
 
@@ -343,7 +343,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 			//DL Approved
 			clnt->currentState = DOWNLOADING; 
-			clnt->downloadFileStream.open("result.mp3", ios::binary); //TODO: hardcoded
+			clnt->downloadFileStream.open(clnt->currentSongFile, ios::binary);
 		}
 		else
 		{
@@ -711,7 +711,8 @@ DWORD Client::dlThread(LPVOID param)
 	string userRequest;
 
 	userRequest += "DL ";
-	userRequest += "Behnam's party mix.wav\n";
+	userRequest += clnt->currentSongFile;
+	userRequest += "\n";
 
 	clnt->currentState = SENTDLREQUEST;
 	clnt->dispatchOneSend(userRequest);
@@ -745,7 +746,8 @@ DWORD Client::stThread(LPVOID param)
 	string userRequest;
 
 	userRequest += "ST ";
-	userRequest += "Behnam's party mix.wav\n";
+	userRequest += c->currentSongFile;
+	userRequest += "\n";
 
 	c->currentState = SENTSTREQUEST;
 	c->dispatchOneSend(userRequest);

@@ -2,7 +2,6 @@
 #define UTIL_H
 
 #pragma comment(lib,"ws2_32.lib")
-#pragma comment(lib,"libzplay.lib")
 
 #include <WinSock2.h>
 #include <ws2tcpip.h>
@@ -20,7 +19,6 @@
 #include <sys/types.h>
 #include <fstream>
 #include <map>
-#include <vector>
 
 
 #define DATABUFSIZE 102400
@@ -81,9 +79,5 @@ typedef struct upload_context {
 	Client* clnt;
 	LPSTR filename;
 } UPLOADCONTEXT;
-
-
-
-bool populateSongList(HWND*, std::string);
 
 #endif // UTIL_H

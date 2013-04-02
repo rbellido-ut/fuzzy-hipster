@@ -143,6 +143,7 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						MessageBox(hWnd, "CAN ONLY DO ONE THING AT A TIME" , "Warning" , MB_ICONWARNING);
 					}
 					else {
+						clnt.currentSongFile = getSelectedListBoxItem(&hWnd,IDC_SRVSONGLIST);
 						downloadRequest(clnt);
 					}
 					break;
@@ -165,6 +166,7 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						MessageBox(hWnd, "CAN ONLY DO ONE THING AT A TIME" , "Warning" , MB_ICONWARNING);
 					}
 					else {
+						clnt.currentSongFile = getSelectedListBoxItem(&hWnd,IDC_SRVSONGLIST);
 						streamRequest(clnt);
 					}
 					break;
@@ -176,9 +178,6 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						MessageBox(hWnd, "CAN ONLY DO ONE THING AT A TIME" , "Warning" , MB_ICONWARNING);
 					}
 					else {
-						// get user input
-						SendMessage(GetDlgItem(hWnd,IDC_EDIT_PORT), WM_GETTEXT,sizeof(szPort)/sizeof(szPort[0]),(LPARAM)szPort);
-						SendMessage(GetDlgItem(hWnd,IDC_EDIT_HOSTNAME), WM_GETTEXT,sizeof(szServer)/sizeof(szServer[0]),(LPARAM)szServer);
 						micRequest(clnt);
 					}
 					break;
@@ -810,6 +809,38 @@ bool populateListBox(HWND* hWnd, int resIdxOfListBox, vector<string> localList)
 	}
 
 	return true;
+}
+
+string getSelectedListBoxItem(HWND* hWnd, int resIdxOfListBox)
+{
+	char* tmp = new char[DATABUFSIZE]; // edit box
+
+	// get the number of items in the box.
+	int count = SendMessage(GetDlgItem(*hWnd,resIdxOfListBox), LB_GETCOUNT, 0, 0);
+
+	int iSelected = -1;
+
+	// go through the items and find the first selected one
+	for (int i = 0; i < count; i++)
+	{
+		// check if this item is selected or not..
+		if (SendMessage(GetDlgItem(*hWnd,resIdxOfListBox), LB_GETSEL, i, 0) > 0)
+		{
+			// yes, we only want the first selected so break.
+			iSelected = i;
+			break;
+		}
+	}
+
+	// get the text of the selected item
+	if (iSelected != -1)
+		SendMessage(GetDlgItem(*hWnd,resIdxOfListBox), LB_GETTEXT, (WPARAM)iSelected , (LPARAM)tmp);
+	//SendMessage(GetDlgItem(hWnd,IDC_EDIT_HOSTNAME), WM_GETTEXT,sizeof(szServer)/sizeof(szServer[0]),(LPARAM)szServer);
+
+	// char to string
+	string result(tmp);
+
+	return result;
 }
 
 int __stdcall micCallBack (void* instance, void *user_data, TCallbackMessage message, unsigned int param1, unsigned int param2)

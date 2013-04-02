@@ -74,5 +74,7 @@ bool castRequest(Client&);
 bool listRequest(Client&,  HWND*) ;
 bool populateListBox(HWND* , int , std::vector<std::string> );
 std::vector<std::string> processSongList(std::string );
+std::string getSelectedListBoxItem(HWND* , int );
+
 
 #endif
