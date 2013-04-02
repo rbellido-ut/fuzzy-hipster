@@ -45,7 +45,8 @@ public:
 
 	long int dlFileSize, ulFileSize;
 	int downloadedAmount, uploadedAmount;
-	std::string cachedServerSongList;
+	std::string cachedServerSongString;
+	std::vector<std::string> localSongList;
 
 
 private:

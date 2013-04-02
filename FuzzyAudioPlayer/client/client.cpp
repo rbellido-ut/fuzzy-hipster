@@ -325,7 +325,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		//if (iss >> reqType)
 		{
 			//iss >> cachedServerSongList;
-			cachedServerSongList.append(tmp);
+			cachedServerSongString.append(tmp);
 			//cachedServerSongList.erase(0, cachedServerSongList.find_first_not_of(' '));
 
 			if (endOfList) {

@@ -8,7 +8,6 @@
 #include "utils.h"
 #include "resource.h"
 #include <Commctrl.h>
-#include <vector>
 #pragma comment(lib,"comctl32.lib")
 
 /***********************************
@@ -72,6 +71,8 @@ bool uploadRequest(Client& clnt, HWND hWnd, OPENFILENAME &ofn);
 bool streamRequest(Client&);
 bool micRequest(Client&);
 bool castRequest(Client&);
-
+bool listRequest(Client&,  HWND*) ;
+bool populateListBox(HWND* , int , std::vector<std::string> );
+std::vector<std::string> processSongList(std::string );
 
 #endif
