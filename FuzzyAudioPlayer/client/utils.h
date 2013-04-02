@@ -77,7 +77,7 @@ typedef struct list_context {
 
 typedef struct upload_context {
 	Client* clnt;
-	LPSTR filename;
+	char filename[BUFSIZE];
 } UPLOADCONTEXT;
 
 #endif // UTIL_H

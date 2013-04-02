@@ -13,6 +13,10 @@ public:
 	~Client()
 	{
 		player_->Release();
+
+		shutdown(connectSocket_,SD_BOTH);
+		closesocket(connectSocket_);
+		WSACleanup();
 	}
 
 	bool runClient(WSADATA *wsadata, const char*, const int);
@@ -48,6 +52,8 @@ public:
 	std::string cachedServerSongString;
 	std::vector<std::string> localSongList;
 	std::string currentSongFile;
+
+	void closeSocket();
 
 private:
 	SOCKET connectSocket_;

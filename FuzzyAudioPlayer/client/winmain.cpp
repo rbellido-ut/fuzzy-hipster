@@ -134,6 +134,12 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 			}
 			break;
 
+		case ID_FILE_DISCONNECT:
+			{
+				//delete clnt;
+			}
+			break;
+
 		case IDC_BUTTON_OK:
 			{
 				if (IsDlgButtonChecked(hWnd, IDC_RADIO_DOWNLOAD) == BST_CHECKED )
@@ -156,6 +162,8 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 					}
 					else {
 						uploadRequest(clnt, hWnd, ofn);
+						
+						//listRequest(clnt,&hWnd);
 					}
 					break;
 				}
@@ -196,9 +204,10 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 			}
 			break;
 
-		case IDC_BUTTON_PLAY:
+		case IDC_BUTTON_CANCEL:
 			{
-
+				// return to idle state at earliest convenience
+				clnt.currentState = WFUCOMMAND;
 			}
 			break;
 		}
@@ -207,8 +216,8 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 	case WM_DESTROY:
 		{
 			PostQuitMessage(0);
-			shutdown(Socket,SD_BOTH);
-			closesocket(Socket);
+			//shutdown(Socket,SD_BOTH);
+			//closesocket(Socket);
 			WSACleanup();
 			return 0;
 		}
@@ -232,17 +241,28 @@ bool downloadRequest(Client &clnt)
 	return true;
 }
 
+std::string getFileNameWithoutPath(std::string f)
+{
+	int i = f.find_last_of('\\');
+	if (i != std::string::npos)
+		f = f.substr(i+1); // f contains the result :)
+
+	return f;
+}
+
 bool uploadRequest(Client& clnt, HWND hWnd, OPENFILENAME &ofn)
 {
 	initOpenFileStruct(hWnd, ofn);
 
 	if (GetOpenFileName(&ofn))
 	{
-		UPLOADCONTEXT *uc = (UPLOADCONTEXT*)malloc(sizeof(UPLOADCONTEXT));
+		
+		clnt.currentSongFile = getFileNameWithoutPath(ofn.lpstrFile);
+		/*UPLOADCONTEXT *uc = (UPLOADCONTEXT*)malloc(sizeof(UPLOADCONTEXT));
 		uc->clnt = &clnt;
-		uc->filename =  ofn.lpstrFile;
+		strcpy(ofn.lpstrFile, uc->filename);*/
 
-		//clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, uc, 0, &clnt.ulThreadID);
+		//clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, &uc, 0, &clnt.ulThreadID);
 
 		clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, &clnt, 0, &clnt.ulThreadID);
 	}
@@ -261,8 +281,10 @@ bool listRequest(Client& clnt, HWND* hWnd)
 	userRequest += "LIST ";
 	userRequest += "Behnam's party mix.wav\n";
 
+	
 	clnt.currentState = SENTLISTREQUEST;
 	clnt.dispatchOneSend(userRequest);
+	
 
 	while (1)
 	{
@@ -736,12 +758,16 @@ bool createGUI(HWND hWnd)
 		,WM_SETFONT, (WPARAM)hFont, TRUE);
 	EnableWindow(GetDlgItem(hWnd,IDC_BUTTON_STOP), FALSE);
 
-
 	SendMessage(
 		CreateWindow("BUTTON", "&OK", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
-		150*4+50, 360, 100, 23, hWnd, (HMENU)IDC_BUTTON_OK, GetModuleHandle(NULL), NULL)
+		650, 360, 100, 23, hWnd, (HMENU)IDC_BUTTON_OK, GetModuleHandle(NULL), NULL)
 		,WM_SETFONT, (WPARAM)hFont, TRUE);
 	EnableWindow(GetDlgItem(hWnd,IDC_BUTTON_OK), FALSE); 
+
+	SendMessage(
+		CreateWindow("BUTTON", "&Cancel", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
+		540, 360, 100, 23, hWnd, (HMENU)IDC_BUTTON_CANCEL, GetModuleHandle(NULL), NULL)
+		,WM_SETFONT, (WPARAM)hFont, TRUE);
 
 	// xfer Status bar
 	int statwidths[] = {80, 200, 360, 490,590, -1};

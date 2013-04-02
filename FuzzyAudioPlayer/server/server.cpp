@@ -451,11 +451,12 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			cout << "Uploading..." << endl;
 			cout << "filesize of the file to upload: " << filesize << endl;
 
-			line = "UL " + filename + '\n';
+			line = "UL " + filename + " \n";
 			send(clientsocket, line.c_str(), line.size(), 0);
 			line = ""; //just clear the line buffer	
 
-			fileRecvd.open(filename, ios::binary); //TODO: hardcoded!
+			// save file to /Music/*.xxx
+			fileRecvd.open(getMusicDir().substr(0,getMusicDir().size()-1).append(filename), ios::binary); //TODO: hardcoded!
 			
 			if (!fileRecvd.is_open()) //server can't open the file. Deny client to download file.
 			{

@@ -853,14 +853,14 @@ DWORD Client::ulThread(LPVOID param)
 	string userRequest;
 	ostringstream oss;
 
-	clnt->uploadFileStream.open("result.mp3", ios::binary);
+	clnt->uploadFileStream.open(clnt->currentSongFile, ios::binary);
 	streampos begin, end;
 	begin = clnt->uploadFileStream.tellg();
 	clnt->uploadFileStream.seekg(0, ios::end);
 	clnt->ulFileSize = static_cast<long int>(clnt->uploadFileStream.tellg()-begin);
 	clnt->uploadFileStream.seekg(begin);
 
-	oss << "UL " << clnt->ulFileSize << " Behnam's party mix.wav\n";
+	oss << "UL " << clnt->ulFileSize << clnt->currentSongFile << "\n";
 	userRequest = oss.str();
 
 	clnt->currentState = SENTULREQUEST;
@@ -897,7 +897,7 @@ DWORD Client::ulThread(LPVOID param)
 		
 		}
 	}
-
+	
 	MessageBox(NULL, "UL Done", "Upload Successful", NULL);
 	return 0;
 }
