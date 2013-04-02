@@ -75,6 +75,6 @@ typedef struct upload_context {
 
 
 
-bool populateSongList(HWND*, std::string);
+bool populateSongList(Client*, std::string);
 
 #endif // UTIL_H

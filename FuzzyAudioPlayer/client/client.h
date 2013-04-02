@@ -47,6 +47,12 @@ public:
 	int downloadedAmount, uploadedAmount;
 	std::string cachedServerSongList;
 
+
+
+	std::vector<std::string> localSongList;
+
+
+
 private:
 	SOCKET connectSocket_;
 	SOCKADDR_IN addr_;

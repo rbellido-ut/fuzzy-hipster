@@ -799,7 +799,7 @@ DWORD Client::listThread(LPVOID param)
 			{
 				// remove last EOT char from received song list
 				// populate song list on gui
-				populateSongList(hwnd, c->cachedServerSongList.substr(0,c->cachedServerSongList.size()-1));
+				populateSongList(c, c->cachedServerSongList.substr(0,c->cachedServerSongList.size()-1));
 				break;
 			}
 
