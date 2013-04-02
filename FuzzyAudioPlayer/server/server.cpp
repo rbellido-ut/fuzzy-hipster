@@ -265,15 +265,17 @@ ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
 ----------------------------------------------------------------------------------------------------------------------*/
 void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename, int uploadfilesize)
 {
-	int bytessent = 0, bytesrecvd = 0;
-	int totalbytessent	= 0, totalbytesrecvd = 0;
-	string line;
-	ifstream fileToSend;
-	ofstream fileRecvd;
-	char* tmp;
-	streamsize numberOfBytesRead;
-	vector<string> song_list;
-	int num_songs;
+	int				bytessent = 0,
+					bytesrecvd = 0;
+	int				totalbytessent	= 0,
+					totalbytesrecvd = 0;
+	string			line;
+	ifstream		fileToSend;
+	ofstream		fileRecvd;
+	char*			tmp;
+	streamsize		numberOfBytesRead;
+	vector<string>	song_list;
+	int				num_songs;
 
 	//computing filesizes
 	ostringstream oss;
@@ -302,7 +304,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 				}
 			}
 
-			line = "LISTEND\n";
+			line = 0x04;
 			send(clientsocket, line.c_str(), line.size(), 0);
 		break;
 
@@ -503,16 +505,32 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI multicastThread(LPVOID args)
 {
-	char achMCAddr[MAXADDRSTR] = TIMECAST_ADDR;
-	u_short nPort              = TIMECAST_PORT;
-	u_long  lTTL               = TIMECAST_TTL;
-	
-	int				nRet;
+	char			achMCAddr[MAXADDRSTR] = TIMECAST_ADDR,
+					*tmp;
+
+	u_short			nPort = TIMECAST_PORT;
+	u_long			lTTL = TIMECAST_TTL;
+
+	int				nRet,
+					num_songs;
+
 	BOOL			fFlag;
-	SOCKADDR_IN		server, destination;
+
+	SOCKADDR_IN		server,
+					destination;
+
 	struct ip_mreq	stMreq;
 	SOCKET			hSocket;
 	WSADATA			stWSAData;
+	vector<string>	song_list;
+
+	string			dir,
+					line;
+
+	ifstream		fileToSend;
+
+	streamsize		numberOfBytesRead;
+
 
 	nRet = WSAStartup(0x0202, &stWSAData);
 	if (nRet)
@@ -568,7 +586,59 @@ DWORD WINAPI multicastThread(LPVOID args)
 	destination.sin_addr.s_addr = inet_addr(achMCAddr);
 	destination.sin_port =        htons(nPort);
 
-	// SEND DATA HERE
+	dir = getMusicDir();
+	num_songs = populateSongList(song_list);
+
+	if (num_songs > 0)
+	{
+		for (vector<string>::iterator it = song_list.begin(); it != song_list.end(); ++it)
+		{
+			std::streampos begin, end;
+			string absSongPath = dir;
+			int bytessent = 0,
+				filesize,
+				totalbytessent = 0;
+
+			absSongPath += *it;
+
+			fileToSend.open(absSongPath);
+
+			if (!fileToSend.is_open())
+				continue;
+
+			begin = fileToSend.tellg();
+			fileToSend.seekg(0, ios::end);
+			end = fileToSend.tellg();
+			fileToSend.seekg(0, ios::beg);
+			filesize = end - begin;
+
+			while (TRUE)
+			{
+				tmp = new char[1024];
+				numberOfBytesRead = 0;
+				fileToSend.read(tmp, 1024);
+
+				if((numberOfBytesRead = fileToSend.gcount()) > 0)
+				{
+					line.append(tmp, static_cast<unsigned int>(numberOfBytesRead));
+					if (((bytessent = sendto(hSocket, line.c_str(), line.size(), 0, (struct sockaddr*)&destination, sizeof(destination)))) == 0 || (bytessent == -1))
+					{
+						cerr << "Failed to send! Exited with error " << GetLastError() << endl;
+						fileToSend.close();
+						delete[] tmp;
+						return 1;
+					}
+
+					totalbytessent += bytessent;
+					line.clear();
+				}
+
+				if (totalbytessent == filesize) break;
+			}
+
+			fileToSend.close();
+		}
+	}
 
 	return 1;
 }
