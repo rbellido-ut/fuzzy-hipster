@@ -5,6 +5,8 @@ using namespace libZPlay;
 
 bool createMicSocket();
 bool startMicSession();
+SOCKET createMulticastSocket();
+DWORD WINAPI multicastThread(LPVOID args);
 DWORD WINAPI micSessionThread(LPVOID param);
 int __stdcall micCallBack (void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2);
 
@@ -424,7 +426,120 @@ bool createMicSocket () {
 bool castRequest(Client& clnt)
 {
 	MessageBox(NULL, "multicast req" , "Test" , MB_OK);
+	CreateThread(NULL, 0, multicastThread, NULL, NULL, NULL);
 	return true;
+}
+
+SOCKET createMulticastSocket()
+{
+	SOCKET			hSocket;
+	WSADATA			stWSAData;
+	SOCKADDR_IN		local_address;
+	u_short nPort = TIMECAST_PORT;
+	BOOL			fFlag;
+	int				nRet, nIP_TTL = 2;	
+
+	nRet = WSAStartup(0x0202, &stWSAData);
+	if (nRet)
+	{
+		MessageBox(NULL, "WSAStartup failed", "Error", MB_OK);
+		return NULL;
+	}
+
+	hSocket = socket(AF_INET, SOCK_DGRAM, 0);
+	if (hSocket == INVALID_SOCKET)
+	{
+		MessageBox(NULL, "socket() failed", "Error", MB_OK);
+		WSACleanup();
+		return NULL;
+	}
+
+	fFlag = TRUE;
+	nRet = setsockopt(hSocket, SOL_SOCKET, SO_REUSEADDR, (char *)&fFlag, sizeof(fFlag));
+	if (nRet == SOCKET_ERROR)
+	{
+		MessageBox(NULL, "setsockopt() SO_REUSEADDR failed", "Error", MB_OK);
+	}
+
+	local_address.sin_family      = AF_INET;
+	local_address.sin_addr.s_addr = htonl(INADDR_ANY);
+	local_address.sin_port        = htons(nPort);
+
+	nRet = bind(hSocket, (struct sockaddr*)&local_address, sizeof(local_address));
+	if (nRet == SOCKET_ERROR)
+	{
+		MessageBox(NULL, "bind() port failed", "Error", MB_OK);
+	}
+
+	return hSocket;
+}
+
+DWORD WINAPI multicastThread(LPVOID args)
+{
+	SOCKET			hSocket;
+	int				nRet;
+	struct ip_mreq	stMreq;
+	SOCKADDR_IN		server;
+	char			achMCAddr[MAXADDRSTR] = TIMECAST_ADDR;
+	char			achInBuf[BUFSIZE];
+	u_long			lMCAddr;
+	u_short			nPort = TIMECAST_PORT;
+	ZPlay *			netplay = CreateZPlay();
+
+	if ((hSocket = createMulticastSocket()) == NULL)
+	{
+		MessageBox(NULL, "Could not create UDP socket", "Error", MB_OK);
+		return 1;
+	}
+
+	stMreq.imr_multiaddr.s_addr = inet_addr(achMCAddr);
+	stMreq.imr_interface.s_addr = INADDR_ANY;
+
+	nRet = setsockopt(hSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&stMreq, sizeof(stMreq));
+	if (nRet == SOCKET_ERROR)
+	{
+		MessageBox(NULL, "setsockopt() IP_ADD_MEMBERSHIP failed", "Error", MB_OK);
+		return 1;
+	}
+
+	netplay->Play();
+
+	// Read continuously, play data
+	while (TRUE)
+	{
+		char *tmp = new char[DATABUFSIZE];
+		int addr_size = sizeof(struct sockaddr_in);
+
+		nRet = recvfrom(hSocket, tmp, DATABUFSIZE, 0, (struct sockaddr*)&server, &addr_size);
+		if (nRet < 0)
+		{
+			MessageBox(NULL, "recvfrom() failed", "Error", MB_OK);
+			WSACleanup();
+			return 1;
+		}
+
+		netplay->PushDataToStream(tmp, nRet);
+
+		delete tmp;
+
+		if (nRet == 0)
+			break;
+	}
+
+	stMreq.imr_multiaddr.s_addr = inet_addr(achMCAddr);
+	stMreq.imr_interface.s_addr = INADDR_ANY;
+
+	nRet = setsockopt(hSocket, IPPROTO_IP, IP_DROP_MEMBERSHIP, (char *)&stMreq, sizeof(stMreq));
+	if (nRet == SOCKET_ERROR)
+	{
+		MessageBox(NULL, "setsockopt() IP_DROP_MEMBERSHIP failed", "Error", MB_OK);
+	}
+
+	closesocket(hSocket);
+
+	WSACleanup();
+
+	return 0;
 }
 
 // create all main window gui elements

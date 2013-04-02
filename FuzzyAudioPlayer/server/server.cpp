@@ -619,9 +619,9 @@ DWORD WINAPI multicastThread(LPVOID args)
 
 			while (TRUE)
 			{
-				tmp = new char[1024];
+				tmp = new char[BUFSIZE];
 				numberOfBytesRead = 0;
-				fileToSend.read(tmp, 1024);
+				fileToSend.read(tmp, BUFSIZE);
 
 				if((numberOfBytesRead = fileToSend.gcount()) > 0)
 				{
