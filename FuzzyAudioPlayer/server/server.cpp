@@ -247,7 +247,7 @@ ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
 --
 -- DESIGNER: Ronald Bellido
 --
--- PROGRAMMER: Ronald Bellido
+-- PROGRAMMER: Ronald Bellido, Jesse Braham
 --
 -- INTERFACE: void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename)
 --					prevState - the previous state the server was in
@@ -501,7 +501,9 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 --
 -- RETURNS: DWORD
 --
--- NOTES: This thread starts up a multicast server.
+-- NOTES: This thread starts up a multicast server.  It then iterates through the list of songs available on the server,
+--			and broadcasts each song to the multicast destination address.  If a song cannot be read, it is simply
+--			skipped, and the server attempts to read the next file.
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI multicastThread(LPVOID args)
 {
@@ -594,11 +596,11 @@ DWORD WINAPI multicastThread(LPVOID args)
 		for (vector<string>::iterator it = song_list.begin(); it != song_list.end(); ++it)
 		{
 			std::streampos begin, end;
-			string absSongPath = dir;
 			int bytessent = 0,
 				filesize,
 				totalbytessent = 0;
 
+			string absSongPath = dir;
 			absSongPath += *it;
 
 			fileToSend.open(absSongPath);
