@@ -47,9 +47,8 @@ enum {
     MICROPHONE, //in mic mode
 	SENTSTREQUEST,
 	WAITFORSTREAM,
-	LIST, // get song list from server
-	SENTLISTREQUEST,
-	WAITFORLIST
+	SENTLISTREQUEST, 
+	WAITFORLIST // get song list from server
 };
 
 typedef struct socket_data{
@@ -68,6 +67,12 @@ typedef struct list_context {
 	Client* clnt;
 	HWND* hwnd;
 } LISTCONTEXT;
+
+typedef struct upload_context {
+	Client* clnt;
+	LPSTR filename;
+} UPLOADCONTEXT;
+
 
 
 bool populateSongList(HWND*, std::string);

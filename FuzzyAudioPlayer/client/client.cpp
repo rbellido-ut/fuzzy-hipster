@@ -325,10 +325,11 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		break;
 
 	case WAITFORLIST:
-		if (iss >> reqType)
+		//if (iss >> reqType)
 		{
-			iss >> cachedServerSongList;
-			cachedServerSongList.erase(0, cachedServerSongList.find_first_not_of(' '));
+			//iss >> cachedServerSongList;
+			cachedServerSongList.append(tmp);
+			//cachedServerSongList.erase(0, cachedServerSongList.find_first_not_of(' '));
 
 			if (endOfList) {
 				clnt->currentState = WFUCOMMAND;
@@ -767,45 +768,6 @@ DWORD Client::stThread(LPVOID param)
 	return 0;
 }
 
-DWORD WINAPI Client::runListThread(LPVOID param)
-{
-	
-	LISTCONTEXT *lc = (LISTCONTEXT*) param;
-	Client* c = (Client*) lc->clnt;
-	return c->listThread(lc);
-}
-
-DWORD Client::listThread(LPVOID param)
-{
-	LISTCONTEXT *lc = (LISTCONTEXT*) param;
-	Client* c = lc->clnt;
-	HWND* hwnd = lc->hwnd;
-	//Client* c = (Client*) param;
-	string userRequest;
-
-	userRequest += "LIST ";
-	userRequest += "Behnam's party mix.wav\n";
-
-	c->currentState = SENTLISTREQUEST;
-	c->dispatchOneSend(userRequest);
-
-	while(1)
-	{
-		if(c->currentState != LIST)
-		{
-			if(c->currentState == WFUCOMMAND)
-				break;
-
-			continue;
-		}
-		dispatchOneRecv();
-	}
-
-	populateSongList(hwnd, c->cachedServerSongList);
-
-	return 0;
-}
-
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION:	runULThread
 --
@@ -911,8 +873,6 @@ DWORD Client::ulThread(LPVOID param)
 	MessageBox(NULL, "UL Done", "Upload Successful", NULL);
 	return 0;
 }
-
-
 
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION:	allocData

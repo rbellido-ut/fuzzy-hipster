@@ -5,7 +5,7 @@ using namespace std;
 /*
 * Creates a server. Returns the listening socket.
 */
-SOCKET createServer(WSADATA *wsaData, int protocol, SOCKADDR_IN * udpaddr)
+SOCKET createServer(WSADATA *wsaData, int protocol)
 {
 	int res;
 	SOCKADDR_IN addr;
@@ -48,10 +48,6 @@ SOCKET createServer(WSADATA *wsaData, int protocol, SOCKADDR_IN * udpaddr)
             return NULL;
         }
     }
-	else
-	{
-		*udpaddr = addr;
-	}
-
+	
 	return listenSocket;
 }

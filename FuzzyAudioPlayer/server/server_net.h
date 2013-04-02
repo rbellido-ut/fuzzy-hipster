@@ -3,6 +3,6 @@
 
 #include "utils.h"
 
-SOCKET createServer(WSADATA * wsadata, int protocol, SOCKADDR_IN * udpaddr = 0);
+SOCKET createServer(WSADATA * wsadata, int protocol);
 
 #endif

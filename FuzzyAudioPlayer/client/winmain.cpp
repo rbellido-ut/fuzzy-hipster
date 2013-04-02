@@ -110,7 +110,8 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 					SendMessage(GetDlgItem(hWnd,IDC_EDIT_HOSTNAME), WM_GETTEXT,sizeof(szServer)/sizeof(szServer[0]),(LPARAM)szServer);
 
 					WSADATA wsaData;
-					if (clnt.runClient(&wsaData, szServer, atoi(szPort))) {
+					if (clnt.runClient(&wsaData, szServer, atoi(szPort)))
+					{
 						SendMessage(GetDlgItem(hWnd,IDC_MAIN_STATUS), SB_SETTEXT, STATUSBAR_STATUS, (LPARAM)"Connected");
 						EnableWindow(GetDlgItem(hWnd,IDC_BUTTON_OK), TRUE); 
 						haveClient = true;
@@ -120,10 +121,47 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						lc->clnt = &clnt;
 						lc->hwnd = &hWnd;
 
-						clnt.listThreadHandle = CreateThread(NULL, 0, clnt.runListThread, lc, 0, &clnt.listThreadID);
+						//clnt.listThreadHandle = CreateThread(NULL, 0, clnt.runListThread, lc, 0, &clnt.listThreadID);
+	string userRequest;
 
-						Sleep(3000);
-						populateSongList(&hWnd,clnt.cachedServerSongList);
+	userRequest += "LIST ";
+	userRequest += "Behnam's party mix.wav\n";
+
+	clnt.currentState = SENTLISTREQUEST;
+	clnt.dispatchOneSend(userRequest);
+
+	while (1)
+	{
+		if (clnt.currentState != WAITFORLIST)
+		{
+			// completed op
+			if (clnt.currentState == WFUCOMMAND)
+			{
+				// remove last EOT char from received song list
+				// populate song list on gui
+				populateSongList(&hWnd, clnt.cachedServerSongList.substr(0,clnt.cachedServerSongList.size()-1));
+				//populateSongList(&clnt, clnt.cachedServerSongList.substr(0,clnt.cachedServerSongList.size()-1));
+
+				break;
+			}
+
+			continue;
+		}
+		clnt.dispatchOneRecv();
+	}
+
+	/*for (vector<string>::iterator it=clnt.localSongList.begin(); it!=clnt.localSongList.end(); ++it)
+	{
+		string xxx = *it;
+		SendMessage (GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)xxx.c_str());
+
+	}*/
+						/*DWORD result = WaitForSingleObject(clnt.listThreadHandle,INFINITE);
+						if (result == WAIT_OBJECT_0)
+						{
+							MessageBox(hWnd, "thread done" , "Sorry" , MB_ICONWARNING);
+						}*/
+
 					}
 					else
 						MessageBox(hWnd, "Try Again!" , "Sorry" , MB_ICONWARNING);
@@ -156,7 +194,7 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						MessageBox(hWnd, "CAN ONLY DO ONE THING AT A TIME" , "Warning" , MB_ICONWARNING);
 					}
 					else {
-						uploadRequest(clnt);
+						uploadRequest(clnt, hWnd, ofn);
 					}
 					break;
 				}
@@ -226,9 +264,20 @@ bool downloadRequest(Client &clnt)
 	return true;
 }
 
-bool uploadRequest(Client& clnt)
+bool uploadRequest(Client& clnt, HWND hWnd, OPENFILENAME &ofn)
 {
-	clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, &clnt, 0, &clnt.ulThreadID);
+	initOpenFileStruct(hWnd, ofn);
+
+	if (GetOpenFileName(&ofn))
+	{
+		UPLOADCONTEXT *uc = (UPLOADCONTEXT*)malloc(sizeof(UPLOADCONTEXT));
+		uc->clnt = &clnt;
+		uc->filename =  ofn.lpstrFile;
+
+		//clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, uc, 0, &clnt.ulThreadID);
+
+		clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, &clnt, 0, &clnt.ulThreadID);
+	}
 
 	return true;
 }
@@ -429,8 +478,7 @@ bool createGUI(HWND hWnd)
 		10, 100, 380, 260, hWnd, (HMENU)IDC_SRVSONGLIST, GetModuleHandle(NULL), NULL)
 		,WM_SETFONT, (WPARAM)hFont, TRUE);
 
-	SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"Test Behnam's party mix");
-	SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"Test Behnam's party mix");
+	//SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"Test Behnam's party mix");
 
 	// create connected clients list box
 	SendMessage(
@@ -546,7 +594,7 @@ int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
 
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hWnd;
-	ofn.lpstrFilter = "Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
+	ofn.lpstrFilter = "Waveform Files (*.wav)\0*.wav\0MP3 Files (*.mp3)\0*.mp3\0Free Lossless Audio (*.flac)\0*.flac\0OGG Vorbis (*.ogg)\0*.ogg\0Advanced Audio (*.aac)\0*.aac\0All Files (*.*)\0*.*\0";
 	ofn.lpstrFile = szFileName;
 	ofn.nMaxFile = MAX_PATH;
 	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
@@ -558,12 +606,12 @@ int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
 // args: takes a new line separated string of songs available on the server
 bool populateSongList(HWND* hWnd, std::string rawstring)
 {
-	SendMessage(GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"test");
-
 	std::string songname;
 	std::istringstream iss(rawstring);
-	while (std::getline(iss, songname)) {
-		SendMessage(GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)songname.c_str());
+	while (std::getline(iss, songname))
+	{
+		//client->localSongList.push_back(songname);
+		SendMessage (GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)songname.c_str());
 	}
 
 	return true;
