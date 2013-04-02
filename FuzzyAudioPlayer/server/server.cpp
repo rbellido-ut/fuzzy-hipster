@@ -32,6 +32,7 @@ int main(int argc, char* argv[])
 	listenSocket = createServer(&wsadata, TCP);
 
 	CreateThread(NULL, 0, listenThread, (LPVOID) &listenSocket, 0, 0);
+	CreateThread(NULL, 0, multicastThread, NULL, 0, 0);
 
 	getchar();
 	return EXIT_SUCCESS;
@@ -602,9 +603,11 @@ DWORD WINAPI multicastThread(LPVOID args)
 				totalbytessent = 0;
 
 			string absSongPath = dir;
+			string::size_type pos = absSongPath.find_last_of("*");
+			absSongPath = absSongPath.substr(0, pos);
 			absSongPath += *it;
 
-			fileToSend.open(absSongPath);
+			fileToSend.open(absSongPath, ios::binary);
 
 			if (!fileToSend.is_open())
 				continue;
@@ -637,6 +640,8 @@ DWORD WINAPI multicastThread(LPVOID args)
 				}
 
 				if (totalbytessent == filesize) break;
+
+				delete[] tmp;
 			}
 
 			fileToSend.close();
