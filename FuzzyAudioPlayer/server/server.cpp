@@ -26,6 +26,11 @@ int main(int argc, char* argv[])
 	SOCKET listenSocket;
 	std::vector<SOCKET> clientList;
 
+	cout << "--------------------------------------------------" << endl;
+	cout << "- Fuzzy Audio Player  -  Server" << endl;
+	cout << "--------------------------------------------------" << endl;
+
+
 	WSADATA wsadata;
 	listenSocket = createServer(&wsadata, TCP);
 
