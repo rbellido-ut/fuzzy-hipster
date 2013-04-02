@@ -139,6 +139,11 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 				//delete clnt;
 			}
 			break;
+		case ID_HELP_ABOUT:
+			{
+				MessageBox(hWnd,"You","About",MB_ICONINFORMATION|MB_OK);
+			}
+			break;
 
 		case IDC_BUTTON_OK:
 			{
