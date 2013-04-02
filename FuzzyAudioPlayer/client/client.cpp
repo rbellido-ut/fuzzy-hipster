@@ -266,6 +266,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	LPSOCKETDATA data = (LPSOCKETDATA) rc->data;
 	Client* clnt = rc->clnt;
 	bool endOfTransmit = false;
+	bool endOfList = false;
 
 	if(error || bytesTransferred == 0)
 	{
@@ -284,6 +285,9 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	//if last character is EOT, End the transmit
 	if(clnt->downloadedAmount == clnt->dlFileSize)
 		endOfTransmit = true;
+
+	if(tmp[tmp.size()-1] == '\x004')
+		endOfList = true;
 
 	//open a input string stream from the binary string
 	istringstream iss(tmp);
@@ -305,29 +309,34 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 			char buff[1024];
 			int n;
 			string firstframe;
-			while (!player_->OpenStream(1,1,firstframe.data(),firstframe.size(),sfWav)) //cannot be sfAutoDetect
+			while (!player_->OpenStream(true,true,firstframe.data(),firstframe.size(),sfMp3)) //cannot be sfAutoDetect
 			{
 				n = recv(connectSocket_,buff,1024,0);
 				firstframe.append(buff,n);
 				n=0;
 				//MessageBox(NULL,player_->GetError(),NULL,MB_OK);
 			}
-			//clnt->downloadFileStream.open("result.mp3", ios::binary);
 		}
 		else
 		{
 			clnt->currentState = WFUCOMMAND;
 			MessageBox(NULL, "ST Denied", "NOT APPROVED", NULL);
 		}
-
 		break;
 
 	case WAITFORLIST:
+		if (iss >> reqType)
+		{
+			iss >> cachedServerSongList;
+			cachedServerSongList.erase(0, cachedServerSongList.find_first_not_of(' '));
+
+			if (endOfList)
+				clnt->currentState = WFUCOMMAND;
+		}
+
 		break;
 
 	case WAITFORDOWNLOAD:	//after DL request was sent in dlThread
-
-
 		if(iss >> reqType && iss >> fileSize)
 		{
 			clnt->dlFileSize = fileSize;

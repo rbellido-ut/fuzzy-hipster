@@ -437,5 +437,10 @@ int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
 	return 0;
 }
 
-//Behnam's Party Mix.wav
+// args: takes a new line separated string of songs available on the server
+bool populateSongList(std::string rawstring)
+{
 
+
+	return true;
+}

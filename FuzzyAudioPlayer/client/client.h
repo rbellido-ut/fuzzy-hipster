@@ -45,6 +45,7 @@ public:
 
 	int dlFileSize, ulFileSize;
 	int downloadedAmount, uploadedAmount;
+	std::string cachedServerSongList;
 
 private:
 	SOCKET connectSocket_;

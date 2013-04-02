@@ -304,12 +304,12 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 				}
 			}
 
-			line = 0x04;
+			line = '\x004';
 			send(clientsocket, line.c_str(), line.size(), 0);
 		break;
 
 		case STREAMING:
-			fileToSend.open("Moonli-SLrec-6202.wav", ios::binary); //TODO: hardcoded!s
+			fileToSend.open("test.mp3", ios::binary); //TODO: hardcoded!s
 
 			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist. Deny client to download file.
 			{
