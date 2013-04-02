@@ -107,7 +107,14 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						haveClient = true;
 
 						// get song list from server
-						clnt.listThreadHandle = CreateThread(NULL, 0, clnt.runListThread, &clnt, 0, &clnt.listThreadID);
+						LISTCONTEXT *lc = (LISTCONTEXT*)malloc(sizeof(LISTCONTEXT));
+						lc->clnt = &clnt;
+						lc->hwnd = &hWnd;
+						
+						clnt.listThreadHandle = CreateThread(NULL, 0, clnt.runListThread, lc, 0, &clnt.listThreadID);
+
+						Sleep(3000);
+						populateSongList(&hWnd,clnt.cachedServerSongList);
 					}
 					else
 						MessageBox(hWnd, "Try Again!" , "Sorry" , MB_ICONWARNING);
@@ -221,23 +228,6 @@ bool streamRequest(Client& clnt)
 {
 	clnt.stThreadHandle = CreateThread(NULL, 0, clnt.runSTThread, &clnt, 0, &clnt.stThreadID);
 
-	/*MessageBox(NULL, "stream req" , "Test" , MB_OK);
-
-	std::string userRequest;
-
-	userRequest += "ST";
-
-	clnt.dispatchOneSend(userRequest);
-
-	clnt.currentState = STREAMING;
-
-	// need to read streamed data received from server into a SFML buffer then play it with the SFML lib
-	sf::SoundBuffer buffer;
-	buffer.loadFromFile("D:\\test.ogg");
-	AudioStream stream;
-	stream.load(buffer);
-	stream.play();*/
-
 	return true;
 }
 
@@ -312,7 +302,8 @@ bool createGUI(HWND hWnd)
 		10, 100, 380, 260, hWnd, (HMENU)IDC_SRVSONGLIST, GetModuleHandle(NULL), NULL)
 		,WM_SETFONT, (WPARAM)hFont, TRUE);
 
-	//SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"Test Behnam's party mix");
+	SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"Test Behnam's party mix");
+	SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"Test Behnam's party mix");
 
 	// create connected clients list box
 	SendMessage(
@@ -438,12 +429,14 @@ int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
 }
 
 // args: takes a new line separated string of songs available on the server
-bool populateSongList(HWND hWnd, std::string rawstring)
+bool populateSongList(HWND* hWnd, std::string rawstring)
 {
+	SendMessage(GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"test");
+
 	std::string songname;
 	std::istringstream iss(rawstring);
 	while (std::getline(iss, songname)) {
-	   SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)songname.c_str());
+	   SendMessage(GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)songname.c_str());
 	}
 	
 	return true;

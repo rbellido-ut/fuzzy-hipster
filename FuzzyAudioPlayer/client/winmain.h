@@ -72,6 +72,6 @@ bool uploadRequest(Client&);
 bool streamRequest(Client&);
 bool micRequest(Client&);
 bool castRequest(Client&);
-bool populateSongList(std::string);
+
 
 #endif

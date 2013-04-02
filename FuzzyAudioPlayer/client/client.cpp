@@ -330,8 +330,9 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 			iss >> cachedServerSongList;
 			cachedServerSongList.erase(0, cachedServerSongList.find_first_not_of(' '));
 
-			if (endOfList)
+			if (endOfList) {
 				clnt->currentState = WFUCOMMAND;
+			}
 		}
 
 		break;
@@ -768,13 +769,18 @@ DWORD Client::stThread(LPVOID param)
 
 DWORD WINAPI Client::runListThread(LPVOID param)
 {
-	Client* c = (Client*) param;
-	return c->listThread(c);
+	
+	LISTCONTEXT *lc = (LISTCONTEXT*) param;
+	Client* c = (Client*) lc->clnt;
+	return c->listThread(lc);
 }
 
 DWORD Client::listThread(LPVOID param)
 {
-	Client* c = (Client*) param;
+	LISTCONTEXT *lc = (LISTCONTEXT*) param;
+	Client* c = lc->clnt;
+	HWND* hwnd = lc->hwnd;
+	//Client* c = (Client*) param;
 	string userRequest;
 
 	userRequest += "LIST ";
@@ -794,6 +800,8 @@ DWORD Client::listThread(LPVOID param)
 		}
 		dispatchOneRecv();
 	}
+
+	populateSongList(hwnd, c->cachedServerSongList);
 
 	return 0;
 }

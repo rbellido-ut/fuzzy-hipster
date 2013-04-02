@@ -64,5 +64,12 @@ typedef struct request_context{
     Client* clnt;
 } REQUESTCONTEXT;
 
+typedef struct list_context {
+	Client* clnt;
+	HWND* hwnd;
+} LISTCONTEXT;
+
+
+bool populateSongList(HWND*, std::string);
 
 #endif // UTIL_H
