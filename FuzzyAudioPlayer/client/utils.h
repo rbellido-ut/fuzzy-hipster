@@ -68,6 +68,12 @@ typedef struct list_context {
 	HWND* hwnd;
 } LISTCONTEXT;
 
+typedef struct upload_context {
+	Client* clnt;
+	LPSTR filename;
+} UPLOADCONTEXT;
+
+
 
 bool populateSongList(HWND*, std::string);
 
