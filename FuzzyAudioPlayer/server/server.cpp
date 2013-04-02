@@ -196,7 +196,7 @@ ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
 	string requesttype;
 
 	ss >> requesttype;
-	cout << "received " << requesttype << " ";
+	cout << "received " << requesttype << " " << endl;
 
 	if (requesttype == "LIST")
 	{
@@ -279,7 +279,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 	//computing filesizes
 	ostringstream oss;
 	std::streampos begin, end;
-	int filesize = 0;
+	long int filesize = 0;
 
 	//cout << "Previous State: " << prevState << endl;
 
@@ -322,7 +322,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			//compute size of the file
 			begin = fileToSend.tellg();
 			fileToSend.seekg(0, ios::end);
-			filesize = fileToSend.tellg() - begin;
+			filesize = static_cast<long int>(fileToSend.tellg() - begin);
 			fileToSend.seekg(begin);
 			cout << "File size of " << filename << ": " << filesize << " bytes" << endl;
 
@@ -381,7 +381,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			//compute size of the file
 			begin = fileToSend.tellg();
 			fileToSend.seekg(0, ios::end);
-			filesize = fileToSend.tellg() - begin;
+			filesize = static_cast<long int>(fileToSend.tellg() - begin);
 			fileToSend.seekg(begin);
 			cout << "File size of " << filename << ": " << filesize << " bytes" << endl;
 
