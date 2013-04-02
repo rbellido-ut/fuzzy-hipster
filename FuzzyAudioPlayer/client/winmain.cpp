@@ -116,51 +116,7 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						EnableWindow(GetDlgItem(hWnd,IDC_BUTTON_OK), TRUE); 
 						haveClient = true;
 
-						// get song list from server
-						LISTCONTEXT *lc = (LISTCONTEXT*)malloc(sizeof(LISTCONTEXT));
-						lc->clnt = &clnt;
-						lc->hwnd = &hWnd;
-
-						//clnt.listThreadHandle = CreateThread(NULL, 0, clnt.runListThread, lc, 0, &clnt.listThreadID);
-	string userRequest;
-
-	userRequest += "LIST ";
-	userRequest += "Behnam's party mix.wav\n";
-
-	clnt.currentState = SENTLISTREQUEST;
-	clnt.dispatchOneSend(userRequest);
-
-	while (1)
-	{
-		if (clnt.currentState != WAITFORLIST)
-		{
-			// completed op
-			if (clnt.currentState == WFUCOMMAND)
-			{
-				// remove last EOT char from received song list
-				// populate song list on gui
-				populateSongList(&hWnd, clnt.cachedServerSongList.substr(0,clnt.cachedServerSongList.size()-1));
-				//populateSongList(&clnt, clnt.cachedServerSongList.substr(0,clnt.cachedServerSongList.size()-1));
-
-				break;
-			}
-
-			continue;
-		}
-		clnt.dispatchOneRecv();
-	}
-
-	/*for (vector<string>::iterator it=clnt.localSongList.begin(); it!=clnt.localSongList.end(); ++it)
-	{
-		string xxx = *it;
-		SendMessage (GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)xxx.c_str());
-
-	}*/
-						/*DWORD result = WaitForSingleObject(clnt.listThreadHandle,INFINITE);
-						if (result == WAIT_OBJECT_0)
-						{
-							MessageBox(hWnd, "thread done" , "Sorry" , MB_ICONWARNING);
-						}*/
+						listRequest(clnt,&hWnd);
 
 					}
 					else
@@ -278,6 +234,49 @@ bool uploadRequest(Client& clnt, HWND hWnd, OPENFILENAME &ofn)
 
 		clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, &clnt, 0, &clnt.ulThreadID);
 	}
+
+	return true;
+}
+
+// get song list from server and populate GUI
+// returns false if recv'd list is empty
+bool listRequest(Client& clnt, HWND* hWnd)
+{
+	//clnt.listThreadHandle = CreateThread(NULL, 0, clnt.runListThread, lc, 0, &clnt.listThreadID);
+
+	string userRequest;
+
+	userRequest += "LIST ";
+	userRequest += "Behnam's party mix.wav\n";
+
+	clnt.currentState = SENTLISTREQUEST;
+	clnt.dispatchOneSend(userRequest);
+
+	while (1)
+	{
+		if (clnt.currentState != WAITFORLIST)
+		{
+			// completed op
+			if (clnt.currentState == WFUCOMMAND)
+			{
+
+				break;
+			}
+
+			continue;
+		}
+		clnt.dispatchOneRecv();
+	}
+
+	// get song list
+	// remove last EOT char from received song list
+	clnt.localSongList = processSongList(clnt.cachedServerSongString.substr(0,clnt.cachedServerSongString.size()-1));
+
+	if (clnt.localSongList.size() == 0) // if recv'd song list is empty..
+		return false;
+	else 
+		populateListBox(hWnd, IDC_SRVSONGLIST, clnt.localSongList); // populate song list on gui
+		//populateSongList(&clnt, clnt.cachedServerSongList.substr(0,clnt.cachedServerSongList.size()-1));
 
 	return true;
 }
@@ -604,19 +603,36 @@ int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
 }
 
 // args: takes a new line separated string of songs available on the server
-bool populateSongList(HWND* hWnd, std::string rawstring)
+vector<string> processSongList(std::string rawstring)
 {
+	vector<string> result;
+
 	std::string songname;
 	std::istringstream iss(rawstring);
 	while (std::getline(iss, songname))
 	{
-		//client->localSongList.push_back(songname);
-		SendMessage (GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)songname.c_str());
+		result.push_back(songname);
+	}
+
+	return result;
+}
+
+
+bool populateListBox(HWND* hWnd, int resIdxOfListBox, vector<string> localList)
+{
+	// clear list box
+	SendMessage (GetDlgItem(*hWnd,resIdxOfListBox),LB_RESETCONTENT,0,0);
+
+	// populate list box
+	for (vector<string>::iterator it=localList.begin(); it!=localList.end(); ++it)
+	{
+		string s = *it;
+		SendMessage (GetDlgItem(*hWnd,resIdxOfListBox),LB_INSERTSTRING,0,(LPARAM)s.c_str());
+
 	}
 
 	return true;
 }
-
 
 int __stdcall micCallBack (void* instance, void *user_data, TCallbackMessage message, unsigned int param1, unsigned int param2)
 {

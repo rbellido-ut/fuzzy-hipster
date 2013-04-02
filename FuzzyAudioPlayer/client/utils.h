@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <fstream>
 #include <map>
+#include <vector>
 
 #define DATABUFSIZE 102400
 #define TCPPORT 5555
