@@ -155,7 +155,9 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 					}
 					else {
 						clnt.currentSongFile = getSelectedListBoxItem(&hWnd,IDC_SRVSONGLIST);
-						downloadRequest(clnt);
+
+						if (clnt.currentSongFile != "ERROR")
+							downloadRequest(clnt);
 					}
 					break;
 				}
@@ -864,6 +866,12 @@ string getSelectedListBoxItem(HWND* hWnd, int resIdxOfListBox)
 	}
 
 	// get the text of the selected item
+	if (iSelected == -1)
+	{
+		MessageBox(NULL, "No file selected to download", "Error", MB_OK);
+		return "ERROR";
+	}
+
 	if (iSelected != -1)
 		SendMessage(GetDlgItem(*hWnd,resIdxOfListBox), LB_GETTEXT, (WPARAM)iSelected , (LPARAM)tmp);
 	//SendMessage(GetDlgItem(hWnd,IDC_EDIT_HOSTNAME), WM_GETTEXT,sizeof(szServer)/sizeof(szServer[0]),(LPARAM)szServer);
