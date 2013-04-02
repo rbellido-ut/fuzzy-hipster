@@ -276,7 +276,6 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	
 	//append the binary data received to a c++ string
 	string tmp;
-	tmp = "";
 	tmp.append(data->databuf, bytesTransferred);
 
 	//if last character is EOT, End the transmit
@@ -306,7 +305,23 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 			char buff[1024];
 			int n;
 			string firstframe;
-			while (!player_->OpenStream(true,true,firstframe.data(),firstframe.size(),sfMp3)) //cannot be sfAutoDetect
+			
+			//check format of the song
+			TStreamFormat format;
+			string::size_type pos = clnt->currentSongFile.find_last_of(".");
+			tmp = clnt->currentSongFile.substr(pos);
+
+			if (tmp == ".mp3") format = sfMp3;
+			else if (tmp == ".flac") format = sfFLAC;
+			else if (tmp == ".wav") format = sfWav;
+			else if (tmp == ".ogg") format = sfOgg;
+			else {
+				MessageBox(NULL, "Invalid song format!", "ERROR", MB_OK);
+				return;
+			}
+
+
+			while (!player_->OpenStream(true,true,firstframe.data(),firstframe.size(), format)) //cannot be sfAutoDetect
 			{
 				n = recv(connectSocket_,buff,1024,0);
 				firstframe.append(buff,n);
@@ -417,6 +432,20 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	}
 
 
+}
+
+TStreamFormat parseFileFormat(const std::string filename)
+{
+	string format;
+	string::size_type pos = filename.find_last_of(".");
+	format = filename.substr(pos, ios::end);
+
+	if (format == "mp3") return sfMp3;
+	else if (format == "flac") return sfFLAC;
+	else if (format == "wav") return sfWav;
+	else if (format == "ogg") return sfOgg;
+	
+	return sfAutodetect; //ERROR: invalid song format
 }
 
 /*------------------------------------------------------------------------------------------------------------------
