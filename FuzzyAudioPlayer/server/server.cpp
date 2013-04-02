@@ -140,7 +140,7 @@ DWORD WINAPI handleClientRequests(LPVOID param)
 		{
 			if (GetLastError() == WSAECONNRESET)
 			{
-				cout << "client disconnected" << endl;
+				cerr << "client disconnected" << endl;
 				return 0;
 			}
 
@@ -196,7 +196,7 @@ ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
 	string requesttype;
 
 	ss >> requesttype;
-	cout << "received " << requesttype << " " << endl;
+	cout << "received " << requesttype << " ";
 
 	if (requesttype == "LIST")
 	{
@@ -231,6 +231,10 @@ ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
 	{
 		cout << "Received: 2 way chat request" << endl;
 		return MICCHATTING;
+	}
+	else 
+	{
+		cout << "\n";
 	}
 
 	return SERVERROR;
@@ -317,6 +321,8 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 				line = "ST\n";
 				send(clientsocket, line.c_str(), line.size(), 0);
 				line = "";
+				cerr << "Error: " << GetLastError() << endl;
+				cerr << "Ending streaming session..." << endl;
 				break;
 			}
 
@@ -348,6 +354,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 					if (((bytessent = send(clientsocket, line.c_str(), line.size(), 0))) == 0 || (bytessent == -1))
 					{
 						cerr << "Failed to send! Exited with error " << GetLastError() << endl;
+						cerr << "Ending streaming session..." << endl;
 						fileToSend.close();
 						delete[] tmp;
 						return;
@@ -407,6 +414,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 					if (((bytessent = send(clientsocket, line.c_str(), line.size(), 0))) == 0 || (bytessent == -1))
 					{
 						cerr << "Failed to send! Exited with error " << GetLastError() << endl;
+						cerr << "Ending download session..." << endl;
 						fileToSend.close();
 						delete[] tmp;
 						return;
@@ -456,6 +464,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 				if (((bytesrecvd = recv(clientsocket, tmp, DATABUFSIZE, 0)) == 0) || (bytesrecvd == -1))
 				{
 					cerr << "recv failed with error " << GetLastError() << endl;
+					cout << "Ending upload session..." << endl;
 					fileRecvd.close();
 					delete[] tmp;
 					return;
