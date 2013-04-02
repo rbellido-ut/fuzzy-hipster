@@ -140,7 +140,7 @@ DWORD WINAPI handleClientRequests(LPVOID param)
 		{
 			if (GetLastError() == WSAECONNRESET)
 			{
-				cout << "client disconnected" << endl;
+				cerr << "client disconnected" << endl;
 				return 0;
 			}
 
@@ -217,7 +217,7 @@ ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
 	else if (requesttype == "UL")
 	{
 		ss >> uploadfilesize;
-		getline(ss, filename); // received: UL filename uploadfilesize \n
+		getline(ss, filename); // received: UL uploadfilesize filename\n
 		cout << uploadfilesize << filename << endl;
 		return UPLOADING;
 	}
@@ -229,8 +229,12 @@ ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
 	}
 	else if (requesttype == "MIC") //received: MIC\n
 	{
-		cout << "2 way chat requested" << endl;
+		cout << "Received: 2 way chat request" << endl;
 		return MICCHATTING;
+	}
+	else 
+	{
+		cout << "\n";
 	}
 
 	return SERVERROR;
@@ -279,7 +283,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 	//computing filesizes
 	ostringstream oss;
 	std::streampos begin, end;
-	int filesize = 0;
+	long int filesize = 0;
 
 	//cout << "Previous State: " << prevState << endl;
 
@@ -306,6 +310,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			// send EOT
 			line = '\x004';
 			send(clientsocket, line.c_str(), line.size(), 0);
+			cout << "song list sent" << endl;
 		break;
 
 		case STREAMING:
@@ -316,13 +321,15 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 				line = "ST\n";
 				send(clientsocket, line.c_str(), line.size(), 0);
 				line = "";
+				cerr << "Error: " << GetLastError() << endl;
+				cerr << "Ending streaming session..." << endl;
 				break;
 			}
 
 			//compute size of the file
 			begin = fileToSend.tellg();
 			fileToSend.seekg(0, ios::end);
-			filesize = fileToSend.tellg() - begin;
+			filesize = static_cast<long int>(fileToSend.tellg() - begin);
 			fileToSend.seekg(begin);
 			cout << "File size of " << filename << ": " << filesize << " bytes" << endl;
 
@@ -331,6 +338,8 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			line = oss.str();
 			send(clientsocket, line.c_str(), line.size(), 0);
 			line = ""; //just clear the line buffer	
+
+			cout << "Streaming..." << endl;
 
 			while (true)
 			{
@@ -345,6 +354,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 					if (((bytessent = send(clientsocket, line.c_str(), line.size(), 0))) == 0 || (bytessent == -1))
 					{
 						cerr << "Failed to send! Exited with error " << GetLastError() << endl;
+						cerr << "Ending streaming session..." << endl;
 						fileToSend.close();
 						delete[] tmp;
 						return;
@@ -361,7 +371,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			}
 
 			//EOT in hex
-			cout << "done downloading" << endl;
+			cout << "Done streaming" << endl;
 			line = "STEND\n";
 			send(clientsocket, line.c_str(), line.size(), 0);
 			fileToSend.close();
@@ -381,7 +391,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			//compute size of the file
 			begin = fileToSend.tellg();
 			fileToSend.seekg(0, ios::end);
-			filesize = fileToSend.tellg() - begin;
+			filesize = static_cast<long int>(fileToSend.tellg() - begin);
 			fileToSend.seekg(begin);
 			cout << "File size of " << filename << ": " << filesize << " bytes" << endl;
 
@@ -404,6 +414,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 					if (((bytessent = send(clientsocket, line.c_str(), line.size(), 0))) == 0 || (bytessent == -1))
 					{
 						cerr << "Failed to send! Exited with error " << GetLastError() << endl;
+						cerr << "Ending download session..." << endl;
 						fileToSend.close();
 						delete[] tmp;
 						return;
@@ -420,7 +431,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			}
 
 			//EOT in hex
-			cout << "done downloading" << endl;
+			cout << "Done downloading" << endl;
 			line = "DLEND\n";
 			send(clientsocket, line.c_str(), line.size(), 0);
 			fileToSend.close();
@@ -428,6 +439,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 		break;
 
 		case UPLOADING:
+			cout << "Uploading..." << endl;
 			cout << "filesize of the file to upload: " << filesize << endl;
 
 			line = "UL " + filename + '\n';
@@ -452,6 +464,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 				if (((bytesrecvd = recv(clientsocket, tmp, DATABUFSIZE, 0)) == 0) || (bytesrecvd == -1))
 				{
 					cerr << "recv failed with error " << GetLastError() << endl;
+					cout << "Ending upload session..." << endl;
 					fileRecvd.close();
 					delete[] tmp;
 					return;
@@ -464,7 +477,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 
 				if (totalbytesrecvd == uploadfilesize) //Uploading is done
 				{
-					cout << "done uploading" << endl;
+					cout << "Done uploading" << endl;
 					fileRecvd.close();
 					delete[] tmp;
 					break;
@@ -475,6 +488,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 		break;
 
 		case MICCHATTING:
+			cout << "Mic session started..." << endl;
 			startMicSession();
 		break;
 
