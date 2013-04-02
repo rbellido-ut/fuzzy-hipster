@@ -68,7 +68,7 @@ bool createGUI(HWND hWnd);
 int initOpenFileStruct(HWND, OPENFILENAME &);
 long delay (SYSTEMTIME, SYSTEMTIME);
 bool downloadRequest(Client&);
-bool uploadRequest(Client&);
+bool uploadRequest(Client& clnt, HWND hWnd, OPENFILENAME &ofn);
 bool streamRequest(Client&);
 bool micRequest(Client&);
 bool castRequest(Client&);

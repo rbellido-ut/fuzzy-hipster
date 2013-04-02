@@ -161,7 +161,7 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						MessageBox(hWnd, "CAN ONLY DO ONE THING AT A TIME" , "Warning" , MB_ICONWARNING);
 					}
 					else {
-						uploadRequest(clnt);
+						uploadRequest(clnt, hWnd, ofn);
 					}
 					break;
 				}
@@ -231,9 +231,20 @@ bool downloadRequest(Client &clnt)
 	return true;
 }
 
-bool uploadRequest(Client& clnt)
+bool uploadRequest(Client& clnt, HWND hWnd, OPENFILENAME &ofn)
 {
-	clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, &clnt, 0, &clnt.ulThreadID);
+	initOpenFileStruct(hWnd, ofn);
+
+	if (GetOpenFileName(&ofn))
+	{
+		UPLOADCONTEXT *uc = (UPLOADCONTEXT*)malloc(sizeof(UPLOADCONTEXT));
+		uc->clnt = &clnt;
+		uc->filename =  ofn.lpstrFile;
+
+		//clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, uc, 0, &clnt.ulThreadID);
+
+		clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, &clnt, 0, &clnt.ulThreadID);
+	}
 
 	return true;
 }
@@ -550,7 +561,7 @@ int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
 
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hWnd;
-	ofn.lpstrFilter = "Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
+	ofn.lpstrFilter = "Waveform Files (*.wav)\0*.wav\0MP3 Files (*.mp3)\0*.mp3\0Free Lossless Audio (*.flac)\0*.flac\0OGG Vorbis (*.ogg)\0*.ogg\0Advanced Audio (*.aac)\0*.aac\0All Files (*.*)\0*.*\0";
 	ofn.lpstrFile = szFileName;
 	ofn.nMaxFile = MAX_PATH;
 	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
