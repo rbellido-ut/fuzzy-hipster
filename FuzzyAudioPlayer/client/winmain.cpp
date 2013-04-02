@@ -122,7 +122,13 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						lc->hwnd = &hWnd;
 
 						clnt.listThreadHandle = CreateThread(NULL, 0, clnt.runListThread, lc, 0, &clnt.listThreadID);
-						Sleep(111); // works with sleep????
+						
+						/*DWORD result = WaitForSingleObject(clnt.listThreadHandle,INFINITE);
+						if (result == WAIT_OBJECT_0)
+						{
+							MessageBox(hWnd, "thread done" , "Sorry" , MB_ICONWARNING);
+						}*/
+
 					}
 					else
 						MessageBox(hWnd, "Try Again!" , "Sorry" , MB_ICONWARNING);
@@ -561,12 +567,11 @@ bool populateSongList(HWND* hWnd, std::string rawstring)
 
 	std::string songname;
 	std::istringstream iss(rawstring);
-	while (std::getline(iss, songname)) {
-
-	   SendMessage(GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)songname.c_str());
-		//InvalidateRect(*hWnd,NULL,TRUE);
-		//UpdateWindow(*hWnd);
+	while (std::getline(iss, songname))
+	{
+	   SendMessage (GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)songname.c_str());
 	}
+
 	return true;
 }
 

@@ -800,13 +800,15 @@ DWORD Client::listThread(LPVOID param)
 				// remove last EOT char from received song list
 				// populate song list on gui
 				populateSongList(hwnd, c->cachedServerSongList.substr(0,c->cachedServerSongList.size()-1));
-				return 0;
+				break;
 			}
 
 			continue;
 		}
 		dispatchOneRecv();
 	}
+
+	return 0;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
