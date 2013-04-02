@@ -43,7 +43,7 @@ public:
 	int sizeOfDownloadFile;
 	int sizeOfUploadFile;
 
-	int dlFileSize, ulFileSize;
+	long int dlFileSize, ulFileSize;
 	int downloadedAmount, uploadedAmount;
 	std::string cachedServerSongList;
 

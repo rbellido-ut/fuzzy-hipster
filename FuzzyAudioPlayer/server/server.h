@@ -3,6 +3,9 @@
 
 #include <string>
 #include <vector>
+#include "../mic.h"
+#include "server_net.h"
+#include "utils.h"
 
 DWORD WINAPI handleClientRequests(LPVOID param);
 DWORD WINAPI listenThread(LPVOID args);
