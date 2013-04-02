@@ -346,7 +346,7 @@ bool createMicSocket () {
 	struct hostent  *hp;
 	memset((char *)&micServer, 0, sizeof(struct sockaddr_in));
 	micServer.sin_family = AF_INET;
-	micServer.sin_port = htons(22);
+	micServer.sin_port = htons(UDPPORT);
 	if ((hp = gethostbyname("localhost")) == NULL)
 	{
 		MessageBox(NULL, "Unknown server address", NULL, NULL);
