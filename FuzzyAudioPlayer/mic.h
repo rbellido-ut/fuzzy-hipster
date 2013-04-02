@@ -13,6 +13,6 @@ typedef struct
 } MICVARS, *LPMICVARS;
 
 int startMicSession();
-int __stdcall micCallback(void * instasnce, void * user_data, TCallbackMessage message, unsigned int param1, unsigned int param2);
+int __stdcall micCallback(void * instance, void * user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2);
 
 #endif
