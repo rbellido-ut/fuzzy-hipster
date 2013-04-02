@@ -139,7 +139,8 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 			{
 				// remove last EOT char from received song list
 				// populate song list on gui
-				populateSongList(&clnt, clnt.cachedServerSongList.substr(0,clnt.cachedServerSongList.size()-1));
+				populateSongList(&hWnd, clnt.cachedServerSongList.substr(0,clnt.cachedServerSongList.size()-1));
+				//populateSongList(&clnt, clnt.cachedServerSongList.substr(0,clnt.cachedServerSongList.size()-1));
 
 				break;
 			}
@@ -149,12 +150,12 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 		clnt.dispatchOneRecv();
 	}
 
-	for (vector<string>::iterator it=clnt.localSongList.begin(); it!=clnt.localSongList.end(); ++it)
+	/*for (vector<string>::iterator it=clnt.localSongList.begin(); it!=clnt.localSongList.end(); ++it)
 	{
 		string xxx = *it;
 		SendMessage (GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)xxx.c_str());
 
-	}
+	}*/
 						/*DWORD result = WaitForSingleObject(clnt.listThreadHandle,INFINITE);
 						if (result == WAIT_OBJECT_0)
 						{
@@ -603,17 +604,14 @@ int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
 }
 
 // args: takes a new line separated string of songs available on the server
-bool populateSongList(Client* client, std::string rawstring)
+bool populateSongList(HWND* hWnd, std::string rawstring)
 {
-	
-	//SendMessage(GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"sm64_happy_message.wav");
-
 	std::string songname;
 	std::istringstream iss(rawstring);
 	while (std::getline(iss, songname))
 	{
-		client->localSongList.push_back(songname);
-	   //SendMessage (GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)songname.c_str());
+		//client->localSongList.push_back(songname);
+		SendMessage (GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)songname.c_str());
 	}
 
 	return true;

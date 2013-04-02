@@ -768,49 +768,6 @@ DWORD Client::stThread(LPVOID param)
 	return 0;
 }
 
-DWORD WINAPI Client::runListThread(LPVOID param)
-{
-	
-	LISTCONTEXT *lc = (LISTCONTEXT*) param;
-	Client* c = (Client*) lc->clnt;
-	return c->listThread(lc);
-}
-
-DWORD Client::listThread(LPVOID param)
-{
-	LISTCONTEXT *lc = (LISTCONTEXT*) param;
-	Client* c = lc->clnt;
-	HWND* hwnd = lc->hwnd;
-	//Client* c = (Client*) param;
-	string userRequest;
-
-	userRequest += "LIST ";
-	userRequest += "Behnam's party mix.wav\n";
-
-	c->currentState = SENTLISTREQUEST;
-	c->dispatchOneSend(userRequest);
-
-	while (1)
-	{
-		if (c->currentState != WAITFORLIST)
-		{
-			// completed op
-			if (c->currentState == WFUCOMMAND)
-			{
-				// remove last EOT char from received song list
-				// populate song list on gui
-				populateSongList(c, c->cachedServerSongList.substr(0,c->cachedServerSongList.size()-1));
-				break;
-			}
-
-			continue;
-		}
-		dispatchOneRecv();
-	}
-
-	return 0;
-}
-
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION:	runULThread
 --
