@@ -439,6 +439,25 @@ bool castRequest(Client& clnt)
 	return true;
 }
 
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: createMulticastSocket
+--
+-- DATE: April 2, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Braham
+--
+-- PROGRAMMER: Jesse Braham
+--
+-- INTERFACE: SOCKET createMulticastSocket()
+--
+-- RETURNS: SOCKET
+--
+-- NOTES:  This function creates a multicast socket and sets up the appropriate structures.  Upon completion,
+--			it returns the SOCKET created.
+----------------------------------------------------------------------------------------------------------------------*/
 SOCKET createMulticastSocket()
 {
 	SOCKET			hSocket;
@@ -483,6 +502,25 @@ SOCKET createMulticastSocket()
 	return hSocket;
 }
 
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: multicastThread
+--
+-- DATE: April 2, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Braham
+--
+-- PROGRAMMER: Jesse Braham, Behnam Bastami
+--
+-- INTERFACE: DWORD WINAPI multicastThread(LPVOID args)
+--
+-- RETURNS: DWORD
+--
+-- NOTES:  This function creates a multicast socket, sets up the multicast group, and plays the multicasted data
+--			received from the sever.  Upon completion, the multicast group is left, and the socket is closed.
+----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI multicastThread(LPVOID args)
 {
 	SOCKET			hSocket;
