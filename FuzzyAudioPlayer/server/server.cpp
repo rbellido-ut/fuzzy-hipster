@@ -314,15 +314,14 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 		break;
 
 		case STREAMING:
-			fileToSend.open("test.mp3", ios::binary); //TODO: hardcoded!s
+			fileToSend.open(filename, ios::binary); //TODO: hardcoded!s
 
 			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist. Deny client to download file.
 			{
 				line = "ST\n";
 				send(clientsocket, line.c_str(), line.size(), 0);
 				line = "";
-				cerr << "Error: " << GetLastError() << endl;
-				cerr << "Ending streaming session..." << endl;
+				cout << "Streaming request denied. Can't open file." << endl;
 				break;
 			}
 
@@ -378,13 +377,14 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			delete[] tmp;
 			break;
 		case DOWNLOADING:
-			fileToSend.open("sm64_happy_message.wav", ios::binary); //TODO: hardcoded!s
+			fileToSend.open(filename, ios::binary); //TODO: hardcoded!s
 
 			if (!fileToSend.is_open()) //server can't open the file, file probably doesn't exist. Deny client to download file.
 			{
 				line = "DL\n";
 				send(clientsocket, line.c_str(), line.size(), 0);
 				line = "";
+				cout << "Download request denied. Can't open file" << endl;
 				break;
 			}
 
@@ -446,7 +446,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 			send(clientsocket, line.c_str(), line.size(), 0);
 			line = ""; //just clear the line buffer	
 
-			fileRecvd.open("lol.cd1", ios::binary); //TODO: hardcoded!
+			fileRecvd.open(filename, ios::binary); //TODO: hardcoded!
 			
 			if (!fileRecvd.is_open()) //server can't open the file. Deny client to download file.
 			{

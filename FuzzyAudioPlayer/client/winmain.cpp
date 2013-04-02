@@ -373,7 +373,7 @@ bool startMicSession()
 		if ( r == -1 ) {
 			int err = WSAGetLastError();
 			if (err == 10054)
-				printf("Concoction recent by Pier.\n"); 
+				printf("Connection reset by peer.\n"); 
 			else printf("get last error %d\n", err);
 			break;
 		}
