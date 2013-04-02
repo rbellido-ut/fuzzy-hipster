@@ -312,7 +312,7 @@ bool createGUI(HWND hWnd)
 		10, 100, 380, 260, hWnd, (HMENU)IDC_SRVSONGLIST, GetModuleHandle(NULL), NULL)
 		,WM_SETFONT, (WPARAM)hFont, TRUE);
 
-	SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"Test Behnam's party mix");
+	//SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"Test Behnam's party mix");
 
 	// create connected clients list box
 	SendMessage(
@@ -438,9 +438,13 @@ int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
 }
 
 // args: takes a new line separated string of songs available on the server
-bool populateSongList(std::string rawstring)
+bool populateSongList(HWND hWnd, std::string rawstring)
 {
-
-
+	std::string songname;
+	std::istringstream iss(rawstring);
+	while (std::getline(iss, songname)) {
+	   SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)songname.c_str());
+	}
+	
 	return true;
 }
