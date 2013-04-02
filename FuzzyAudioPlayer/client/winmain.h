@@ -31,10 +31,8 @@
 #define ID_TOOL_ABORT			6917
 #define IDC_MAIN_STATUS			6918
 #define IDC_MAIN_TOOL			6919
-#define WM_SOCKET				6920
+#define IDC_BUTTON_CANCEL		6920
 #define IDC_BUTTON_OK			6921
-
-
 
 #define STATUSBAR_MODE			0
 #define STATUSBAR_TIME			1
@@ -54,10 +52,8 @@ char szPort[5] = "5555"; // edit box
 int nRepeat = 1;
 
 // not needed
-SOCKET Socket = NULL;
 SOCKADDR_IN SockAddr;
 DWORD BytesRECV=0;
-
 
 /***********************************
 *			PROTOTYPES
@@ -75,6 +71,6 @@ bool listRequest(Client&,  HWND*) ;
 bool populateListBox(HWND* , int , std::vector<std::string> );
 std::vector<std::string> processSongList(std::string );
 std::string getSelectedListBoxItem(HWND* , int );
-
+std::string getFileNameWithoutPath(std::string );
 
 #endif
