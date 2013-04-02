@@ -3,7 +3,9 @@
 using namespace std;
 using namespace libZPlay;
 
-void createMicSocket();
+bool createMicSocket();
+bool startMicSession();
+DWORD WINAPI micSessionThread(LPVOID param);
 int __stdcall micCallBack (void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2);
 
 SOCKET micSocket;
@@ -118,7 +120,7 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						LISTCONTEXT *lc = (LISTCONTEXT*)malloc(sizeof(LISTCONTEXT));
 						lc->clnt = &clnt;
 						lc->hwnd = &hWnd;
-						
+
 						clnt.listThreadHandle = CreateThread(NULL, 0, clnt.runListThread, lc, 0, &clnt.listThreadID);
 						Sleep(111); // works with sleep????
 					}
@@ -245,14 +247,129 @@ bool micRequest(Client& clnt)
 
 	userRequest += "MIC";
 
+	clnt.currentState = MICROPHONE;
 	clnt.dispatchOneSend(userRequest);
 
-	clnt.currentState = MICROPHONE;
-	createMicSocket();
-	clnt.currentState = WFUCOMMAND;
-	
+	HANDLE hMicSessionThread = CreateThread(NULL, 0, micSessionThread, &clnt, 0, NULL);
+
 	return true;
 }
+
+DWORD WINAPI micSessionThread(LPVOID param)
+{
+	Client* clnt = (Client*) param;
+
+	if(!createMicSocket())
+	{
+		clnt->currentState = WFUCOMMAND;
+		return 1;
+	}
+
+	startMicSession();
+
+	clnt->currentState = WFUCOMMAND;
+
+	return 0;
+}
+
+bool startMicSession()
+{
+	ZPlay * netplay = CreateZPlay();
+
+	netplay->SetSettings(sidSamplerate, 44100);// 44100 samples
+	netplay->SetSettings(sidChannelNumber, 2);// 2 channel
+	netplay->SetSettings(sidBitPerSample, 16);// 16 bit
+	netplay->SetSettings(sidBigEndian, 1); // little endian
+	int i;
+
+	int result = netplay->OpenStream(1, 1, &i, 1, sfPCM); 
+	if(result == 0) {
+		printf("Error: %s\n", netplay->GetError());
+		netplay->Release();
+		return false;
+	}
+
+
+	ZPlay *player = CreateZPlay();
+
+	result = player->OpenFile("wavein://", sfAutodetect);
+	if(result == 0) {
+		printf("Error: %s\n", player->GetError());
+		player->Release();
+		return false;
+	}
+
+	player->SetCallbackFunc(micCallBack, (TCallbackMessage)(MsgWaveBuffer|MsgStop), NULL);
+
+	player->Play();
+
+	while(1) {
+		char * buf = new char[65507];
+
+		int size = sizeof(micServer);
+		int r = recvfrom (micSocket, buf, 65507, 0, (sockaddr*)&micServer, &size);
+		if ( r == -1 ) {
+			int err = WSAGetLastError();
+			if (err == 10054)
+				printf("Concoction recent by Pier.\n"); 
+			else printf("get last error %d\n", err);
+			break;
+		}
+
+		netplay->PushDataToStream(buf, r);
+		delete buf;
+		netplay->Play();
+
+
+		TStreamStatus status;
+		player->GetStatus(&status);
+		if(status.fPlay == 0)
+			break; 
+
+		TStreamTime pos;
+		player->GetPosition(&pos);
+	}
+
+	player->Release();
+	return true;
+
+}
+
+
+bool createMicSocket () {
+
+	WSADATA wsaData;
+	WORD wVersionRequested = MAKEWORD(2,2);
+	WSAStartup(wVersionRequested, &wsaData);
+
+	struct hostent  *hp;
+	memset((char *)&micServer, 0, sizeof(struct sockaddr_in));
+	micServer.sin_family = AF_INET;
+	micServer.sin_port = htons(UDPPORT);
+	if ((hp = gethostbyname("localhost")) == NULL)
+	{
+		MessageBox(NULL, "Unknown server address", NULL, NULL);
+		return false;
+	}
+
+	memcpy((char *)&micServer.sin_addr, hp->h_addr, hp->h_length);
+
+	micSocket = socket(AF_INET, SOCK_DGRAM, 0);
+
+	memset((char *)&micClient, 0, sizeof(micClient));
+	micClient.sin_family = AF_INET;
+	micClient.sin_port = htons(0);
+	micClient.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	if (bind(micSocket, (struct sockaddr *)&micClient, sizeof(micClient)) == -1) {
+		MessageBox(NULL, "Can't bind socket", NULL, NULL);
+		exit(1);
+	}
+
+
+	return true;
+}
+
 
 bool castRequest(Client& clnt)
 {
@@ -445,110 +562,14 @@ bool populateSongList(HWND* hWnd, std::string rawstring)
 	std::string songname;
 	std::istringstream iss(rawstring);
 	while (std::getline(iss, songname)) {
+
 	   SendMessage(GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)songname.c_str());
 		//InvalidateRect(*hWnd,NULL,TRUE);
 		//UpdateWindow(*hWnd);
 	}
-
-
-
 	return true;
 }
 
-
-void createMicSocket () {
-
-	WSADATA wsaData;
-	WORD wVersionRequested = MAKEWORD(2,2);
-	WSAStartup(wVersionRequested, &wsaData);
-
-	struct hostent  *hp;
-	memset((char *)&micServer, 0, sizeof(struct sockaddr_in));
-	micServer.sin_family = AF_INET;
-	micServer.sin_port = htons(22);
-	if ((hp = gethostbyname("localhost")) == NULL)
-	{
-		MessageBox(NULL, "Unknown server address", NULL, NULL);
-		return;
-	}
-
-	memcpy((char *)&micServer.sin_addr, hp->h_addr, hp->h_length);
-
-	micSocket = socket(AF_INET, SOCK_DGRAM, 0);
-
-	memset((char *)&micClient, 0, sizeof(micClient));
-	micClient.sin_family = AF_INET;
-	micClient.sin_port = htons(0);
-	micClient.sin_addr.s_addr = htonl(INADDR_ANY);
-
-	if (bind(micSocket, (struct sockaddr *)&micClient, sizeof(micClient)) == -1) {
-		MessageBox(NULL, "Can't bind socket", NULL, NULL);
-		exit(1);
-	}
-
-	ZPlay * netplay = CreateZPlay();
-
-	netplay->SetSettings(sidSamplerate, 44100);// 44100 samples
-	netplay->SetSettings(sidChannelNumber, 2);// 2 channel
-	netplay->SetSettings(sidBitPerSample, 16);// 16 bit
-	netplay->SetSettings(sidBigEndian, 1); // little endian
-	int i;
-	
-	int result = netplay->OpenStream(1, 1, &i, 1, sfPCM); 
-	if(result == 0) {
-		printf("Error: %s\n", netplay->GetError());
-		netplay->Release();
-		return ;
-	}
-
-
-	ZPlay *player = CreateZPlay();
-
-	result = player->OpenFile("wavein://", sfAutodetect);
-	if(result == 0) {
-		printf("Error: %s\n", player->GetError());
-		player->Release();
-		return ;
-	}
-
-	player->SetCallbackFunc(micCallBack, (TCallbackMessage)(MsgWaveBuffer|MsgStop), NULL);
-
-	
-	player->Play();
-
-	while(1) {
-		char * buf = new char[65507];
-
-		int size = sizeof(micServer);
-		int r = recvfrom (micSocket, buf, 65507, 0, (sockaddr*)&micServer, &size);
-		if ( r == -1 ) {
-			int err = WSAGetLastError();
-			if (err == 10054)
-				printf("Concoction recent by Pier.\n"); 
-			else printf("get last error %d\n", err);
-			break;
-		}
-
-		printf("%d got %d \n", GetTickCount(), r);
-		netplay->PushDataToStream(buf, r);
-		delete buf;
-		netplay->Play();
-
-		
-		TStreamStatus status;
-		player->GetStatus(&status);
-		if(status.fPlay == 0)
-			break; 
-
-		TStreamTime pos;
-		player->GetPosition(&pos);
-		printf("Pos: %02u:%02u:%02u:%03u\r", pos.hms.hour, pos.hms.minute, pos.hms.second, pos.hms.millisecond);
-	}
-
-	player->Release();
-	return ;
-
-}
 
 int __stdcall micCallBack (void* instance, void *user_data, TCallbackMessage message, unsigned int param1, unsigned int param2)
 {
