@@ -325,10 +325,11 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		break;
 
 	case WAITFORLIST:
-		if (iss >> reqType)
+		//if (iss >> reqType)
 		{
-			iss >> cachedServerSongList;
-			cachedServerSongList.erase(0, cachedServerSongList.find_first_not_of(' '));
+			//iss >> cachedServerSongList;
+			cachedServerSongList.append(tmp);
+			//cachedServerSongList.erase(0, cachedServerSongList.find_first_not_of(' '));
 
 			if (endOfList) {
 				clnt->currentState = WFUCOMMAND;
@@ -789,21 +790,23 @@ DWORD Client::listThread(LPVOID param)
 	c->currentState = SENTLISTREQUEST;
 	c->dispatchOneSend(userRequest);
 
-	while(1)
+	while (1)
 	{
-		if(c->currentState != LIST)
+		if (c->currentState != WAITFORLIST)
 		{
-			if(c->currentState == WFUCOMMAND)
-				break;
+			// completed op
+			if (c->currentState == WFUCOMMAND)
+			{
+				// remove last EOT char from received song list
+				// populate song list on gui
+				populateSongList(hwnd, c->cachedServerSongList.substr(0,c->cachedServerSongList.size()-1));
+				return 0;
+			}
 
 			continue;
 		}
 		dispatchOneRecv();
 	}
-
-	populateSongList(hwnd, c->cachedServerSongList);
-
-	return 0;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -911,8 +914,6 @@ DWORD Client::ulThread(LPVOID param)
 	MessageBox(NULL, "UL Done", "Upload Successful", NULL);
 	return 0;
 }
-
-
 
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION:	allocData

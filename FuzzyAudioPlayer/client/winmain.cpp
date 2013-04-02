@@ -108,7 +108,8 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 					SendMessage(GetDlgItem(hWnd,IDC_EDIT_HOSTNAME), WM_GETTEXT,sizeof(szServer)/sizeof(szServer[0]),(LPARAM)szServer);
 
 					WSADATA wsaData;
-					if (clnt.runClient(&wsaData, szServer, atoi(szPort))) {
+					if (clnt.runClient(&wsaData, szServer, atoi(szPort)))
+					{
 						SendMessage(GetDlgItem(hWnd,IDC_MAIN_STATUS), SB_SETTEXT, STATUSBAR_STATUS, (LPARAM)"Connected");
 						EnableWindow(GetDlgItem(hWnd,IDC_BUTTON_OK), TRUE); 
 						haveClient = true;
@@ -119,9 +120,7 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 						lc->hwnd = &hWnd;
 						
 						clnt.listThreadHandle = CreateThread(NULL, 0, clnt.runListThread, lc, 0, &clnt.listThreadID);
-
-						Sleep(3000);
-						populateSongList(&hWnd,clnt.cachedServerSongList);
+						Sleep(111); // works with sleep????
 					}
 					else
 						MessageBox(hWnd, "Try Again!" , "Sorry" , MB_ICONWARNING);
@@ -312,8 +311,7 @@ bool createGUI(HWND hWnd)
 		10, 100, 380, 260, hWnd, (HMENU)IDC_SRVSONGLIST, GetModuleHandle(NULL), NULL)
 		,WM_SETFONT, (WPARAM)hFont, TRUE);
 
-	SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"Test Behnam's party mix");
-	SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"Test Behnam's party mix");
+	//SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"Test Behnam's party mix");
 
 	// create connected clients list box
 	SendMessage(
@@ -441,14 +439,19 @@ int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
 // args: takes a new line separated string of songs available on the server
 bool populateSongList(HWND* hWnd, std::string rawstring)
 {
-	SendMessage(GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"test");
+	
+	//SendMessage(GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"sm64_happy_message.wav");
 
 	std::string songname;
 	std::istringstream iss(rawstring);
 	while (std::getline(iss, songname)) {
 	   SendMessage(GetDlgItem(*hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)songname.c_str());
+		//InvalidateRect(*hWnd,NULL,TRUE);
+		//UpdateWindow(*hWnd);
 	}
-	
+
+
+
 	return true;
 }
 
