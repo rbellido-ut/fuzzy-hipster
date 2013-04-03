@@ -3,6 +3,9 @@
 using namespace std;
 using namespace libZPlay;
 
+ZPlay * netstream;
+ZPlay * micplayer;
+
 int startMicSession()
 {
 	LPMICVARS micvar = (LPMICVARS) malloc(sizeof(MICVARS));
@@ -21,71 +24,83 @@ int startMicSession()
 	{
 		cerr << "Error opening a microphone stream: " << netstream->GetError() << endl;
 		netstream->Release();
-		free(micvar);
+		closesocket(micvar->micsocket);
 		return 0;
 	}
 
-	ZPlay * player = CreateZPlay();
+	micplayer = CreateZPlay();
 
-	if (player->OpenFile("wavein://", sfAutodetect) == 0)
+	if (micplayer->OpenFile("wavein://", sfAutodetect) == 0)
 	{
-		cerr << "Error in OpenFile: " << player->GetError() << endl;
-		netstream->Release();
-		player->Release();
-		free(micvar);
+		cerr << "Error in OpenFile: " << micplayer->GetError() << endl;
+		micplayer->Release();
+		closesocket(micvar->micsocket);
 		return 0;
 	}
 
-	player->SetCallbackFunc(micCallback, (TCallbackMessage) (MsgWaveBuffer | MsgStop), (VOID*) micvar); //setup callback function whenever a mic picks up a sound
+	micplayer->SetCallbackFunc(micCallback, (TCallbackMessage) (MsgWaveBuffer | MsgStop), (VOID*) micvar); //setup callback function whenever a mic picks up a sound
 
-	player->Play(); //start listening to the mic
+	micplayer->Play(); //start listening to the mic
 
 	while (1)
 	{
-		char * buffer = new char[DATABUFSIZE];
+		char * buffer = new char[65507];
 		int size = sizeof(micvar->micaddr);
 		int bytesrecvd;
-		if ((bytesrecvd = recvfrom(micvar->micsocket, buffer, DATABUFSIZE, 0, (SOCKADDR*)&micvar->micaddr, &size)) == -1)
+		if ((bytesrecvd = recvfrom(micvar->micsocket, buffer, 65507, 0, (SOCKADDR*)&micvar->micaddr, &size)) == -1)
 		{
 			cerr << "Error in recvfrom: " << WSAGetLastError() << endl;
+			closesocket(micvar->micsocket);
 			break;
 		}
 
+
+
 		netstream->PushDataToStream(buffer, bytesrecvd);
 		delete buffer;
+
+
+		if (bytesrecvd == 0) {
+			//cout << "asdfjaksldfj zero  " << endl;
+			closesocket(micvar->micsocket);
+			break;
+		}
+
+
 		netstream->Play(); //send the received data into the stream
 		
 		TStreamStatus status;
-		player->GetStatus(&status);
+		micplayer->GetStatus(&status);
 		if (status.fPlay == 0)
 			break; //microphone not playing anymore
 
 		TStreamTime pos;
-		player->GetPosition(&pos);
+		micplayer->GetPosition(&pos);
 		cout << "Pos: " << pos.hms.hour << " " << pos.hms.minute << " " <<
 			pos.hms.second << " " << pos.hms.millisecond << endl;
 	}
 
-	free(micvar);
-	player->Release();
+	micplayer->Release();
 	return 0;
 }
 
 int __stdcall micCallback(void * instance, void * user_data, TCallbackMessage message, unsigned int param1, unsigned int param2)
 {
-	LPMICVARS micvar = (LPMICVARS) user_data;
-	switch (message)
-	{
-		case MsgWaveBuffer:
-			if (sendto(micvar->micsocket, (const char *) param1, param2, 0, (const SOCKADDR *)& micvar->micaddr, sizeof(micvar->micaddr)) < 0)
-			{
-				cerr << "Error in sendto: " << GetLastError() << endl;
-				return 2;
-			}
-		break;
+	MICVARS * micvar = (MICVARS *) user_data;
 
-		case MsgStop:
-			return closesocket(micvar->micsocket);
+	if ( message == MsgStop)
+	{
+		micplayer->Stop();
+		netstream->Stop();
+		closesocket(micvar->micsocket);
+		return 2;
+	}
+	
+	if (sendto(micvar->micsocket, (const char *) param1, param2, 0, (const SOCKADDR *)& micvar->micaddr, sizeof(micvar->micaddr)) < 0)
+	{
+		cerr << "Error in sendto: " << GetLastError() << endl;
+		
+		return 1;
 	}
 
 	return 1;

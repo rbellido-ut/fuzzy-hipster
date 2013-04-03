@@ -201,8 +201,8 @@ ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
 	stringstream ss(req);
 	string requesttype;
 
-	ss >> requesttype;
-	cout << "received " << requesttype << " ";
+	if (ss >> requesttype)
+		cout << "received " << requesttype << " ";
 
 	if (requesttype == "LIST")
 	{
@@ -681,11 +681,11 @@ DWORD WINAPI multicastThread(LPVOID args)
 					break; //exit the loop
 
 				//get current position
-				TStreamTime pos;
+				/*TStreamTime pos;
 				multicaststream->GetPosition(&pos);
-				cout << "Pos: " << pos.hms.hour << " " << pos.hms.minute << " " << pos.hms.second << " " << pos.hms.millisecond << endl;
+				cout << "Pos: " << pos.hms.hour << " " << pos.hms.minute << " " << pos.hms.second << " " << pos.hms.millisecond << endl;*/
 
-				Sleep(300); //TODO: might need to remove this later
+				//Sleep(300); //TODO: might need to remove this later
 			}
 
 			fileToSend->close();
