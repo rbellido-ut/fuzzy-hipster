@@ -362,6 +362,26 @@ bool streamRequest(Client& clnt)
 	return true;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	micRequest
+--
+-- DATE:		March 30, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	bool micRequest(Client& clnt)
+--				clnt: the client object that needs to connect to microphone
+--
+-- RETURNS:		true on success and false on failure
+--				
+--
+-- NOTES:		This function is called by runClient, to create a TCP async socket
+--
+----------------------------------------------------------------------------------------------------------------------*/
 bool micRequest(Client& clnt)
 {
 	MessageBox(NULL, "mic req" , "Test" , MB_OK);
