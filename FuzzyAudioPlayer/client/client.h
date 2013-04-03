@@ -52,14 +52,15 @@ public:
 	std::string cachedServerSongString;
 	std::vector<std::string> localSongList;
 	std::string currentSongFile;
-
+	libZPlay::ZPlay *player_;
 	void closeSocket();
-
-private:
 	SOCKET connectSocket_;
 	SOCKADDR_IN addr_;
 	hostent *hp_;
-	libZPlay::ZPlay *player_;
+	
+
+private:
+	
 
 	SOCKET createTCPClient(WSADATA*, const char*, const int);
 
