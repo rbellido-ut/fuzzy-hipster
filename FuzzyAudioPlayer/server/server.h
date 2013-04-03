@@ -8,9 +8,10 @@
 #include "utils.h"
 
 typedef struct {
-	std::ifstream * file;
+	std::ifstream* file;
 	SOCKET socket;
 	SOCKADDR_IN multaddr;
+	int filesize;
 } MULTICASTVARS, *LPMULTICASTVARS;
 
 DWORD WINAPI handleClientRequests(LPVOID param);

@@ -556,6 +556,8 @@ DWORD WINAPI multicastThread(LPVOID args)
 
 	ifstream*		fileToSend;
 
+	fileToSend = new ifstream;
+
 	streamsize		numberOfBytesRead;
 	
 	LPMULTICASTVARS multcastvars = (LPMULTICASTVARS) malloc(sizeof(MULTICASTVARS));
@@ -622,16 +624,14 @@ DWORD WINAPI multicastThread(LPVOID args)
 	{
 		//Open libzplay stream and settings
 		ZPlay * multicaststream = CreateZPlay();
-		multicaststream->SetSettings(sidSamplerate, 44100);
-		multicaststream->SetSettings(sidChannelNumber, 2);
-		multicaststream->SetSettings(sidBitPerSample, 16);
-		multicaststream->SetSettings(sidBigEndian, 1);
-
-		//Set up the multicast callback
-		multicaststream->SetCallbackFunc(multicastCallback, MsgStreamNeedMoreData, (void *) fileToSend);
-
+		
 		for (vector<string>::iterator it = song_list.begin(); it != song_list.end(); ++it)
 		{
+			multicaststream->SetSettings(sidSamplerate, 44100);
+		multicaststream->SetSettings(sidChannelNumber, 2);
+		multicaststream->SetSettings(sidBitPerSample, 16);
+		multicaststream->SetSettings(sidBigEndian, 0);
+
 			std::streampos begin, end;
 			int bytessent = 0,
 				filesize,
@@ -642,12 +642,25 @@ DWORD WINAPI multicastThread(LPVOID args)
 			absSongPath = absSongPath.substr(0, pos);
 			absSongPath += *it;
 
+			begin = fileToSend->tellg();
+			fileToSend->seekg(0, ios::end);
+			end = fileToSend->tellg();
+			fileToSend->seekg(0, ios::beg);
+			filesize = end - begin;
+
 			fileToSend->open(absSongPath, ios::binary);
 
 			if (!fileToSend->is_open())
 				continue;
 
 			multcastvars->file = fileToSend;
+			multcastvars->multaddr = destination;
+			multcastvars->socket = hSocket;
+			multcastvars->filesize = filesize;
+			
+			//Set up the multicast callback
+			multicaststream->SetCallbackFunc(multicastCallback, (TCallbackMessage) (MsgStreamNeedMoreData | MsgWaveBuffer), (void *) multcastvars);
+
 			//Figure out the format of the file
 			//TStreamFormat format = multicaststream->GetFileFormat(it->c_str());
 
@@ -658,6 +671,8 @@ DWORD WINAPI multicastThread(LPVOID args)
 				multicaststream->Release();
 				return 1;
 			}
+
+			multicaststream->SetMasterVolume(0,0); //turn down the volume
 
 			multicaststream->Play(); //start streaming
 
@@ -677,8 +692,10 @@ DWORD WINAPI multicastThread(LPVOID args)
 			}
 
 			fileToSend->close();
-			multicaststream->Release();
+			
 		}
+		multicaststream->Release();
+		free(multcastvars);
 	}
 
 	return 1;
@@ -691,15 +708,13 @@ int  __stdcall  multicastCallback(void* instance, void *user_data, libZPlay::TCa
 
 	ZPlay * multicaststream = (ZPlay*) instance;
 	LPMULTICASTVARS mcv = (LPMULTICASTVARS) user_data;
+	char* buffer = new char[DATABUFSIZE];
 
 	switch (message)
 	{
 		case MsgStreamNeedMoreData:
-			//ifstream * fileToSend = (ifstream *) user_data;
-			
-			char* buffer = new char[DATABUFSIZE];
-
-			mcv->file->read(buffer, DATABUFSIZE); //TODO: might need to cast databufsize and change how much I'm reading
+			mcv->file->read(buffer, 1024); //TODO: might need to cast databufsize and change how much I'm reading
+			//cout << "Read " << mcv->file->gcount() << endl;
 			multicaststream->PushDataToStream(buffer, mcv->file->gcount());
 		break;
 
@@ -707,11 +722,14 @@ int  __stdcall  multicastCallback(void* instance, void *user_data, libZPlay::TCa
 			if (sendto(mcv->socket, (const char *) param1, param2, 0,(const SOCKADDR *)& mcv->multaddr, sizeof(mcv->multaddr)) < 0)
 			{
 				cerr << "Error in sendto: " << GetLastError();
+				free(mcv);
 				return 2;
 			}
 		break;
 	}
 	
+	//delete buffer;
+	//free(mcv);
 	return 0;
 }
 

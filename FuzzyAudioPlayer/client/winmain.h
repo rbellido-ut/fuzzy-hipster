@@ -1,6 +1,12 @@
 #ifndef _WINMAIN_
 #define _WINMAIN_
 
+/* Easy styles enabler for msvc */
+#ifdef _MSC_VER
+#pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' \
+version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#endif
+
 /***********************************
 *			IMPORTS
 ***********************************/

@@ -68,7 +68,7 @@ int startMicSession()
 
 	free(micvar);
 	player->Release();
-	return 1;
+	return 0;
 }
 
 int __stdcall micCallback(void * instance, void * user_data, TCallbackMessage message, unsigned int param1, unsigned int param2)
@@ -88,5 +88,5 @@ int __stdcall micCallback(void * instance, void * user_data, TCallbackMessage me
 			return closesocket(micvar->micsocket);
 	}
 
-	return 0;
+	return 1;
 }
