@@ -19,7 +19,7 @@ int startMicSession()
 	int n;
 	if (netstream->OpenStream(1, 1, &n, 1, sfPCM) == 0)
 	{
-		cerr << "Error in OpenStream: " << netstream->GetError() << endl;
+		cerr << "Error opening a microphone stream: " << netstream->GetError() << endl;
 		netstream->Release();
 		free(micvar);
 		return 0;
@@ -68,7 +68,7 @@ int startMicSession()
 
 	free(micvar);
 	player->Release();
-	return 1;
+	return 0;
 }
 
 int __stdcall micCallback(void * instance, void * user_data, TCallbackMessage message, unsigned int param1, unsigned int param2)
@@ -80,7 +80,7 @@ int __stdcall micCallback(void * instance, void * user_data, TCallbackMessage me
 			if (sendto(micvar->micsocket, (const char *) param1, param2, 0, (const SOCKADDR *)& micvar->micaddr, sizeof(micvar->micaddr)) < 0)
 			{
 				cerr << "Error in sendto: " << GetLastError() << endl;
-				return 0;
+				return 2;
 			}
 		break;
 

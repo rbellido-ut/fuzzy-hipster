@@ -590,7 +590,12 @@ DWORD WINAPI multicastThread(LPVOID args)
 	char			achInBuf[BUFSIZE];
 	u_long			lMCAddr;
 	u_short			nPort = TIMECAST_PORT;
+
 	ZPlay *			netplay = CreateZPlay();
+	netplay->SetSettings(sidSamplerate, 44100);
+	netplay->SetSettings(sidChannelNumber, 2);
+	netplay->SetSettings(sidBitPerSample, 16);
+	netplay->SetSettings(sidBigEndian, 1);
 
 	if ((hSocket = createMulticastSocket()) == NULL)
 	{
@@ -608,20 +613,26 @@ DWORD WINAPI multicastThread(LPVOID args)
 		return 1;
 	}
 
-	netplay->Play();
+	//netplay->Play();
 
 	string firstframe;
 	char buff[DATABUFSIZE];
 	int addr_size = sizeof(struct sockaddr_in);
 
-	nRet = recvfrom(hSocket, buff, DATABUFSIZE, 0, (struct sockaddr*)&server, &addr_size);
-	firstframe.append(buff, nRet);
+	/*nRet = recvfrom(hSocket, buff, DATABUFSIZE, 0, (struct sockaddr*)&server, &addr_size);
+	firstframe.append(buff, nRet);*/
 
-	while (!netplay->OpenStream(true,true,firstframe.data(),firstframe.size(),sfMp3)) //cannot be sfAutoDetect
+	/*while (!netplay->OpenStream(true,true,firstframe.data(),firstframe.size(), sfPCM)) //cannot be sfAutoDetect
 	{
 		nRet = recvfrom(hSocket, buff, DATABUFSIZE, 0, (struct sockaddr*)&server, &addr_size);
 		firstframe.append(buff,nRet);
 		nRet=0;
+	}*/
+
+	if (!netplay->OpenStream(1, 1, buff, DATABUFSIZE, sfPCM))
+	{
+		MessageBox(NULL, "OpenStream() failed", "Error", MB_OK);
+		return 1;
 	}
 
 	netplay->Play();
@@ -629,23 +640,28 @@ DWORD WINAPI multicastThread(LPVOID args)
 	// Read continuously, play data
 	while (TRUE)
 	{
-		char *tmp = new char[DATABUFSIZE];
+		char *tmp = new char[65507];
 
-		nRet = recvfrom(hSocket, tmp, DATABUFSIZE, 0, (struct sockaddr*)&server, &addr_size);
+		nRet = recvfrom(hSocket, buff, 65507, 0, (struct sockaddr*)&server, &addr_size);
 		if (nRet < 0)
 		{
-			MessageBox(NULL, "recvfrom() failed", "Error", MB_OK);
+			int lol = WSAGetLastError();
+			sprintf(tmp, "%d", lol);
+			MessageBox(NULL, tmp, "Error", MB_OK);
 			WSACleanup();
 			return 1;
 		}
 
-		netplay->PushDataToStream(tmp, nRet);
+		if ((nRet % 2) == 0) 
+			netplay->PushDataToStream(buff, nRet);
 
 		delete tmp;
 
 		if (nRet == 0)
 			break;
 	}
+
+	netplay->Release();
 
 	stMreq.imr_multiaddr.s_addr = inet_addr(achMCAddr);
 	stMreq.imr_interface.s_addr = INADDR_ANY;

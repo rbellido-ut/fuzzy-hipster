@@ -20,6 +20,7 @@
 #include "server.h"
 
 using namespace std;
+using namespace libZPlay;
 
 int main(int argc, char* argv[])
 {
@@ -554,9 +555,13 @@ DWORD WINAPI multicastThread(LPVOID args)
 	string			dir,
 					line;
 
-	ifstream		fileToSend;
+	ifstream*		fileToSend;
+
+	fileToSend = new ifstream;
 
 	streamsize		numberOfBytesRead;
+	
+	LPMULTICASTVARS multcastvars = (LPMULTICASTVARS) malloc(sizeof(MULTICASTVARS));
 
 
 	nRet = WSAStartup(0x0202, &stWSAData);
@@ -618,6 +623,13 @@ DWORD WINAPI multicastThread(LPVOID args)
 
 	if (num_songs > 0)
 	{
+		//Open libzplay stream and settings
+		ZPlay * multicaststream = CreateZPlay();
+		multicaststream->SetSettings(sidSamplerate, 44100);
+		multicaststream->SetSettings(sidChannelNumber, 2);
+		multicaststream->SetSettings(sidBitPerSample, 16);
+		multicaststream->SetSettings(sidBigEndian, 0);
+
 		for (vector<string>::iterator it = song_list.begin(); it != song_list.end(); ++it)
 		{
 			std::streampos begin, end;
@@ -630,51 +642,93 @@ DWORD WINAPI multicastThread(LPVOID args)
 			absSongPath = absSongPath.substr(0, pos);
 			absSongPath += *it;
 
-			fileToSend.open(absSongPath, ios::binary);
+			begin = fileToSend->tellg();
+			fileToSend->seekg(0, ios::end);
+			end = fileToSend->tellg();
+			fileToSend->seekg(0, ios::beg);
+			filesize = end - begin;
 
-			if (!fileToSend.is_open())
+			fileToSend->open(absSongPath, ios::binary);
+
+			if (!fileToSend->is_open())
 				continue;
 
-			begin = fileToSend.tellg();
-			fileToSend.seekg(0, ios::end);
-			end = fileToSend.tellg();
-			fileToSend.seekg(0, ios::beg);
-			filesize = end - begin;
+			multcastvars->file = fileToSend;
+			multcastvars->multaddr = destination;
+			multcastvars->socket = hSocket;
+			multcastvars->filesize = filesize;
+			
+			//Set up the multicast callback
+			multicaststream->SetCallbackFunc(multicastCallback, (TCallbackMessage) (MsgStreamNeedMoreData | MsgWaveBuffer), (void *) multcastvars);
+
+			int n;
+			if (multicaststream->OpenStream(1, 1, &n, 1, sfPCM) == 0)
+			{
+				cerr << "Error in opening a multicast stream: " << multicaststream->GetError() << endl;
+				multicaststream->Release();
+				return 1;
+			}
+
+			multicaststream->SetMasterVolume(0,0); //turn down the volume
+
+			multicaststream->Play(); //start streaming
 
 			while (TRUE)
 			{
-				tmp = new char[BUFSIZE];
-				numberOfBytesRead = 0;
-				fileToSend.read(tmp, BUFSIZE);
+				TStreamStatus status;
+				multicaststream->GetStatus(&status);
+				if (status.fPlay == 0)
+					break; //exit the loop
 
-				if((numberOfBytesRead = fileToSend.gcount()) > 0)
-				{
-					line.append(tmp, static_cast<unsigned int>(numberOfBytesRead));
-					if (((bytessent = sendto(hSocket, line.c_str(), line.size(), 0, (struct sockaddr*)&destination, sizeof(destination)))) == 0 || (bytessent == -1))
-					{
-						cerr << "Failed to send! Exited with error " << GetLastError() << endl;
-						fileToSend.close();
-						delete[] tmp;
-						return 1;
-					}
+				//get current position
+				TStreamTime pos;
+				multicaststream->GetPosition(&pos);
+				cout << "Pos: " << pos.hms.hour << " " << pos.hms.minute << " " << pos.hms.second << " " << pos.hms.millisecond << endl;
 
-					totalbytessent += bytessent;
-					line.clear();
-				}
-
-				if (totalbytessent == filesize) break;
-
-				delete[] tmp;
-				Sleep(25);
+				Sleep(300); //TODO: might need to remove this later
 			}
 
-			fileToSend.close();
+			fileToSend->close();
+			
 		}
+		multicaststream->Release();
+		free(multcastvars);
 	}
 
 	return 1;
 }
 
+int  __stdcall  multicastCallback(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
+{
+	//watch for MsgNeedMoreData, MsgWaveBuffer
+	//return 0 on msgWavebuffer
+
+	ZPlay * multicaststream = (ZPlay*) instance;
+	LPMULTICASTVARS mcv = (LPMULTICASTVARS) user_data;
+	char* buffer = new char[DATABUFSIZE];
+
+	switch (message)
+	{
+		case MsgStreamNeedMoreData:
+			mcv->file->read(buffer, 1024);
+			//cout << "Read " << mcv->file->gcount() << endl;
+			multicaststream->PushDataToStream(buffer, mcv->file->gcount());
+		break;
+
+		case MsgWaveBuffer:
+			if (sendto(mcv->socket, (const char *) param1, param2, 0,(const SOCKADDR *)& mcv->multaddr, sizeof(mcv->multaddr)) < 0)
+			{
+				cerr << "Error in sendto: " << GetLastError();
+				free(mcv);
+				return 2;
+			}
+		break;
+	}
+	
+	delete buffer;
+	//free(mcv);
+	return 0;
+}
 
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION: getMusicDir

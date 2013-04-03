@@ -434,16 +434,17 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 }
 
+//partymix.wav
 TStreamFormat parseFileFormat(const std::string filename)
 {
 	string format;
 	string::size_type pos = filename.find_last_of(".");
-	format = filename.substr(pos, ios::end);
+	format = filename.substr(pos);
 
-	if (format == "mp3") return sfMp3;
-	else if (format == "flac") return sfFLAC;
-	else if (format == "wav") return sfWav;
-	else if (format == "ogg") return sfOgg;
+	if (format == ".mp3") return sfMp3;
+	else if (format == ".flac") return sfFLAC;
+	else if (format == ".wav") return sfWav;
+	else if (format == ".ogg") return sfOgg;
 	
 	return sfAutodetect; //ERROR: invalid song format
 }
