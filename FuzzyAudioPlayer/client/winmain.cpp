@@ -7,6 +7,7 @@ bool createMicSocket();
 bool startMicSession();
 SOCKET createMulticastSocket();
 DWORD WINAPI multicastThread(LPVOID args);
+DWORD WINAPI listThreadProc(LPVOID args);
 DWORD WINAPI micSessionThread(LPVOID param);
 int __stdcall micCallBack (void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2);
 
@@ -213,8 +214,29 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 
 		case IDC_BUTTON_CANCEL:
 			{
+				closesocket(clnt.connectSocket_);
 				// return to idle state at earliest convenience
 				clnt.currentState = WFUCOMMAND;
+				clnt.player_->Stop();
+
+				// get user input
+				SendMessage(GetDlgItem(hWnd,IDC_EDIT_PORT), WM_GETTEXT,sizeof(szPort)/sizeof(szPort[0]),(LPARAM)szPort);
+				SendMessage(GetDlgItem(hWnd,IDC_EDIT_HOSTNAME), WM_GETTEXT,sizeof(szServer)/sizeof(szServer[0]),(LPARAM)szServer);
+
+				WSADATA wsaData;
+				if (clnt.runClient(&wsaData, szServer, atoi(szPort)))
+				{
+					SendMessage(GetDlgItem(hWnd,IDC_MAIN_STATUS), SB_SETTEXT, STATUSBAR_STATUS, (LPARAM)"Connected");
+					EnableWindow(GetDlgItem(hWnd,IDC_BUTTON_OK), TRUE); 
+					EnableWindow(GetDlgItem(hWnd, IDC_EDIT_PORT), FALSE);
+					EnableWindow(GetDlgItem(hWnd, IDC_EDIT_HOSTNAME), FALSE);
+					haveClient = true;
+
+					listRequest(clnt,&hWnd);
+
+				}
+				else
+					MessageBox(hWnd, "Try Again!" , "Sorry" , MB_ICONWARNING);
 			}
 			break;
 		}
@@ -265,11 +287,6 @@ bool uploadRequest(Client& clnt, HWND hWnd, OPENFILENAME &ofn)
 	{
 		
 		clnt.currentSongFile = getFileNameWithoutPath(ofn.lpstrFile);
-		/*UPLOADCONTEXT *uc = (UPLOADCONTEXT*)malloc(sizeof(UPLOADCONTEXT));
-		uc->clnt = &clnt;
-		strcpy(ofn.lpstrFile, uc->filename);*/
-
-		//clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, &uc, 0, &clnt.ulThreadID);
 
 		clnt.ulThreadHandle = CreateThread(NULL, 0, clnt.runULThread, &clnt, 0, &clnt.ulThreadID);
 	}
@@ -277,28 +294,21 @@ bool uploadRequest(Client& clnt, HWND hWnd, OPENFILENAME &ofn)
 	return true;
 }
 
-// get song list from server and populate GUI
-// returns false if recv'd list is empty
-bool listRequest(Client& clnt, HWND* hWnd)
-{
-	//clnt.listThreadHandle = CreateThread(NULL, 0, clnt.runListThread, lc, 0, &clnt.listThreadID);
-
-	string userRequest;
-
-	userRequest += "LIST ";
-	userRequest += "Behnam's party mix.wav\n";
-
+DWORD WINAPI listThreadProc (LPVOID param){
 	
-	clnt.currentState = SENTLISTREQUEST;
-	clnt.dispatchOneSend(userRequest);
+	UPLOADCONTEXT* uc = (UPLOADCONTEXT*) param;
+	Client * clnt = uc->clnt;
+	string userReq = uc->userReq;
 	
+	clnt->currentState = SENTLISTREQUEST;
+	clnt->dispatchOneSend(userReq);
 
 	while (1)
 	{
-		if (clnt.currentState != WAITFORLIST)
+		if (clnt->currentState != WAITFORLIST)
 		{
 			// completed op
-			if (clnt.currentState == WFUCOMMAND)
+			if (clnt->currentState == WFUCOMMAND)
 			{
 
 				break;
@@ -306,20 +316,38 @@ bool listRequest(Client& clnt, HWND* hWnd)
 
 			continue;
 		}
-		clnt.dispatchOneRecv();
+		clnt->dispatchOneRecv();
 	}
 
 	// get song list
 	// remove last EOT char from received song list
-	clnt.localSongList.erase( clnt.localSongList.begin(), clnt.localSongList.end() );
-		clnt.localSongList = processSongList(clnt.cachedServerSongString.substr(0,clnt.cachedServerSongString.size()-1));
-	clnt.cachedServerSongString.clear();
-	if (clnt.localSongList.size() == 0) // if recv'd song list is empty..
+	clnt->localSongList.erase( clnt->localSongList.begin(), clnt->localSongList.end() );
+		clnt->localSongList = processSongList(clnt->cachedServerSongString.substr(0,clnt->cachedServerSongString.size()-1));
+	clnt->cachedServerSongString.clear();
+	if (clnt->localSongList.size() == 0) // if recv'd song list is empty..
 		return false;
 	else  {
-		populateListBox(hSrvList, clnt.localSongList); // populate song list on gui
+		populateListBox(hSrvList, clnt->localSongList); // populate song list on gui
 		//populateSongList(&clnt, clnt.cachedServerSongList.substr(0,clnt.cachedServerSongList.size()-1));
 	}
+}
+
+// get song list from server and populate GUI
+// returns false if recv'd list is empty
+bool listRequest(Client& clnt, HWND* hWnd)
+{
+	string userRequest("LIST");
+
+	UPLOADCONTEXT* uc = new UPLOADCONTEXT;
+	uc->clnt = &clnt;
+	uc->userReq = userRequest;
+
+	HANDLE listThreadHandle = CreateThread(NULL, 0, listThreadProc, uc, 0, NULL);
+
+	
+	
+
+	
 	return true;
 }
 

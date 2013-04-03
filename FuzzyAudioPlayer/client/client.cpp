@@ -265,6 +265,10 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	bool endOfTransmit = false;
 	bool endOfList = false;
 
+	//UDP variables
+	SOCKET streamsocket;
+	SOCKADDR_IN streamaddr;
+
 	if(error || bytesTransferred == 0)
 	{
 		freeData(data);
@@ -277,6 +281,8 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 	//append the binary data received to a c++ string
 	string tmp;
 	tmp.append(data->databuf, bytesTransferred);
+
+	//clnt->downloadedAmount += bytesTransferred;
 
 	//if last character is EOT, End the transmit
 	if(clnt->downloadedAmount == clnt->dlFileSize)
@@ -320,28 +326,24 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 				return;
 			}
 
-
 			while (!player_->OpenStream(true,true,firstframe.data(),firstframe.size(), format)) //cannot be sfAutoDetect
 			{
 				n = recv(connectSocket_,buff,1024,0);
+				clnt->downloadedAmount += n;
 				firstframe.append(buff,n);
 				n=0;
-				//MessageBox(NULL,player_->GetError(),NULL,MB_OK);
 			}
 		}
 		else
 		{
 			clnt->currentState = WFUCOMMAND;
-			MessageBox(NULL, "ST Denied", "NOT APPROVED", NULL);
 		}
 		break;
 
 	case WAITFORLIST:
-		//if (iss >> reqType)
 		{
-			//iss >> cachedServerSongList;
 			cachedServerSongString.append(tmp);
-			//cachedServerSongList.erase(0, cachedServerSongList.find_first_not_of(' '));
+			cachedServerSongString.erase(0, cachedServerSongString.find_first_not_of(' '));
 
 			if (endOfList) {
 				clnt->currentState = WFUCOMMAND;
@@ -363,7 +365,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		else
 		{
 			clnt->currentState = WFUCOMMAND;
-			MessageBox(NULL, "DL Denied", "NOT APPROVED", NULL);
+			//MessageBox(NULL, "DL Denied", "NOT APPROVED", NULL);
 		}
 
 		break;
@@ -376,7 +378,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 			if(extra.empty()) //if only received "DL"
 			{
 				clnt->currentState = WFUCOMMAND;
-				MessageBox(NULL, "UL Denied", "NOT APPROVED", NULL);
+				//MessageBox(NULL, "UL Denied", "NOT APPROVED", NULL);
 				//close file
 				break;
 			}
@@ -389,8 +391,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		break;
 
 	case DOWNLOADING:	//while downloading
-
-		if(endOfTransmit)	//if we have downloaded the entire file bytes
+		if(clnt->downloadedAmount == clnt->dlFileSize)	//if we have downloaded the entire file bytes
 		{
 			clnt->currentState = WFUCOMMAND;	//set our state to waiting for user command
 			clnt->downloadFileStream.close();	//close the file stream
@@ -400,13 +401,13 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		}
 		else	
 		{
-			downloadedAmount += bytesTransferred; //update the number of bytes downloaded sofar
+			clnt->downloadedAmount += bytesTransferred; //update the number of bytes downloaded sofar
 			clnt->downloadFileStream.write(tmp.c_str(), tmp.size()); //write to the file
 		}
 		break;
 
 	case STREAMING:
-		if(endOfTransmit)
+		if(clnt->downloadedAmount == clnt->dlFileSize)
 		{
 			clnt->currentState = WFUCOMMAND;
 			clnt->downloadFileStream.close();
@@ -416,8 +417,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		}
 		else
 		{
-			downloadedAmount += bytesTransferred;
-
+			clnt->downloadedAmount += bytesTransferred; 
 			player_->PushDataToStream(data->wsabuf.buf, bytesTransferred);
 			player_->Play();
 			//clnt->downloadFileStream.write(tmp.c_str(), tmp.size());
@@ -792,6 +792,8 @@ DWORD Client::stThread(LPVOID param)
 		}
 		dispatchOneRecv();
 	}
+
+	MessageBox(NULL, "ST Done", "Stream Successful", NULL);
 
 	return 0;
 }

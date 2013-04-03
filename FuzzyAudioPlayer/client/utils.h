@@ -77,7 +77,7 @@ typedef struct list_context {
 
 typedef struct upload_context {
 	Client* clnt;
-	char filename[BUFSIZE];
+	std::string userReq;
 } UPLOADCONTEXT;
 
-#endif // UTIL_H
+#endif 
