@@ -293,7 +293,7 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 
 		case IDC_BUTTON_CANCEL:
 			{
-				closesocket(micSocket);
+				//closesocket(micSocket);
 				closesocket(multicastsocket);
 				closesocket(clnt.connectSocket_);
 				// return to idle state at earliest convenience

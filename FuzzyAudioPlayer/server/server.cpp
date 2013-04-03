@@ -4,7 +4,15 @@
 -- PROGRAM: FuzzyAudioPlayerServer
 --
 -- FUNCTIONS:
---
+--		- int main(int argc, char * argv[])
+--		- DWORD WINAPI listenThread(LPVOID args)
+--		- DWORD WINAPI handleClientRequests(LPVOID param)
+--		- ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
+--		- void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename, int uploadfilesize)
+--		- DWORD WINAPI multicastThread(LPVOID args)
+--		- int  __stdcall  multicastCallback(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
+--		- string getMusicDir()
+--		- int populateSongList(vector<string>& song_list)
 --
 -- DATE: March 20, 2013
 --
@@ -15,6 +23,7 @@
 -- PROGRAMMER: Ronald Bellido, Jesse Braham
 --
 -- NOTES:
+Contains implementation of the server-side functions
 ----------------------------------------------------------------------------------------------------------------------*/
 
 #include "server.h"
@@ -519,9 +528,9 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 --
 -- REVISIONS: (Date and Description)
 --
--- DESIGNER: Jesse Braham
+-- DESIGNER: Jesse Braham, Ronald Bellido
 --
--- PROGRAMMER: Jesse Braham
+-- PROGRAMMER: Jesse Braham, Ronald Bellido
 --
 -- INTERFACE: DWORD WINAPI multicastThread(LPVOID args)
 --
@@ -705,9 +714,9 @@ DWORD WINAPI multicastThread(LPVOID args)
 --
 -- REVISIONS: (Date and Description)
 --
--- DESIGNER: Ron Bellido
+-- DESIGNER: Ronald Bellido
 --
--- PROGRAMMER: Ron Bellido
+-- PROGRAMMER: Ronald Bellido
 --
 -- INTERFACE: int  __stdcall  multicastCallback(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
 --
