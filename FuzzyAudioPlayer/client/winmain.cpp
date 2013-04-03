@@ -1004,7 +1004,25 @@ string getSelectedListBoxItem(HWND* hWnd, int resIdxOfListBox)
 	return result;
 }
 
-
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	micCallBack
+--
+-- DATE:		March 30, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	int __stdcall micCallBack (void* instance, void *user_data, TCallbackMessage message, unsigned int param1, unsigned int param2)
+--
+-- RETURNS:		
+--				
+--
+-- NOTES:		This is the callback function that gets called whenever the microphone has data to process
+--
+----------------------------------------------------------------------------------------------------------------------*/
 int __stdcall micCallBack (void* instance, void *user_data, TCallbackMessage message, unsigned int param1, unsigned int param2)
 {
 
