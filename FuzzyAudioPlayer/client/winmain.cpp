@@ -168,7 +168,9 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 					else {
 						uploadRequest(clnt, hWnd, ofn);
 						
-						//listRequest(clnt,&hWnd);
+						DWORD result = WaitForSingleObject(clnt.ulThreadHandle, INFINITE);
+						if (result == WAIT_OBJECT_0)
+							listRequest(clnt,&hWnd);
 					}
 					break;
 				}
@@ -309,14 +311,15 @@ bool listRequest(Client& clnt, HWND* hWnd)
 
 	// get song list
 	// remove last EOT char from received song list
-	clnt.localSongList = processSongList(clnt.cachedServerSongString.substr(0,clnt.cachedServerSongString.size()-1));
-
+	clnt.localSongList.erase( clnt.localSongList.begin(), clnt.localSongList.end() );
+		clnt.localSongList = processSongList(clnt.cachedServerSongString.substr(0,clnt.cachedServerSongString.size()-1));
+	clnt.cachedServerSongString.clear();
 	if (clnt.localSongList.size() == 0) // if recv'd song list is empty..
 		return false;
-	else 
-		populateListBox(hWnd, IDC_SRVSONGLIST, clnt.localSongList); // populate song list on gui
+	else  {
+		populateListBox(hSrvList, clnt.localSongList); // populate song list on gui
 		//populateSongList(&clnt, clnt.cachedServerSongList.substr(0,clnt.cachedServerSongList.size()-1));
-
+	}
 	return true;
 }
 
@@ -676,9 +679,10 @@ bool createGUI(HWND hWnd)
 		,WM_SETFONT, (WPARAM)hFont, TRUE);
 
 	// create song list box
-	SendMessage(
-		CreateWindowEx(WS_EX_CLIENTEDGE, "LISTBOX", "", WS_CHILD|WS_VISIBLE|LBS_STANDARD|LBS_HASSTRINGS,
-		10, 100, 380, 260, hWnd, (HMENU)IDC_SRVSONGLIST, GetModuleHandle(NULL), NULL)
+	hSrvList = CreateWindowEx(WS_EX_CLIENTEDGE, "LISTBOX", "", WS_CHILD|WS_VISIBLE|LBS_STANDARD|LBS_HASSTRINGS,
+		10, 100, 380, 260, hWnd, (HMENU)IDC_SRVSONGLIST, GetModuleHandle(NULL), NULL);
+	SendMessage(hSrvList
+		
 		,WM_SETFONT, (WPARAM)hFont, TRUE);
 
 	//SendMessage(GetDlgItem(hWnd,IDC_SRVSONGLIST),LB_INSERTSTRING,0,(LPARAM)"Test Behnam's party mix");
@@ -826,18 +830,22 @@ vector<string> processSongList(std::string rawstring)
 }
 
 
-bool populateListBox(HWND* hWnd, int resIdxOfListBox, vector<string> localList)
+//bool populateListBox(HWND* hWnd, int resIdxOfListBox, vector<string> localList)
+bool populateListBox(HWND hList, vector<string> localList)
 {
 	// clear list box
-	SendMessage (GetDlgItem(*hWnd,resIdxOfListBox),LB_RESETCONTENT,0,0);
+	SendMessage(hSrvList, WM_SETREDRAW, 0, 0);
+	SendMessage (hSrvList,LB_RESETCONTENT,0,0);
 
 	// populate list box
 	for (vector<string>::iterator it=localList.begin(); it!=localList.end(); ++it)
 	{
 		string s = *it;
-		SendMessage (GetDlgItem(*hWnd,resIdxOfListBox),LB_INSERTSTRING,0,(LPARAM)s.c_str());
+		SendMessage (hSrvList,LB_INSERTSTRING,0,(LPARAM)s.c_str());
 
 	}
+
+	SendMessage(hSrvList, WM_SETREDRAW, 1, 0);
 
 	return true;
 }

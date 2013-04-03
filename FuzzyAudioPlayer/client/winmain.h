@@ -50,6 +50,7 @@
 char szServer[128] = "localhost"; // edit box
 char szPort[5] = "5555"; // edit box
 int nRepeat = 1;
+HWND hSrvList;
 
 // not needed
 SOCKADDR_IN SockAddr;
@@ -68,7 +69,7 @@ bool streamRequest(Client&);
 bool micRequest(Client&);
 bool castRequest(Client&);
 bool listRequest(Client&,  HWND*) ;
-bool populateListBox(HWND* , int , std::vector<std::string> );
+bool populateListBox(HWND, std::vector<std::string> );
 std::vector<std::string> processSongList(std::string );
 std::string getSelectedListBoxItem(HWND* , int );
 std::string getFileNameWithoutPath(std::string );
