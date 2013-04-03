@@ -6,6 +6,25 @@ using namespace libZPlay;
 ZPlay * netstream;
 ZPlay * micplayer;
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	startMicSession
+--
+-- DATE:		April 1, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Ronald Bellido
+--
+-- PROGRAMMER:	Ronald Bellido
+--
+-- INTERFACE:	int startMicSession()
+--
+-- RETURNS:		0 - Something failed, 1 - All ok
+--				
+--
+-- NOTES:
+This function will start microphone session
+----------------------------------------------------------------------------------------------------------------------*/
 int startMicSession()
 {
 	LPMICVARS micvar = (LPMICVARS) malloc(sizeof(MICVARS));
@@ -84,6 +103,35 @@ int startMicSession()
 	return 0;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	micCallbakc
+--
+-- DATE:		April 1, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Ronald Bellido
+--
+-- PROGRAMMER:	Ronald Bellido
+--
+-- INTERFACE:	int __stdcall micCallback(void * instance, void * user_data, TCallbackMessage message, unsigned int param1, unsigned int param2)
+--
+-- RETURNS:		Dependent on the type of the TCallbackMessage (message) passed. See NOTES below.
+--				
+--
+-- NOTES:
+This function will mainly listen for the MsgWaveBuffer message, which is a message for when a decoding thread is
+ready to send data to the soundcard.
+	Important parameters:
+		param1 - pointer to memory PCM buffer
+		param2 - number of bytes in PCM data buffer
+	Returns:
+		0 - send data to soundcard
+		1 - skip sending data to soundcard
+		2 - stop playing
+
+For MsgStop, all the parameters and the return type are not used. The message is used after a song stops playing.
+----------------------------------------------------------------------------------------------------------------------*/
 int __stdcall micCallback(void * instance, void * user_data, TCallbackMessage message, unsigned int param1, unsigned int param2)
 {
 	MICVARS * micvar = (MICVARS *) user_data;
