@@ -58,6 +58,7 @@ char szPort[5] = "5555"; // edit box
 int nRepeat = 1;
 HWND hSrvList;
 
+
 // not needed
 SOCKADDR_IN SockAddr;
 DWORD BytesRECV=0;
@@ -80,5 +81,6 @@ bool populateListBox(HWND, std::vector<std::string> );
 std::vector<std::string> processSongList(std::string );
 std::string getSelectedListBoxItem(HWND* , int );
 std::string getFileNameWithoutPath(std::string );
+
 
 #endif
