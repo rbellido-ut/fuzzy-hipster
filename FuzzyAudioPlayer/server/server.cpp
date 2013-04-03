@@ -660,9 +660,6 @@ DWORD WINAPI multicastThread(LPVOID args)
 			//Set up the multicast callback
 			multicaststream->SetCallbackFunc(multicastCallback, (TCallbackMessage) (MsgStreamNeedMoreData | MsgWaveBuffer), (void *) multcastvars);
 
-			//Figure out the format of the file
-			//TStreamFormat format = multicaststream->GetFileFormat(it->c_str());
-
 			int n;
 			if (multicaststream->OpenStream(1, 1, &n, 1, sfPCM) == 0)
 			{
@@ -687,7 +684,7 @@ DWORD WINAPI multicastThread(LPVOID args)
 				multicaststream->GetPosition(&pos);
 				cout << "Pos: " << pos.hms.hour << " " << pos.hms.minute << " " << pos.hms.second << " " << pos.hms.millisecond << endl;
 
-				Sleep(300); //TODO: need to remove this later
+				Sleep(300); //TODO: might need to remove this later
 			}
 
 			fileToSend->close();
@@ -712,7 +709,7 @@ int  __stdcall  multicastCallback(void* instance, void *user_data, libZPlay::TCa
 	switch (message)
 	{
 		case MsgStreamNeedMoreData:
-			mcv->file->read(buffer, 1024); //TODO: might need to cast databufsize and change how much I'm reading
+			mcv->file->read(buffer, 1024);
 			//cout << "Read " << mcv->file->gcount() << endl;
 			multicaststream->PushDataToStream(buffer, mcv->file->gcount());
 		break;
@@ -727,7 +724,7 @@ int  __stdcall  multicastCallback(void* instance, void *user_data, libZPlay::TCa
 		break;
 	}
 	
-	//delete buffer;
+	delete buffer;
 	//free(mcv);
 	return 0;
 }
