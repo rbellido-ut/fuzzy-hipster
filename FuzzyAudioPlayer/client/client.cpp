@@ -422,6 +422,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 			player_->Play();
 			//clnt->downloadFileStream.write(tmp.c_str(), tmp.size());
 		}
+		//freeData(data);
 		break;
 
 	case L2MULTICAST:
@@ -431,6 +432,7 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		break;
 	}
 
+	freeData(data);
 
 }
 
@@ -608,7 +610,6 @@ void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 		//...other cases as need be...
 
 	}
-
 
 }
 
@@ -972,7 +973,6 @@ void Client::freeData(LPSOCKETDATA data)
 {
 	if(data)
 	{
-		closesocket(data->sock);
 		delete data;
 	}
 }

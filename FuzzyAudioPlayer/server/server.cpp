@@ -755,7 +755,7 @@ string getMusicDir()
 	GetModuleFileName(NULL, buf, MAX_PATH);
 	string::size_type pos = string(buf).find_last_of("\\/");
 	dir = string(buf).substr(0, pos);
-	dir += "\\Music\\*";
+	dir += "\\Stream\\*";
 
 	return dir;
 }
