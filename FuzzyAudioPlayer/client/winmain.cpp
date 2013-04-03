@@ -398,6 +398,26 @@ bool micRequest(Client& clnt)
 	return true;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	micSessionThread
+--
+-- DATE:		March 30, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	DWORD WINAPI micSessionThread(LPVOID param)
+--				clnt: the client object passed to the thread proc
+--
+-- RETURNS:		0 on success
+--				
+--
+-- NOTES:		This is the thread proc that gets called when a micSessionThread is created
+--
+----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI micSessionThread(LPVOID param)
 {
 	Client* clnt = (Client*) param;
@@ -415,6 +435,27 @@ DWORD WINAPI micSessionThread(LPVOID param)
 	return 0;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	startMicSession
+--
+-- DATE:		March 30, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	bool startMicSession()
+--				
+--
+-- RETURNS:		true on success, false on failure
+--				
+--
+-- NOTES:		This is function creates two libZPlater objects and uses them to send microphone data back and 
+--			forward between the client and the server
+--
+----------------------------------------------------------------------------------------------------------------------*/
 bool startMicSession()
 {
 	ZPlay * netplay = CreateZPlay();
@@ -478,7 +519,26 @@ bool startMicSession()
 
 }
 
-
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	createMicSocket
+--
+-- DATE:		March 30, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	bool createMicSocket () 
+--				
+--
+-- RETURNS:		true on success, false on failure
+--				
+--
+-- NOTES:		This function created a UDP socket that gets used by the mictophone session
+--
+----------------------------------------------------------------------------------------------------------------------*/
 bool createMicSocket () {
 
 	WSADATA wsaData;
@@ -943,6 +1003,7 @@ string getSelectedListBoxItem(HWND* hWnd, int resIdxOfListBox)
 
 	return result;
 }
+
 
 int __stdcall micCallBack (void* instance, void *user_data, TCallbackMessage message, unsigned int param1, unsigned int param2)
 {
