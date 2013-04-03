@@ -698,11 +698,25 @@ DWORD WINAPI multicastThread(LPVOID args)
 	return 1;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: multicastCallback
+--
+-- DATE: April 3, 2013
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Ron Bellido
+--
+-- PROGRAMMER: Ron Bellido
+--
+-- INTERFACE: int  __stdcall  multicastCallback(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
+--
+-- RETURNS: int -- return 0 on msgWavebuffer
+--
+-- NOTES:  watch for MsgNeedMoreData, MsgWaveBuffer
+----------------------------------------------------------------------------------------------------------------------*/
 int  __stdcall  multicastCallback(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
 {
-	//watch for MsgNeedMoreData, MsgWaveBuffer
-	//return 0 on msgWavebuffer
-
 	ZPlay * multicaststream = (ZPlay*) instance;
 	LPMULTICASTVARS mcv = (LPMULTICASTVARS) user_data;
 	char* buffer = new char[DATABUFSIZE];

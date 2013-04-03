@@ -394,7 +394,27 @@ bool uploadRequest(Client& clnt, HWND hWnd, OPENFILENAME &ofn)
 	return true;
 }
 
-DWORD WINAPI listThreadProc (LPVOID param){
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	listThreadProc
+--
+-- DATE:		March 30, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bestami
+--
+-- PROGRAMMER:	Aaron Lee
+--
+-- INTERFACE:	DWORD WINAPI listThreadProc (LPVOID param)
+--				LPVOID param -- points to UPLOADCONTEXT struct
+--
+-- RETURNS:		NULL
+--
+-- NOTES:		Thread to get song list from server then populate list box on GUI.
+--
+----------------------------------------------------------------------------------------------------------------------*/
+DWORD WINAPI listThreadProc (LPVOID param)
+{
 	
 	UPLOADCONTEXT* uc = (UPLOADCONTEXT*) param;
 	Client * clnt = uc->clnt;
@@ -432,8 +452,25 @@ DWORD WINAPI listThreadProc (LPVOID param){
 	}
 }
 
-// get song list from server and populate GUI
-// returns false if recv'd list is empty
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	listRequest
+--
+-- DATE:		April 3, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bestami
+--
+-- PROGRAMMER:	Behnam Bestami
+--
+-- INTERFACE:	bool listRequest(Client& clnt, HWND* hWnd)
+--					
+--
+-- RETURNS:		returns false if recv'd list is empty
+--
+-- NOTES:		get song list from server and populate GUI. Entry point to thread.
+--
+----------------------------------------------------------------------------------------------------------------------*/
 bool listRequest(Client& clnt, HWND* hWnd)
 {
 	string userRequest("LIST");
@@ -447,6 +484,27 @@ bool listRequest(Client& clnt, HWND* hWnd)
 	return true;
 }
 
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	streamRequest
+--
+-- DATE:		March 30, 2013
+--
+-- REVISIONS:	
+--
+-- DESIGNER:	Behnam Bastami
+--
+-- PROGRAMMER:	Behnam Bastami
+--
+-- INTERFACE:	bool streamRequest(Client& clnt)
+--				clnt: the client object that needs to connect to microphone
+--
+-- RETURNS:		true on success and false on failure
+--				
+--
+-- NOTES:		This function is called by runClient, to create a TCP async socket
+--
+----------------------------------------------------------------------------------------------------------------------*/
 bool streamRequest(Client& clnt)
 {
 	clnt.stThreadHandle = CreateThread(NULL, 0, clnt.runSTThread, &clnt, 0, &clnt.stThreadID);
