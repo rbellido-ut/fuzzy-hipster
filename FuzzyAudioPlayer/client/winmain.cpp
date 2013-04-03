@@ -534,16 +534,14 @@ bool streamRequest(Client& clnt)
 ----------------------------------------------------------------------------------------------------------------------*/
 bool micRequest(Client& clnt)
 {
-	MessageBox(NULL, "mic req" , "Test" , MB_OK);
 
-	std::string userRequest;
+	std::string userRequest("MIC");
 
-	userRequest += "MIC";
+	UPLOADCONTEXT* uc = new UPLOADCONTEXT;
+	uc->clnt = &clnt;
+	uc->userReq = userRequest;
 
-	clnt.currentState = MICROPHONE;
-	clnt.dispatchOneSend(userRequest);
-
-	HANDLE hMicSessionThread = CreateThread(NULL, 0, micSessionThread, &clnt, 0, NULL);
+	HANDLE hMicSessionThread = CreateThread(NULL, 0, micSessionThread, uc, 0, NULL);
 
 	return true;
 }
@@ -570,7 +568,13 @@ bool micRequest(Client& clnt)
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI micSessionThread(LPVOID param)
 {
-	Client* clnt = (Client*) param;
+
+	UPLOADCONTEXT* uc = (UPLOADCONTEXT*) param;
+	Client * clnt = uc->clnt;
+	string userReq = uc->userReq;
+	
+	clnt->currentState = MICROPHONE;
+	clnt->dispatchOneSend(userReq);
 
 	if(!createMicSocket())
 	{
