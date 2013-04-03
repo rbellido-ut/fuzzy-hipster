@@ -20,6 +20,7 @@
 #include "server.h"
 
 using namespace std;
+using namespace libZPlay;
 
 int main(int argc, char* argv[])
 {
@@ -553,9 +554,11 @@ DWORD WINAPI multicastThread(LPVOID args)
 	string			dir,
 					line;
 
-	ifstream		fileToSend;
+	ifstream*		fileToSend;
 
 	streamsize		numberOfBytesRead;
+	
+	LPMULTICASTVARS multcastvars = (LPMULTICASTVARS) malloc(sizeof(MULTICASTVARS));
 
 
 	nRet = WSAStartup(0x0202, &stWSAData);
@@ -617,6 +620,16 @@ DWORD WINAPI multicastThread(LPVOID args)
 
 	if (num_songs > 0)
 	{
+		//Open libzplay stream and settings
+		ZPlay * multicaststream = CreateZPlay();
+		multicaststream->SetSettings(sidSamplerate, 44100);
+		multicaststream->SetSettings(sidChannelNumber, 2);
+		multicaststream->SetSettings(sidBitPerSample, 16);
+		multicaststream->SetSettings(sidBigEndian, 1);
+
+		//Set up the multicast callback
+		multicaststream->SetCallbackFunc(multicastCallback, MsgStreamNeedMoreData, (void *) fileToSend);
+
 		for (vector<string>::iterator it = song_list.begin(); it != song_list.end(); ++it)
 		{
 			std::streampos begin, end;
@@ -629,51 +642,78 @@ DWORD WINAPI multicastThread(LPVOID args)
 			absSongPath = absSongPath.substr(0, pos);
 			absSongPath += *it;
 
-			fileToSend.open(absSongPath, ios::binary);
+			fileToSend->open(absSongPath, ios::binary);
 
-			if (!fileToSend.is_open())
+			if (!fileToSend->is_open())
 				continue;
 
-			begin = fileToSend.tellg();
-			fileToSend.seekg(0, ios::end);
-			end = fileToSend.tellg();
-			fileToSend.seekg(0, ios::beg);
-			filesize = end - begin;
+			multcastvars->file = fileToSend;
+			//Figure out the format of the file
+			//TStreamFormat format = multicaststream->GetFileFormat(it->c_str());
+
+			int n;
+			if (multicaststream->OpenStream(1, 1, &n, 1, sfPCM) == 0)
+			{
+				cerr << "Error in opening a multicast stream: " << multicaststream->GetError() << endl;
+				multicaststream->Release();
+				return 1;
+			}
+
+			multicaststream->Play(); //start streaming
 
 			while (TRUE)
 			{
-				tmp = new char[BUFSIZE];
-				numberOfBytesRead = 0;
-				fileToSend.read(tmp, BUFSIZE);
+				TStreamStatus status;
+				multicaststream->GetStatus(&status);
+				if (status.fPlay == 0)
+					break; //exit the loop
 
-				if((numberOfBytesRead = fileToSend.gcount()) > 0)
-				{
-					line.append(tmp, static_cast<unsigned int>(numberOfBytesRead));
-					if (((bytessent = sendto(hSocket, line.c_str(), line.size(), 0, (struct sockaddr*)&destination, sizeof(destination)))) == 0 || (bytessent == -1))
-					{
-						cerr << "Failed to send! Exited with error " << GetLastError() << endl;
-						fileToSend.close();
-						delete[] tmp;
-						return 1;
-					}
+				//get current position
+				TStreamTime pos;
+				multicaststream->GetPosition(&pos);
+				cout << "Pos: " << pos.hms.hour << " " << pos.hms.minute << " " << pos.hms.second << " " << pos.hms.millisecond << endl;
 
-					totalbytessent += bytessent;
-					line.clear();
-				}
-
-				if (totalbytessent == filesize) break;
-
-				delete[] tmp;
-				Sleep(25);
+				Sleep(300); //TODO: need to remove this later
 			}
 
-			fileToSend.close();
+			fileToSend->close();
+			multicaststream->Release();
 		}
 	}
 
 	return 1;
 }
 
+int  __stdcall  multicastCallback(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
+{
+	//watch for MsgNeedMoreData, MsgWaveBuffer
+	//return 0 on msgWavebuffer
+
+	ZPlay * multicaststream = (ZPlay*) instance;
+	LPMULTICASTVARS mcv = (LPMULTICASTVARS) user_data;
+
+	switch (message)
+	{
+		case MsgStreamNeedMoreData:
+			//ifstream * fileToSend = (ifstream *) user_data;
+			
+			char* buffer = new char[DATABUFSIZE];
+
+			mcv->file->read(buffer, DATABUFSIZE); //TODO: might need to cast databufsize and change how much I'm reading
+			multicaststream->PushDataToStream(buffer, mcv->file->gcount());
+		break;
+
+		case MsgWaveBuffer:
+			if (sendto(mcv->socket, (const char *) param1, param2, 0,(const SOCKADDR *)& mcv->multaddr, sizeof(mcv->multaddr)) < 0)
+			{
+				cerr << "Error in sendto: " << GetLastError();
+				return 2;
+			}
+		break;
+	}
+	
+	return 0;
+}
 
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION: getMusicDir
