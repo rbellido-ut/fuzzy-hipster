@@ -11,7 +11,7 @@ DWORD WINAPI listThreadProc(LPVOID args);
 DWORD WINAPI micSessionThread(LPVOID param);
 int __stdcall micCallBack (void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2);
 
-SOCKET micSocket;
+SOCKET micSocket = NULL;
 SOCKADDR_IN micServer, micClient;	
 
 int WINAPI WinMain(HINSTANCE hInst,HINSTANCE hPrevInst,LPSTR lpCmdLine,int nShowCmd)
@@ -216,6 +216,8 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 
 		case IDC_BUTTON_CANCEL:
 			{
+				closesocket(micSocket);
+				closesocket(multicastsocket);
 				closesocket(clnt.connectSocket_);
 				// return to idle state at earliest convenience
 				clnt.currentState = WFUCOMMAND;
@@ -569,9 +571,9 @@ SOCKET createMulticastSocket()
 --
 -- REVISIONS: (Date and Description)
 --
--- DESIGNER: Jesse Braham
+-- DESIGNER: Jesse Braham, Ronald Bellido
 --
--- PROGRAMMER: Jesse Braham, Behnam Bastami
+-- PROGRAMMER: Jesse Braham, Behnam Bastami, Ronald Bellido
 --
 -- INTERFACE: DWORD WINAPI multicastThread(LPVOID args)
 --
@@ -612,28 +614,18 @@ DWORD WINAPI multicastThread(LPVOID args)
 		MessageBox(NULL, "setsockopt() IP_ADD_MEMBERSHIP failed", "Error", MB_OK);
 		return 1;
 	}
-
-	//netplay->Play();
+	multicastsocket = hSocket;
 
 	string firstframe;
 	char buff[DATABUFSIZE];
 	int addr_size = sizeof(struct sockaddr_in);
-
-	/*nRet = recvfrom(hSocket, buff, DATABUFSIZE, 0, (struct sockaddr*)&server, &addr_size);
-	firstframe.append(buff, nRet);*/
-
-	/*while (!netplay->OpenStream(true,true,firstframe.data(),firstframe.size(), sfPCM)) //cannot be sfAutoDetect
-	{
-		nRet = recvfrom(hSocket, buff, DATABUFSIZE, 0, (struct sockaddr*)&server, &addr_size);
-		firstframe.append(buff,nRet);
-		nRet=0;
-	}*/
 
 	if (!netplay->OpenStream(1, 1, buff, DATABUFSIZE, sfPCM))
 	{
 		MessageBox(NULL, "OpenStream() failed", "Error", MB_OK);
 		return 1;
 	}
+	
 
 	netplay->Play();
 
@@ -645,9 +637,7 @@ DWORD WINAPI multicastThread(LPVOID args)
 		nRet = recvfrom(hSocket, buff, 65507, 0, (struct sockaddr*)&server, &addr_size);
 		if (nRet < 0)
 		{
-			int lol = WSAGetLastError();
-			sprintf(tmp, "%d", lol);
-			MessageBox(NULL, tmp, "Error", MB_OK);
+			MessageBox(NULL, "Stopped receiving from multicast", "Error", MB_OK);
 			WSACleanup();
 			return 1;
 		}

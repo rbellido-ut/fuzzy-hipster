@@ -61,6 +61,7 @@ HWND hSrvList;
 // not needed
 SOCKADDR_IN SockAddr;
 DWORD BytesRECV=0;
+SOCKET multicastsocket = NULL;
 
 /***********************************
 *			PROTOTYPES
