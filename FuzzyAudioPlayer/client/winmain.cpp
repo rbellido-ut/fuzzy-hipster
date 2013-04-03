@@ -592,7 +592,8 @@ DWORD WINAPI multicastThread(LPVOID args)
 			return 1;
 		}
 
-		netplay->PushDataToStream(buff, nRet);
+		if ((nRet % 2) == 0) 
+			netplay->PushDataToStream(buff, nRet);
 
 		delete tmp;
 

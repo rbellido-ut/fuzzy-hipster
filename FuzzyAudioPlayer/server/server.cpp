@@ -624,14 +624,13 @@ DWORD WINAPI multicastThread(LPVOID args)
 	{
 		//Open libzplay stream and settings
 		ZPlay * multicaststream = CreateZPlay();
-		
-		for (vector<string>::iterator it = song_list.begin(); it != song_list.end(); ++it)
-		{
-			multicaststream->SetSettings(sidSamplerate, 44100);
+		multicaststream->SetSettings(sidSamplerate, 44100);
 		multicaststream->SetSettings(sidChannelNumber, 2);
 		multicaststream->SetSettings(sidBitPerSample, 16);
 		multicaststream->SetSettings(sidBigEndian, 0);
 
+		for (vector<string>::iterator it = song_list.begin(); it != song_list.end(); ++it)
+		{
 			std::streampos begin, end;
 			int bytessent = 0,
 				filesize,
