@@ -436,7 +436,25 @@ void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 
 }
 
-//partymix.wav
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:	dispatchWSASendRequest
+--
+-- DATE:		April 3, 2013
+--
+-- REVISIONS:	April 3, 2013
+--
+-- DESIGNER:	Ron Bellido
+--
+-- PROGRAMMER:	Ron Bellido
+--
+-- INTERFACE:	TStreamFormat parseFileFormat(const std::string filename)
+--
+-- RETURNS:		TStreamFormat -- type of libZplay song format
+--				
+-- NOTES:		This parses a filename (string) and detects what format it
+--				is based on the file extension.
+--
+----------------------------------------------------------------------------------------------------------------------*/
 TStreamFormat parseFileFormat(const std::string filename)
 {
 	string format;

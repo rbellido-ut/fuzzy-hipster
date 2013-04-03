@@ -1,3 +1,36 @@
+/*------------------------------------------------------------------------------------------------------------------
+-- SOURCE FILE:		winmain.cpp -  Entry point for the client GUI
+--
+-- PROGRAM:			Fuzzy-Hipster
+--
+-- FUNCTIONS:		bool Client::runClient(WSADATA* wsadata, const char* hostname, const int port) 
+--					SOCKET Client::createTCPClient(WSADATA* wsaData, const char* hostname, const int port) 
+--					bool Client::dispatchWSARecvRequest(LPSOCKETDATA data)
+--					void CALLBACK Client::runRecvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--					void Client::recvComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--					bool Client::dispatchWSASendRequest(LPSOCKETDATA data)
+--					void CALLBACK Client::runSendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--					void Client::sendComplete (DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--					void Client::dispatchOneSend(string usrData)
+--					void Client::dispatchOneRecv()
+--					DWORD WINAPI Client::runDLThread(LPVOID param)
+--					DWORD Client::dlThread(LPVOID param)
+--					DWORD WINAPI Client::runULThread(LPVOID param)
+--					DWORD Client::ulThread(LPVOID param)
+--					LPSOCKETDATA Client::allocData(SOCKET socketFD)
+--					void Client::freeData(LPSOCKETDATA data)
+-- 
+-- DATE:			April 3, 2013
+--
+-- REVISIONS: 
+--
+-- DESIGNER:		Aaron Lee
+--
+-- PROGRAMMER:		Aaron Lee
+--
+-- NOTES: 			requires libzplay library
+----------------------------------------------------------------------------------------------------------------------*/
+
 #include "winmain.h"
 
 using namespace std;
@@ -14,6 +47,29 @@ int __stdcall micCallBack (void* instance, void *user_data, libZPlay::TCallbackM
 SOCKET micSocket = NULL;
 SOCKADDR_IN micServer, micClient;	
 
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: WinMain
+--
+-- DATE: December 7, 2012
+--
+-- REVISIONS: December 7, 2012 -- Initial version.
+--
+-- DESIGNER: Aaron Lee
+--
+-- PROGRAMMER: Aaron Lee
+--
+-- INTERFACE: int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
+--				HINSTANCE hInstance: handle to our application instance
+--				HINSTANCE hPrevInstance: handle to previous application instance
+--				PSTR szCmdLine: arguments passed in before execution
+--				int iCmdShow: window state
+--
+-- RETURNS: int -- error code; 0 indicates no error
+--
+-- NOTES:
+-- Main entry point. Message loop is here as well.
+----------------------------------------------------------------------------------------------------------------------*/
 int WINAPI WinMain(HINSTANCE hInst,HINSTANCE hPrevInst,LPSTR lpCmdLine,int nShowCmd)
 {
 	WNDCLASSEX wClass;
@@ -67,7 +123,28 @@ int WINAPI WinMain(HINSTANCE hInst,HINSTANCE hPrevInst,LPSTR lpCmdLine,int nShow
 	return 0;
 }
 
-
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: WinProc
+--
+-- DATE: February 15, 2013
+--
+-- REVISIONS: February 15, 2013 -- Initial version.
+--
+-- DESIGNER: Aaron Lee
+--
+-- PROGRAMMER: Aaron Lee
+--
+-- INTERFACE: LRESULT CALLBACK WinProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+--							HWND hwnd: The handle to the window.
+--							UINT Message: The message received.
+--							WPARAM wParam: Additional information.
+--							LPARAM lParam: Additional information.
+--
+-- RETURNS: LRESULT
+--
+-- NOTES:
+-- Program message handler. Interprets messages from WSAasyncSelect and handles them.
+----------------------------------------------------------------------------------------------------------------------*/
 LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	static OPENFILENAME ofn = {0};
@@ -274,6 +351,25 @@ bool downloadRequest(Client &clnt)
 	return true;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: getFileNameWithoutPath
+--
+-- DATE: April 3, 2013
+--
+-- REVISIONS: April 3, 2013 -- Initial version.
+--
+-- DESIGNER: Aaron Lee
+--
+-- PROGRAMMER: Aaron Lee
+--
+-- INTERFACE: std::string getFileNameWithoutPath(std::string f)
+--							std::string f: absolute path including filename, extension
+--
+-- RETURNS: std::string -- filename and extension without path
+--
+-- NOTES:
+-- Removes file path from a filepath. I.e.c:/this/is/a/test.wav => test.wav
+----------------------------------------------------------------------------------------------------------------------*/
 std::string getFileNameWithoutPath(std::string f)
 {
 	int i = f.find_last_of('\\');
@@ -348,10 +444,6 @@ bool listRequest(Client& clnt, HWND* hWnd)
 
 	HANDLE listThreadHandle = CreateThread(NULL, 0, listThreadProc, uc, 0, NULL);
 
-	
-	
-
-	
 	return true;
 }
 
@@ -749,8 +841,24 @@ DWORD WINAPI multicastThread(LPVOID args)
 	return 0;
 }
 
-// create all main window gui elements
-// move all createwindow stuff here eventually
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: createGUI
+--
+-- DATE: March 27, 2013
+--
+-- REVISIONS: March 27, 2013 -- Initial version.
+--
+-- DESIGNER: Aaron Lee
+--
+-- PROGRAMMER: Aaron Lee
+--
+-- INTERFACE: bool createGUI(HWND hWnd)
+--
+-- RETURNS: BOOL -- TRUE no errors during creation
+--
+-- NOTES:
+-- create all main window gui elements.
+----------------------------------------------------------------------------------------------------------------------*/
 bool createGUI(HWND hWnd)
 {
 	HANDLE hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
@@ -912,6 +1020,24 @@ bool createGUI(HWND hWnd)
 	return true;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: initOpenFileStruct
+--
+-- DATE: February 13, 2013
+--
+-- REVISIONS: February 13, 2013 -- Initial version.
+--
+-- DESIGNER: Aaron Lee
+--
+-- PROGRAMMER: Aaron Lee
+--
+-- INTERFACE: int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
+--
+-- RETURNS: 0
+--
+-- NOTES:
+-- Initializes a OpenFileStruct Dialog for .txt files.
+----------------------------------------------------------------------------------------------------------------------*/
 int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
 {
 	static char szFileName[MAX_PATH] = "";
@@ -930,7 +1056,25 @@ int initOpenFileStruct(HWND hWnd, OPENFILENAME &ofn)
 	return 0;
 }
 
-// args: takes a new line separated string of songs available on the server
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: processSongList
+--
+-- DATE: April 3, 2013
+--
+-- REVISIONS: April 3, 2013 -- Initial version.
+--
+-- DESIGNER: Aaron Lee
+--
+-- PROGRAMMER: Aaron Lee
+--
+-- INTERFACE: vector<string> processSongList(std::string rawstring)
+--		std::string -- string of songs separated by new-line chars
+--
+-- RETURNS: vector<string> -- vector of songs
+--
+-- NOTES:
+-- Converts a string of songs separated by newlines into a vector
+----------------------------------------------------------------------------------------------------------------------*/
 vector<string> processSongList(std::string rawstring)
 {
 	vector<string> result;
@@ -945,8 +1089,26 @@ vector<string> processSongList(std::string rawstring)
 	return result;
 }
 
-
-//bool populateListBox(HWND* hWnd, int resIdxOfListBox, vector<string> localList)
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: populateListBox
+--
+-- DATE: April 3, 2013
+--
+-- REVISIONS: April 3, 2013 -- Initial version.
+--
+-- DESIGNER: Aaron Lee
+--
+-- PROGRAMMER: Aaron Lee
+--
+-- INTERFACE: bool populateListBox(HWND hList, vector<string> localList)
+--		HWND hList -- handle to list box
+--		vector<string> -- vector of items to load into listbox hList
+--
+-- RETURNS: TRUE if successful
+--
+-- NOTES:
+-- Clears then loads a vector into a list box window.
+----------------------------------------------------------------------------------------------------------------------*/
 bool populateListBox(HWND hList, vector<string> localList)
 {
 	// clear list box
@@ -966,7 +1128,28 @@ bool populateListBox(HWND hList, vector<string> localList)
 	return true;
 }
 
-string getSelectedListBoxItem(HWND* hWnd, int resIdxOfListBox)
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: getSelectedListBoxItem
+--
+-- DATE: April 3, 2013
+--
+-- REVISIONS: April 3, 2013 -- Initial version.
+--
+-- DESIGNER: Aaron Lee
+--
+-- PROGRAMMER: Aaron Lee
+--
+-- INTERFACE: std::string getSelectedListBoxItem(HWND* hWnd, int resIdxOfListBox)
+--		HWND* hWnd -- pointer to main window
+--		int resIdxOfListBox -- resource of list box
+--
+-- RETURNS: string -- song name of selected item by user
+--				"ERROR" if nothing selected by user
+--
+-- NOTES:
+-- Gets the text of the item selected by the user on the list box window.
+----------------------------------------------------------------------------------------------------------------------*/
+std::string getSelectedListBoxItem(HWND* hWnd, int resIdxOfListBox)
 {
 	char* tmp = new char[DATABUFSIZE]; // edit box
 
