@@ -10,6 +10,7 @@ Features
 * Multicasting
 * Upload songs to the server
 * Download songs from the server
+* Microphone chat
 
 Getting Started
 ===============
