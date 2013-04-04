@@ -1,58 +1,37 @@
+Fuzzy Audio Player
+===============
+Fuzzy Audio Player is a network streaming audio player, designed and implemented for our BCIT Data Communications course (COMP 4985) final project.  
+It is a Win32 application written in C++, making use of the [libzplay library](http://libzplay.sourceforge.net/WELCOME.html) for it's audio component, and the Windows Socket API for the network component.
+The application suite comes with a server and a client application.
+
+Features
+========
+* Streams .wav files
+* Multicasting
+* Upload songs to the server
+* Download songs from the server
+
+Getting Started
+===============
+Before starting, make sure that you have the libzplay.dll in the same folder as all the .exe files. In addition,
+make sure to have a 'Stream' folder which will contain all the .wav files you want to listen to through the player.
+
+Server
+-------
+Launching the `FuzzyAudioPlayerServer.exe` will start the server. It automatically starts a multicast channel, streaming
+all the .wav songs contained in the 'Stream' folder; make sure you have at least one .wav file in this folder to
+start streaming.
+
+
+Client
+-------
+* Launch the `FuzzyAudioPlayerClient.exe` to launch the client.
+* Type the correct IP address and port of the server.
+* Once finished, you will see a list of songs available for downloading or streaming.
+* To select an operation, click the radio button and press the 'OK' button.
+
+For more information on how the application works and the design, see the [documentation](https://github.com/rbellido/fuzzy-hipster/blob/master/design/Design_v2.0.docx).
+
 fuzzy-hipster
 =============
-
-This hipster is so fuzzy it can play music...on the network..on wandows
-
-Note: will change the name to windows audio or something later on when we're done this assignment. 
-Just wanted to obscure the name to avoid people looking into our code. Security through obscurity amirite?! Or
-we're just way too hipsters that our application is underground right now, just before it becomes mainstream on April.
-
-Anyway...
-
-Task Breakdown
-===============
-Client Side
----------------
-Aaron & Behnam: 
-* TCP Control channel established, 
-* Waiting for user command [done by: March 20, 2013]
-
-Behnam: 
-* Sending Download/Upload requests,
-* download/upload functionality [done by March 24, 2013]
-
-Aaron: 
-* sending streaming requests, 
-* streaming functionality [done by March 24, 2013]
-
-Behnam & Aaron: 
-* Sending 2-way Microphone requests, 
-* 2-way microphone functionality [done by March 28,2013]
-
-Behnam & Aaron: 
-* Sending multicasting requests,
-* multicasting functionality [done by March 31, 2013]
-
-Server Side
---------------
-Ron & Jesse: 
-* Set up TCP connection listener, listening for requests, 
-* displaying decoded requests [done by: March 20,2013]
-
-Ron: 
-* Handling stream Request [done by March 24, 2013]
-
-Jesse: 
-* Handling upload/download [done by March 24,2013]
-
-Ron: 
-* Handling 2-way Microphone requests [done by March 28, 2013]
-
-Jesse & Ron: 
-* Handling multicasting requests[done by March 31, 2013]
-
-Important dates
-----------------
-- **March 18, Monday - Design work is due**
-- **March 20, Wednesday and onwards - Written progress reports are due.**
-- **April 3, Wednesday - Demo day**
+Fuzzy Hipsters is the team and this is the Fuzzy Audio Player.
