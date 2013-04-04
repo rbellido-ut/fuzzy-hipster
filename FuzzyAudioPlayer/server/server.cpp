@@ -4,7 +4,15 @@
 -- PROGRAM: FuzzyAudioPlayerServer
 --
 -- FUNCTIONS:
---
+--		- int main(int argc, char * argv[])
+--		- DWORD WINAPI listenThread(LPVOID args)
+--		- DWORD WINAPI handleClientRequests(LPVOID param)
+--		- ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
+--		- void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET clientsocket, string filename, int uploadfilesize)
+--		- DWORD WINAPI multicastThread(LPVOID args)
+--		- int  __stdcall  multicastCallback(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
+--		- string getMusicDir()
+--		- int populateSongList(vector<string>& song_list)
 --
 -- DATE: March 20, 2013
 --
@@ -15,6 +23,7 @@
 -- PROGRAMMER: Ronald Bellido, Jesse Braham
 --
 -- NOTES:
+Contains implementation of the server-side functions
 ----------------------------------------------------------------------------------------------------------------------*/
 
 #include "server.h"
@@ -201,8 +210,8 @@ ServerState DecodeRequest(char * request, string& filename, int& uploadfilesize)
 	stringstream ss(req);
 	string requesttype;
 
-	ss >> requesttype;
-	cout << "received " << requesttype << " ";
+	if (ss >> requesttype)
+		cout << "received " << requesttype << " ";
 
 	if (requesttype == "LIST")
 	{
@@ -519,9 +528,9 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 --
 -- REVISIONS: (Date and Description)
 --
--- DESIGNER: Jesse Braham
+-- DESIGNER: Jesse Braham, Ronald Bellido
 --
--- PROGRAMMER: Jesse Braham
+-- PROGRAMMER: Jesse Braham, Ronald Bellido
 --
 -- INTERFACE: DWORD WINAPI multicastThread(LPVOID args)
 --
@@ -533,8 +542,7 @@ void requestDispatcher(ServerState prevState, ServerState currentState, SOCKET c
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI multicastThread(LPVOID args)
 {
-	char			achMCAddr[MAXADDRSTR] = TIMECAST_ADDR,
-					*tmp;
+	char			achMCAddr[MAXADDRSTR] = TIMECAST_ADDR;
 
 	u_short			nPort = TIMECAST_PORT;
 	u_long			lTTL = TIMECAST_TTL;
@@ -559,7 +567,6 @@ DWORD WINAPI multicastThread(LPVOID args)
 
 	fileToSend = new ifstream;
 
-	streamsize		numberOfBytesRead;
 	
 	LPMULTICASTVARS multcastvars = (LPMULTICASTVARS) malloc(sizeof(MULTICASTVARS));
 
@@ -633,7 +640,7 @@ DWORD WINAPI multicastThread(LPVOID args)
 		for (vector<string>::iterator it = song_list.begin(); it != song_list.end(); ++it)
 		{
 			std::streampos begin, end;
-			int bytessent = 0,
+			long int bytessent = 0,
 				filesize,
 				totalbytessent = 0;
 
@@ -646,7 +653,7 @@ DWORD WINAPI multicastThread(LPVOID args)
 			fileToSend->seekg(0, ios::end);
 			end = fileToSend->tellg();
 			fileToSend->seekg(0, ios::beg);
-			filesize = end - begin;
+			filesize = static_cast<long int>(end - begin);
 
 			fileToSend->open(absSongPath, ios::binary);
 
@@ -681,11 +688,11 @@ DWORD WINAPI multicastThread(LPVOID args)
 					break; //exit the loop
 
 				//get current position
-				TStreamTime pos;
+				/*TStreamTime pos;
 				multicaststream->GetPosition(&pos);
-				cout << "Pos: " << pos.hms.hour << " " << pos.hms.minute << " " << pos.hms.second << " " << pos.hms.millisecond << endl;
+				cout << "Pos: " << pos.hms.hour << " " << pos.hms.minute << " " << pos.hms.second << " " << pos.hms.millisecond << endl;*/
 
-				Sleep(300); //TODO: might need to remove this later
+				//Sleep(300); //TODO: might need to remove this later
 			}
 
 			fileToSend->close();
@@ -705,9 +712,9 @@ DWORD WINAPI multicastThread(LPVOID args)
 --
 -- REVISIONS: (Date and Description)
 --
--- DESIGNER: Ron Bellido
+-- DESIGNER: Ronald Bellido
 --
--- PROGRAMMER: Ron Bellido
+-- PROGRAMMER: Ronald Bellido
 --
 -- INTERFACE: int  __stdcall  multicastCallback(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
 --
@@ -726,7 +733,7 @@ int  __stdcall  multicastCallback(void* instance, void *user_data, libZPlay::TCa
 		case MsgStreamNeedMoreData:
 			mcv->file->read(buffer, 1024);
 			//cout << "Read " << mcv->file->gcount() << endl;
-			multicaststream->PushDataToStream(buffer, mcv->file->gcount());
+			multicaststream->PushDataToStream(buffer, static_cast<unsigned int>(mcv->file->gcount()));
 		break;
 
 		case MsgWaveBuffer:

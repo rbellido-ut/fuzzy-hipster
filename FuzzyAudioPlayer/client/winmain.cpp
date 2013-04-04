@@ -44,8 +44,10 @@ DWORD WINAPI listThreadProc(LPVOID args);
 DWORD WINAPI micSessionThread(LPVOID param);
 int __stdcall micCallBack (void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2);
 
-SOCKET micSocket = NULL;
+SOCKET micSocket;
 SOCKADDR_IN micServer, micClient;	
+ZPlay * player;
+ZPlay * netplay;
 
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -293,11 +295,23 @@ LRESULT CALLBACK WinProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 
 		case IDC_BUTTON_CANCEL:
 			{
-				closesocket(micSocket);
+				//closesocket(micSocket);
+				if ((netplay != NULL) || (player != NULL))
+				{
+					if (clnt.currentState == MICROPHONE) {
+						sendto(micSocket, 0, 0, 0, (const sockaddr* )&micServer, sizeof(sockaddr_in));
+						closesocket(micSocket);
+
+					}
+
+					netplay->Stop();
+					//player->Stop();
+				}
+
 				closesocket(multicastsocket);
 				closesocket(clnt.connectSocket_);
 				// return to idle state at earliest convenience
-				clnt.currentState = WFUCOMMAND;
+				clnt.currentState = NOTCONNECTED;
 				clnt.player_->Stop();
 
 				// get user input
@@ -450,6 +464,7 @@ DWORD WINAPI listThreadProc (LPVOID param)
 		populateListBox(hSrvList, clnt->localSongList); // populate song list on gui
 		//populateSongList(&clnt, clnt.cachedServerSongList.substr(0,clnt.cachedServerSongList.size()-1));
 	}
+	return true;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -534,16 +549,16 @@ bool streamRequest(Client& clnt)
 ----------------------------------------------------------------------------------------------------------------------*/
 bool micRequest(Client& clnt)
 {
-	MessageBox(NULL, "mic req" , "Test" , MB_OK);
 
-	std::string userRequest;
+	//std::string userRequest;
 
-	userRequest += "MIC";
+	std::string userRequest("MIC");
 
-	clnt.currentState = MICROPHONE;
-	clnt.dispatchOneSend(userRequest);
+	UPLOADCONTEXT* uc = new UPLOADCONTEXT;
+	uc->clnt = &clnt;
+	uc->userReq = userRequest;
 
-	HANDLE hMicSessionThread = CreateThread(NULL, 0, micSessionThread, &clnt, 0, NULL);
+	HANDLE hMicSessionThread = CreateThread(NULL, 0, micSessionThread, uc, 0, NULL);
 
 	return true;
 }
@@ -570,7 +585,13 @@ bool micRequest(Client& clnt)
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI micSessionThread(LPVOID param)
 {
-	Client* clnt = (Client*) param;
+
+	UPLOADCONTEXT* uc = (UPLOADCONTEXT*) param;
+	Client * clnt = uc->clnt;
+	string userReq = uc->userReq;
+	
+	clnt->currentState = MICROPHONE;
+	clnt->dispatchOneSend(userReq);
 
 	if(!createMicSocket())
 	{
@@ -608,7 +629,7 @@ DWORD WINAPI micSessionThread(LPVOID param)
 ----------------------------------------------------------------------------------------------------------------------*/
 bool startMicSession()
 {
-	ZPlay * netplay = CreateZPlay();
+	netplay = CreateZPlay();
 
 	netplay->SetSettings(sidSamplerate, 44100);// 44100 samples
 	netplay->SetSettings(sidChannelNumber, 2);// 2 channel
@@ -620,16 +641,18 @@ bool startMicSession()
 	if(result == 0) {
 		printf("Error: %s\n", netplay->GetError());
 		netplay->Release();
+		closesocket(micSocket);
 		return false;
 	}
 
 
-	ZPlay *player = CreateZPlay();
+	player = CreateZPlay();
 
 	result = player->OpenFile("wavein://", sfAutodetect);
 	if(result == 0) {
 		printf("Error: %s\n", player->GetError());
 		player->Release();
+		closesocket(micSocket);
 		return false;
 	}
 
@@ -647,6 +670,7 @@ bool startMicSession()
 			if (err == 10054)
 				printf("Connection reset by peer.\n"); 
 			else printf("get last error %d\n", err);
+			closesocket(micSocket);
 			break;
 		}
 
@@ -666,7 +690,6 @@ bool startMicSession()
 
 	player->Release();
 	return true;
-
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -702,6 +725,7 @@ bool createMicSocket () {
 	if ((hp = gethostbyname(szServer)) == NULL)
 	{
 		MessageBox(NULL, "Unknown server address", NULL, NULL);
+		closesocket(micSocket);
 		return false;
 	}
 
@@ -716,6 +740,7 @@ bool createMicSocket () {
 
 	if (bind(micSocket, (struct sockaddr *)&micClient, sizeof(micClient)) == -1) {
 		MessageBox(NULL, "Can't bind socket", NULL, NULL);
+		closesocket(micSocket);
 		exit(1);
 	}
 
@@ -819,8 +844,6 @@ DWORD WINAPI multicastThread(LPVOID args)
 	struct ip_mreq	stMreq;
 	SOCKADDR_IN		server;
 	char			achMCAddr[MAXADDRSTR] = TIMECAST_ADDR;
-	char			achInBuf[BUFSIZE];
-	u_long			lMCAddr;
 	u_short			nPort = TIMECAST_PORT;
 
 	ZPlay *			netplay = CreateZPlay();
@@ -1268,7 +1291,12 @@ int __stdcall micCallBack (void* instance, void *user_data, TCallbackMessage mes
 {
 
 	if ( message == MsgStop )
-		return closesocket(micSocket);
+	{
+		netplay->Stop();
+		player->Stop();
+		closesocket(micSocket);
+		return 2;
+	}
 
 	if (sendto(micSocket, (const char *)param1, param2, 0, (const struct sockaddr*)&micServer, sizeof(micServer)) < 0)
 		return 2;
