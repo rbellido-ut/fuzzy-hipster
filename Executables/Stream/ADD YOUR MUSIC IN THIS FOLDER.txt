@@ -1,0 +1,1 @@
+Don't forget to remove this txt file when you do add music here. Otherwise, the server will add it to it's playlist.
